@@ -30,7 +30,8 @@ class Settings(BaseSettings):
     default_inflation_rate: float = 0.06
     default_tax_rate: float = 0.30
 
-    model_config = {"env_prefix": "QUANTAI_", "env_file": ".env"}
+    # Pydantic-settings config
+    model_config = {"env_prefix": "QUANTAI_", "env_file": ".env", "extra": "ignore"}
 
 
 settings = Settings()
