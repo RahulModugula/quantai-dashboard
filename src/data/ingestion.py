@@ -52,6 +52,10 @@ def download_ohlcv(
     df.index.name = "date"
     df = df.reset_index()
 
+    # yfinance returns timezone-aware timestamps on some systems — strip tz
+    if hasattr(df["date"], "dt") and df["date"].dt.tz is not None:
+        df["date"] = df["date"].dt.tz_localize(None)
+
     df = validate_ohlcv(df, ticker)
 
     logger.info(f"Downloaded {len(df)} rows for {ticker}")
