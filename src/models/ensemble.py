@@ -37,7 +37,6 @@ class EnsembleModel:
             reg_alpha=0.1,
             reg_lambda=1.0,
             random_state=42,
-            use_label_encoder=False,
             eval_metric="logloss",
         )
 
