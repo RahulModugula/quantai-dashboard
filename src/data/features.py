@@ -118,12 +118,21 @@ def compute_volume_features(df: pd.DataFrame) -> pd.DataFrame:
     return result
 
 
-def build_feature_matrix(df: pd.DataFrame) -> pd.DataFrame:
+def build_feature_matrix(df: pd.DataFrame, min_rows: int = 60) -> pd.DataFrame:
     """Build complete feature matrix from OHLCV data.
 
     Returns a clean dataframe with all features and a binary target
     (1 = next day close is higher, 0 = lower).
+
+    Args:
+        df: OHLCV dataframe
+        min_rows: Minimum rows required after warmup; raises if data is too short
     """
+    if len(df) < min_rows:
+        raise ValueError(
+            f"Insufficient history: need at least {min_rows} rows, got {len(df)}"
+        )
+
     features = df[["date", "ticker", "open", "high", "low", "close", "volume"]].copy()
 
     # Technical indicators
