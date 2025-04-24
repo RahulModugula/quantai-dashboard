@@ -111,10 +111,10 @@ def get_engine(db_path: str | None = None):
 
 
 def init_db(db_path: str | None = None):
-    """Create all tables if they don't exist."""
+    """Create all tables if they don't exist (idempotent)."""
     engine = get_engine(db_path)
     metadata.create_all(engine)
-    logger.info("Database initialized")
+    logger.info(f"Database initialized at {db_path or settings.db_path}")
     return engine
 
 
