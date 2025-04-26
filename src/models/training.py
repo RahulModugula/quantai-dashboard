@@ -84,7 +84,7 @@ def walk_forward_train(
     all_oos_preds = []
 
     fold_idx = 0
-    test_start_idx = window
+    test_start_idx = window  # expanding window: train on [0, window], test on [window, window+interval]
 
     while test_start_idx < len(X):
         test_end_idx = min(test_start_idx + retrain_interval, len(X))
