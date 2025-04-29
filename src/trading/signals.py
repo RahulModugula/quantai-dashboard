@@ -37,7 +37,7 @@ def generate_signal(
         sell_threshold: Maximum probability before triggering a sell
         max_position_pct: Max fraction of portfolio in a single position
     """
-    confidence = abs(probability_up - 0.5) * 2  # Scale [0, 1]
+    confidence = round(abs(probability_up - 0.5) * 2, 4)  # Scale to [0, 1]
 
     if probability_up >= buy_threshold and not has_position:
         target_value = portfolio_value * max_position_pct
