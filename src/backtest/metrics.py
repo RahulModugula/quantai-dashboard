@@ -20,10 +20,14 @@ def sortino_ratio(returns: pd.Series, risk_free: float = 0.04, periods_per_year:
 
 
 def max_drawdown(equity_curve: pd.Series) -> float:
-    """Maximum drawdown as a percentage (negative value)."""
+    """Maximum drawdown as a percentage (negative value).
+
+    Returns 0.0 for flat or monotonically increasing equity curves.
+    """
     rolling_max = equity_curve.cummax()
-    drawdown = (equity_curve - rolling_max) / rolling_max
-    return float(drawdown.min())
+    denominator = rolling_max.replace(0, np.nan)
+    drawdown = (equity_curve - rolling_max) / denominator
+    return float(drawdown.min()) if not drawdown.isna().all() else 0.0
 
 
 def calmar_ratio(returns: pd.Series, equity_curve: pd.Series, periods_per_year: int = 252) -> float:
