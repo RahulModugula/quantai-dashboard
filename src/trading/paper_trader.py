@@ -138,6 +138,11 @@ class PaperTrader:
                 max_position_pct=settings.max_position_pct,
             )
 
+            logger.debug(
+                f"{ticker}: signal={signal.signal_type.value} "
+                f"p_up={signal.probability_up:.3f} conf={signal.confidence:.3f}"
+            )
+
             if signal.signal_type == SignalType.BUY:
                 trade = self.portfolio.buy(ticker, signal.suggested_shares, price, now)
                 if trade:
