@@ -1,0 +1,96 @@
+"""
+QuantAI Trading Dashboard - FastAPI Application
+
+Mounts:
+  /api           - REST API (predictions, portfolio, backtest, advisor, sip)
+  /ws/prices     - WebSocket real-time price feed
+  /dashboard     - Plotly Dash interactive dashboard (WSGI-mounted)
+"""
+
+import asyncio
+import logging
+
+from fastapi import FastAPI, WebSocket
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
+
+from src.api.routes import backtest, portfolio, predictions
+from src.api.websocket import price_feed_endpoint
+from src.config import settings
+from src.data.storage import init_db
+
+logger = logging.getLogger(__name__)
+
+DISCLAIMER = (
+    "⚠️ DISCLAIMER: This application is for educational purposes only. "
+    "All predictions, signals, and portfolio data are simulated and do NOT constitute financial advice. "
+    "Backtested results are theoretical and do not guarantee future performance. "
+    "Past performance is not indicative of future results."
+)
+
+
+def create_app() -> FastAPI:
+    app = FastAPI(
+        title="QuantAI - ML Trading Dashboard",
+        description=f"Real-time ML trading dashboard with backtesting and paper trading.\n\n{DISCLAIMER}",
+        version="0.1.0",
+        docs_url="/api/docs",
+        redoc_url="/api/redoc",
+    )
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
+    # REST routes
+    app.include_router(predictions.router, prefix="/api")
+    app.include_router(portfolio.router, prefix="/api")
+    app.include_router(backtest.router, prefix="/api")
+
+    # Import advisor and SIP routes lazily (created in Phase 5)
+    try:
+        from src.api.routes import advisor, sip
+        app.include_router(advisor.router, prefix="/api")
+        app.include_router(sip.router, prefix="/api")
+    except ImportError:
+        logger.warning("Advisor/SIP routes not yet available")
+
+    # WebSocket
+    @app.websocket("/ws/prices")
+    async def ws_prices(websocket: WebSocket):
+        await price_feed_endpoint(websocket)
+
+    # Mount Dash dashboard
+    try:
+        from a2wsgi import WSGIMiddleware
+        from src.dashboard.app import create_dash_app
+        dash_app = create_dash_app()
+        app.mount("/dashboard", WSGIMiddleware(dash_app.server))
+        logger.info("Dash dashboard mounted at /dashboard")
+    except Exception as e:
+        logger.warning(f"Dashboard not mounted: {e}")
+
+    @app.get("/", include_in_schema=False)
+    def root():
+        return RedirectResponse(url="/dashboard")
+
+    @app.on_event("startup")
+    async def startup():
+        init_db()
+        logger.info("Database initialized")
+        # Start paper trader in background
+        try:
+            from src.api.dependencies import get_paper_trader
+            trader = get_paper_trader()
+            asyncio.create_task(trader.run())
+            logger.info("Paper trader started")
+        except Exception as e:
+            logger.warning(f"Paper trader not started: {e}")
+
+    return app
+
+
+app = create_app()
