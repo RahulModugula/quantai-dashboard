@@ -89,7 +89,7 @@ def score_risk_profile(
     else:
         score += 0
 
-    score = min(100, max(0, score))
+    score = min(100, max(0, score))  # clamp to [0, 100]
 
     if score >= 75:
         category = "Very Aggressive"
