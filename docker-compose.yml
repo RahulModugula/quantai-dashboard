@@ -1,0 +1,35 @@
+version: "3.9"
+
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - QUANTAI_REDIS_URL=redis://redis:6379
+      - QUANTAI_DB_PATH=/app/data/trading.db
+    volumes:
+      - ./data:/app/data
+      - ./models:/app/models
+    depends_on:
+      redis:
+        condition: service_healthy
+    command: >
+      sh -c "
+        python scripts/seed_data.py &&
+        python scripts/train_model.py &&
+        uvicorn src.api.main:app --host 0.0.0.0 --port 8000
+      "
+
+volumes:
+  data:
