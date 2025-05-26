@@ -71,7 +71,10 @@ class WalkForwardBacktester:
         merged = merged.sort_values("date").reset_index(drop=True)
 
         if merged.empty:
-            raise ValueError(f"No overlapping dates between predictions and prices for {ticker}")
+            raise ValueError(
+                f"No overlapping dates between predictions and prices for {ticker}. "
+                "Ensure seed_data.py has been run and predictions cover the same date range."
+            )
 
         cash = self.initial_capital
         shares = 0.0

@@ -44,7 +44,7 @@ def download_ohlcv(
         "Volume": "volume",
     })
 
-    # Keep only the columns we need
+    # Keep only the columns we need; adj_close absent for some tickers
     expected = ["open", "high", "low", "close", "volume"]
     df = df[[c for c in expected if c in df.columns]]
 
