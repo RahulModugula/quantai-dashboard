@@ -18,11 +18,12 @@ class EnsembleModel:
         self.sequence_length = sequence_length
 
         self.rf = RandomForestClassifier(
-            n_estimators=200,
-            max_depth=10,
+            n_estimators=300,
+            max_depth=12,
             min_samples_split=20,
             min_samples_leaf=10,
             max_features="sqrt",
+            class_weight="balanced",
             random_state=42,
             n_jobs=-1,
         )
