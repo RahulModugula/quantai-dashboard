@@ -15,7 +15,7 @@ def price_chart_layout() -> html.Div:
                                     id="ticker-select",
                                     options=[
                                         {"label": t, "value": t}
-                                        for t in ["AAPL", "MSFT", "GOOGL", "AMZN", "SPY"]
+                                        for t in ["AAPL", "MSFT", "GOOGL", "AMZN", "SPY", "NVDA", "TSLA"]
                                     ],
                                     value="AAPL",
                                     clearable=False,
