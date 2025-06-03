@@ -139,13 +139,16 @@ def load_ohlcv(
     db_path: str | None = None,
 ) -> pd.DataFrame:
     engine = get_engine(db_path)
-    query = f"SELECT * FROM ohlcv WHERE ticker = '{ticker}'"
+    query = "SELECT * FROM ohlcv WHERE ticker = :ticker"
+    params = {"ticker": ticker}
     if start:
-        query += f" AND date >= '{start}'"
+        query += " AND date >= :start"
+        params["start"] = start
     if end:
-        query += f" AND date <= '{end}'"
+        query += " AND date <= :end"
+        params["end"] = end
     query += " ORDER BY date"
-    return pd.read_sql(query, engine)
+    return pd.read_sql(text(query), engine, params=params)
 
 
 def save_features(df: pd.DataFrame, db_path: str | None = None):
@@ -172,13 +175,16 @@ def load_features(
     db_path: str | None = None,
 ) -> pd.DataFrame:
     engine = get_engine(db_path)
-    query = f"SELECT * FROM features WHERE ticker = '{ticker}'"
+    query = "SELECT * FROM features WHERE ticker = :ticker"
+    params = {"ticker": ticker}
     if start:
-        query += f" AND date >= '{start}'"
+        query += " AND date >= :start"
+        params["start"] = start
     if end:
-        query += f" AND date <= '{end}'"
+        query += " AND date <= :end"
+        params["end"] = end
     query += " ORDER BY date"
-    return pd.read_sql(query, engine)
+    return pd.read_sql(text(query), engine, params=params)
 
 
 def save_trades(trades: pd.DataFrame, db_path: str | None = None):
@@ -195,16 +201,20 @@ def load_trades(
     engine = get_engine(db_path)
     query = "SELECT * FROM trades"
     conditions = []
+    params = {}
     if ticker:
-        conditions.append(f"ticker = '{ticker}'")
+        conditions.append("ticker = :ticker")
+        params["ticker"] = ticker
     if start:
-        conditions.append(f"timestamp >= '{start}'")
+        conditions.append("timestamp >= :start")
+        params["start"] = start
     if end:
-        conditions.append(f"timestamp <= '{end}'")
+        conditions.append("timestamp <= :end")
+        params["end"] = end
     if conditions:
         query += " WHERE " + " AND ".join(conditions)
     query += " ORDER BY timestamp"
-    return pd.read_sql(query, engine)
+    return pd.read_sql(text(query), engine, params=params)
 
 
 def save_portfolio_snapshot(snapshot: dict, db_path: str | None = None):
