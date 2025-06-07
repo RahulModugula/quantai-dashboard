@@ -93,6 +93,37 @@ def compute_atr(
     return atr
 
 
+def compute_adx(
+    high: pd.Series,
+    low: pd.Series,
+    close: pd.Series,
+    period: int = 14,
+) -> pd.Series:
+    """Average Directional Index — measures trend strength (0-100)."""
+    prev_high = high.shift(1)
+    prev_low = low.shift(1)
+    prev_close = close.shift(1)
+
+    tr1 = high - low
+    tr2 = (high - prev_close).abs()
+    tr3 = (low - prev_close).abs()
+    tr = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
+
+    plus_dm = np.where((high - prev_high) > (prev_low - low), np.maximum(high - prev_high, 0), 0)
+    minus_dm = np.where((prev_low - low) > (high - prev_high), np.maximum(prev_low - low, 0), 0)
+
+    plus_dm = pd.Series(plus_dm, index=high.index)
+    minus_dm = pd.Series(minus_dm, index=high.index)
+
+    atr = tr.ewm(alpha=1 / period, min_periods=period).mean()
+    plus_di = 100 * plus_dm.ewm(alpha=1 / period, min_periods=period).mean() / atr.replace(0, np.nan)
+    minus_di = 100 * minus_dm.ewm(alpha=1 / period, min_periods=period).mean() / atr.replace(0, np.nan)
+
+    dx = 100 * (plus_di - minus_di).abs() / (plus_di + minus_di).replace(0, np.nan)
+    adx = dx.ewm(alpha=1 / period, min_periods=period).mean()
+    return adx
+
+
 def compute_rolling_stats(df: pd.DataFrame, windows: list[int] = None) -> pd.DataFrame:
     """Rolling volatility, momentum (rate of change), and mean reversion z-score."""
     if windows is None:
@@ -165,6 +196,8 @@ def build_feature_matrix(df: pd.DataFrame, min_rows: int = 60) -> pd.DataFrame:
 
     stoch_df = compute_stochastic(df["high"], df["low"], df["close"])
     features = pd.concat([features, stoch_df], axis=1)
+
+    features["adx_14"] = compute_adx(df["high"], df["low"], df["close"])
 
     # Rolling statistics
     rolling_df = compute_rolling_stats(df, windows=[5, 20])
