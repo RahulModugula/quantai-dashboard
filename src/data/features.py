@@ -61,6 +61,22 @@ def compute_bollinger_bands(
     })
 
 
+def compute_stochastic(
+    high: pd.Series,
+    low: pd.Series,
+    close: pd.Series,
+    k_period: int = 14,
+    d_period: int = 3,
+) -> pd.DataFrame:
+    """Stochastic Oscillator (%K and %D)."""
+    lowest_low = low.rolling(window=k_period).min()
+    highest_high = high.rolling(window=k_period).max()
+    denom = (highest_high - lowest_low).replace(0, np.nan)
+    pct_k = 100 * (close - lowest_low) / denom
+    pct_d = pct_k.rolling(window=d_period).mean()
+    return pd.DataFrame({"stoch_k": pct_k, "stoch_d": pct_d})
+
+
 def compute_atr(
     high: pd.Series,
     low: pd.Series,
@@ -146,6 +162,9 @@ def build_feature_matrix(df: pd.DataFrame, min_rows: int = 60) -> pd.DataFrame:
     features = pd.concat([features, bb_df], axis=1)
 
     features["atr_14"] = compute_atr(df["high"], df["low"], df["close"])
+
+    stoch_df = compute_stochastic(df["high"], df["low"], df["close"])
+    features = pd.concat([features, stoch_df], axis=1)
 
     # Rolling statistics
     rolling_df = compute_rolling_stats(df, windows=[5, 20])
