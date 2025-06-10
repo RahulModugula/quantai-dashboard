@@ -88,13 +88,14 @@ def create_app() -> FastAPI:
         logger.warning("Data validation routes not available")
 
     try:
-        from src.api.routes import advisor, optimizer, sip, status, diagnostics, analysis
+        from src.api.routes import advisor, optimizer, sip, status, diagnostics, analysis, signals
         app.include_router(advisor.router, prefix="/api")
         app.include_router(sip.router, prefix="/api")
         app.include_router(optimizer.router, prefix="/api")
         app.include_router(status.router, prefix="/api")
         app.include_router(diagnostics.router, prefix="/api")
         app.include_router(analysis.router, prefix="/api")
+        app.include_router(signals.router, prefix="/api")
     except ImportError:
         logger.warning("Some optional routes not yet available")
 
