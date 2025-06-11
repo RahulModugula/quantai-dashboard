@@ -146,6 +146,30 @@ def compute_rolling_stats(df: pd.DataFrame, windows: list[int] = None) -> pd.Dat
     return result
 
 
+def compute_sma_ratios(df: pd.DataFrame) -> pd.DataFrame:
+    """Price relative to key moving averages and golden/death cross signal."""
+    close = df["close"]
+    sma_50 = close.rolling(window=50).mean()
+    sma_200 = close.rolling(window=200).mean()
+
+    result = pd.DataFrame(index=df.index)
+    result["close_to_sma50"] = close / sma_50.replace(0, np.nan)
+    result["close_to_sma200"] = close / sma_200.replace(0, np.nan)
+    result["sma50_to_sma200"] = sma_50 / sma_200.replace(0, np.nan)
+    return result
+
+
+def compute_lagged_returns(df: pd.DataFrame, lags: list[int] = None) -> pd.DataFrame:
+    """Lagged daily returns as features for autocorrelation capture."""
+    if lags is None:
+        lags = [1, 2, 3, 5]
+    returns = df["close"].pct_change()
+    result = pd.DataFrame(index=df.index)
+    for lag in lags:
+        result[f"return_lag_{lag}"] = returns.shift(lag)
+    return result
+
+
 def compute_volume_features(df: pd.DataFrame) -> pd.DataFrame:
     """Volume ratio, OBV, and VWAP proxy."""
     result = pd.DataFrame(index=df.index)
@@ -202,6 +226,14 @@ def build_feature_matrix(df: pd.DataFrame, min_rows: int = 60) -> pd.DataFrame:
     # Rolling statistics
     rolling_df = compute_rolling_stats(df, windows=[5, 20])
     features = pd.concat([features, rolling_df], axis=1)
+
+    # SMA ratios
+    sma_df = compute_sma_ratios(df)
+    features = pd.concat([features, sma_df], axis=1)
+
+    # Lagged returns
+    lag_df = compute_lagged_returns(df)
+    features = pd.concat([features, lag_df], axis=1)
 
     # Volume features
     vol_df = compute_volume_features(df)
