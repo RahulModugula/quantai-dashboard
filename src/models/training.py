@@ -16,7 +16,10 @@ logger = logging.getLogger(__name__)
 FEATURE_COLS = [
     "rsi_14", "macd", "macd_signal", "macd_hist",
     "bb_upper", "bb_middle", "bb_lower", "bb_pct_b", "bb_bandwidth",
-    "atr_14", "volatility_5", "volatility_20",
+    "atr_14", "stoch_k", "stoch_d", "adx_14",
+    "close_to_sma50", "close_to_sma200", "sma50_to_sma200",
+    "return_lag_1", "return_lag_2", "return_lag_3", "return_lag_5",
+    "volatility_5", "volatility_20",
     "momentum_5", "momentum_20", "mean_reversion_20",
     "volume_ratio", "obv",
 ]
