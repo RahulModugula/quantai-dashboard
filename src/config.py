@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     # Model
     walk_forward_window: int = 252
     retrain_interval: int = 63
-    ensemble_weights: dict = {"rf": 0.4, "xgb": 0.4, "lstm": 0.2}
+    ensemble_weights: dict = {"rf": 0.3, "xgb": 0.3, "lgbm": 0.25, "lstm": 0.15}
     sequence_length: int = 20
 
     # Trading
