@@ -64,6 +64,50 @@ def profit_factor(trades: pd.DataFrame) -> float:
     return float(gross_profit / gross_loss)
 
 
+def rolling_sharpe(returns: pd.Series, window: int = 126, risk_free: float = 0.04) -> pd.Series:
+    """Rolling Sharpe ratio over a trailing window (default 6 months)."""
+    excess = returns - risk_free / 252
+    rolling_mean = excess.rolling(window=window).mean()
+    rolling_std = excess.rolling(window=window).std().replace(0, np.nan)
+    return rolling_mean / rolling_std * np.sqrt(252)
+
+
+def benchmark_comparison(
+    equity_curve: pd.Series,
+    benchmark_prices: pd.Series,
+    risk_free: float = 0.04,
+) -> dict:
+    """Compare strategy equity curve against a benchmark (e.g. SPY buy-and-hold)."""
+    bench_returns = benchmark_prices.pct_change().dropna()
+    strat_returns = equity_curve.pct_change().dropna()
+
+    # Align on common dates
+    common = strat_returns.index.intersection(bench_returns.index)
+    if len(common) == 0:
+        return {"alpha": 0.0, "beta": 0.0, "benchmark_return": 0.0}
+
+    sr = strat_returns.loc[common]
+    br = bench_returns.loc[common]
+
+    # Beta = Cov(strategy, benchmark) / Var(benchmark)
+    cov = np.cov(sr, br)
+    beta = float(cov[0, 1] / cov[1, 1]) if cov[1, 1] != 0 else 0.0
+
+    # Alpha (annualized Jensen's alpha)
+    strat_annual = float(sr.mean() * 252)
+    bench_annual = float(br.mean() * 252)
+    alpha = strat_annual - (risk_free + beta * (bench_annual - risk_free))
+
+    bench_total = float(benchmark_prices.iloc[-1] / benchmark_prices.iloc[0] - 1)
+
+    return {
+        "alpha": round(alpha, 4),
+        "beta": round(beta, 4),
+        "benchmark_return": round(bench_total, 4),
+        "benchmark_sharpe": round(float(sharpe_ratio(br, risk_free)), 4),
+    }
+
+
 def compute_all_metrics(
     equity_curve: pd.Series,
     trades: pd.DataFrame,
