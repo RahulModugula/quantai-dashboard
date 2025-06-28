@@ -6,6 +6,44 @@ import pandas as pd
 from src.backtest.engine import BacktestRun
 
 
+def monte_carlo_simulation(
+    trades: pd.DataFrame,
+    initial_capital: float = 100_000.0,
+    n_simulations: int = 1000,
+    seed: int = 42,
+) -> dict:
+    """Resample trade returns with replacement to build confidence intervals.
+
+    Returns percentile-based statistics on terminal portfolio value
+    to assess whether observed performance is statistically significant.
+    """
+    closed = trades[trades["pnl"].notna()]
+    if closed.empty:
+        return {"p5": initial_capital, "p25": initial_capital, "p50": initial_capital,
+                "p75": initial_capital, "p95": initial_capital, "mean": initial_capital}
+
+    trade_returns = closed["pnl"].values
+    rng = np.random.default_rng(seed)
+    n_trades = len(trade_returns)
+    terminal_values = []
+
+    for _ in range(n_simulations):
+        sampled = rng.choice(trade_returns, size=n_trades, replace=True)
+        terminal = initial_capital + sampled.sum()
+        terminal_values.append(terminal)
+
+    terminal_values = np.array(terminal_values)
+    return {
+        "p5": round(float(np.percentile(terminal_values, 5)), 2),
+        "p25": round(float(np.percentile(terminal_values, 25)), 2),
+        "p50": round(float(np.percentile(terminal_values, 50)), 2),
+        "p75": round(float(np.percentile(terminal_values, 75)), 2),
+        "p95": round(float(np.percentile(terminal_values, 95)), 2),
+        "mean": round(float(terminal_values.mean()), 2),
+        "prob_profit": round(float((terminal_values > initial_capital).mean()), 4),
+    }
+
+
 def drawdown_periods(equity_curve: pd.Series) -> list[dict]:
     """Extract significant drawdown periods (drawdown > 5%)."""
     rolling_max = equity_curve.cummax()
@@ -79,6 +117,9 @@ def generate_report(run: BacktestRun) -> dict:
     # Drawdown periods
     dd_periods = drawdown_periods(equity)
 
+    # Monte Carlo confidence intervals
+    mc = monte_carlo_simulation(trades, run.initial_capital)
+
     return {
         "ticker": run.ticker,
         "initial_capital": run.initial_capital,
@@ -89,6 +130,7 @@ def generate_report(run: BacktestRun) -> dict:
         "drawdown_periods": dd_periods,
         "monthly_returns": monthly_data,
         "trades": trade_data,
+        "monte_carlo": mc,
         "generated_at": datetime.now().isoformat(),
         "disclaimer": (
             "Educational purposes only. Past performance is not indicative of future results. "
