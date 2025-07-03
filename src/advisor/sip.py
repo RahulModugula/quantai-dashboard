@@ -97,3 +97,42 @@ def calculate_sip(
         "year_breakdown": year_breakdown,
         "disclaimer": "For educational/illustrative purposes only. Returns are not guaranteed.",
     }
+
+
+def reverse_sip(
+    target_corpus: float,
+    duration_years: int,
+    expected_return: float,
+    inflation_rate: float = 0.06,
+    tax_rate: float = 0.10,
+    step_up_pct: float = 0.0,
+) -> dict:
+    """
+    Goal-based reverse SIP: given a target corpus, calculate the required monthly investment.
+
+    Uses binary search to find the monthly amount that achieves the target
+    post-tax corpus within the specified duration.
+    """
+    lo, hi = 100.0, target_corpus / duration_years
+    for _ in range(100):
+        mid = (lo + hi) / 2
+        result = calculate_sip(mid, duration_years, expected_return, inflation_rate, tax_rate, step_up_pct)
+        if result["post_tax_corpus"] < target_corpus:
+            lo = mid
+        else:
+            hi = mid
+
+    required_monthly = round((lo + hi) / 2, 2)
+    final = calculate_sip(required_monthly, duration_years, expected_return, inflation_rate, tax_rate, step_up_pct)
+
+    return {
+        "target_corpus": target_corpus,
+        "required_monthly": required_monthly,
+        "duration_years": duration_years,
+        "expected_return": expected_return,
+        "total_invested": final["total_invested"],
+        "projected_post_tax": final["post_tax_corpus"],
+        "inflation_adjusted": final["inflation_adjusted_value"],
+        "year_breakdown": final["year_breakdown"],
+        "disclaimer": "For educational/illustrative purposes only. Returns are not guaranteed.",
+    }
