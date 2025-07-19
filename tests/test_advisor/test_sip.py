@@ -85,3 +85,31 @@ def test_sip_known_value():
     result = calculate_sip(10_000, 1, 0.12, 0.0, 0.0)
     # Should be close to FV of annuity
     assert 120_000 < result["pre_tax_corpus"] < 135_000
+
+
+# --- Reverse SIP tests ---
+
+from src.advisor.sip import reverse_sip
+
+
+def test_reverse_sip_finds_monthly_amount():
+    result = reverse_sip(
+        target_corpus=10_000_000,
+        duration_years=20,
+        expected_return=0.12,
+        inflation_rate=0.06,
+        tax_rate=0.10,
+    )
+    assert result["required_monthly"] > 0
+    assert result["projected_post_tax"] >= result["target_corpus"] * 0.99
+
+
+def test_reverse_sip_short_duration_needs_more():
+    short = reverse_sip(5_000_000, 5, 0.12, 0.06, 0.10)
+    long = reverse_sip(5_000_000, 20, 0.12, 0.06, 0.10)
+    assert short["required_monthly"] > long["required_monthly"]
+
+
+def test_reverse_sip_includes_breakdown():
+    result = reverse_sip(1_000_000, 10, 0.12, 0.06, 0.10)
+    assert len(result["year_breakdown"]) == 10
