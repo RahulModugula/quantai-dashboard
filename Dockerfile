@@ -1,38 +1,47 @@
-# Multi-stage build for QuantAI Trading Dashboard
-
-# ---- Builder ----
-FROM python:3.11-slim AS builder
+# Build stage
+FROM python:3.11-slim as builder
 
 WORKDIR /app
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    libomp-dev \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY pyproject.toml .
+COPY src/ src/
 
-RUN pip install --no-cache-dir hatchling && \
-    pip install --no-cache-dir \
-        yfinance pandas numpy scikit-learn xgboost torch \
-        sqlalchemy fastapi uvicorn[standard] dash plotly \
-        redis a2wsgi pydantic pydantic-settings joblib \
-        websockets httpx dash-bootstrap-components
+# Build wheels
+RUN pip install build && python -m build --wheel
 
-# ---- Runtime ----
-FROM python:3.11-slim AS runtime
+# Runtime stage
+FROM python:3.11-slim
 
 WORKDIR /app
 
-# Copy installed packages from builder
-COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
-COPY --from=builder /usr/local/bin /usr/local/bin
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1
 
-# Copy source
-COPY src/ ./src/
-COPY scripts/ ./scripts/
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y \
+    libomp-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy built wheel from builder
+COPY --from=builder /app/dist/*.whl /tmp/
+
+# Install the application
+RUN pip install /tmp/*.whl && rm /tmp/*.whl
+
+# Copy application code
+COPY src/ src/
 COPY .env.example .env
 
-# Create data and model directories
-RUN mkdir -p data/raw data/processed models/registry
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8000/api/health || exit 1
 
-EXPOSE 8000
-
-ENV PYTHONPATH=/app
-ENV PYTHONUNBUFFERED=1
-
+# Run the application
 CMD ["uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000"]

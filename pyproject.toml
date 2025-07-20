@@ -15,7 +15,8 @@ dependencies = [
     "numpy>=1.26.0",
     "scikit-learn>=1.4.0",
     "xgboost>=2.0.0",
-    "lightgbm>=4.3.0",
+    "lightgbm>=4.3.0;platform_system!='Darwin'",
+    "lightgbm-macos>=4.3.0;platform_system=='Darwin'",
     "pyportfolioopt>=1.5.0",
     "optuna>=3.5.0",
     "torch>=2.2.0",
@@ -31,6 +32,7 @@ dependencies = [
     "joblib>=1.3.0",
     "websockets>=12.0",
     "httpx>=0.26.0",
+    "python-dotenv>=1.0.0",
 ]
 
 [project.optional-dependencies]
