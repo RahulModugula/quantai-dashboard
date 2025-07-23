@@ -4,11 +4,15 @@ import pytest
 
 from src.data.features import (
     build_feature_matrix,
+    compute_adx,
     compute_atr,
     compute_bollinger_bands,
+    compute_lagged_returns,
     compute_macd,
     compute_rsi,
     compute_rolling_stats,
+    compute_sma_ratios,
+    compute_stochastic,
     compute_volume_features,
 )
 
@@ -90,3 +94,35 @@ def test_build_feature_matrix_target_binary(ohlcv_df):
 def test_build_feature_matrix_shorter_than_input(ohlcv_df):
     features = build_feature_matrix(ohlcv_df)
     assert len(features) < len(ohlcv_df), "Warmup rows should be dropped"
+
+
+def test_stochastic_bounds(ohlcv_df):
+    stoch = compute_stochastic(ohlcv_df["high"], ohlcv_df["low"], ohlcv_df["close"])
+    valid_k = stoch["stoch_k"].dropna()
+    assert (valid_k >= 0).all() and (valid_k <= 100).all()
+
+
+def test_stochastic_columns(ohlcv_df):
+    stoch = compute_stochastic(ohlcv_df["high"], ohlcv_df["low"], ohlcv_df["close"])
+    assert "stoch_k" in stoch.columns
+    assert "stoch_d" in stoch.columns
+
+
+def test_adx_positive(ohlcv_df):
+    adx = compute_adx(ohlcv_df["high"], ohlcv_df["low"], ohlcv_df["close"])
+    valid = adx.dropna()
+    assert (valid >= 0).all()
+
+
+def test_sma_ratios_columns(ohlcv_df):
+    result = compute_sma_ratios(ohlcv_df)
+    assert "close_to_sma50" in result.columns
+    assert "close_to_sma200" in result.columns
+    assert "sma50_to_sma200" in result.columns
+
+
+def test_lagged_returns_columns(ohlcv_df):
+    result = compute_lagged_returns(ohlcv_df, lags=[1, 2, 3])
+    assert "return_lag_1" in result.columns
+    assert "return_lag_2" in result.columns
+    assert "return_lag_3" in result.columns
