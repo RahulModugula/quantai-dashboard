@@ -32,6 +32,9 @@ def create_dash_app() -> dash.Dash:
     )
 
     app.layout = dbc.Container([
+        # Theme state
+        dcc.Store(id="theme-store", data="light"),
+
         # Header
         dbc.Navbar(
             dbc.Container([
@@ -46,6 +49,15 @@ def create_dash_app() -> dash.Dash:
                         text_color="dark",
                         className="ms-2",
                     )),
+                    dbc.NavItem(
+                        dbc.Button(
+                            "🌙 Dark",
+                            id="theme-toggle",
+                            color="outline-light",
+                            size="sm",
+                            className="ms-3",
+                        ),
+                    ),
                 ], navbar=True),
             ]),
             color="dark",
@@ -94,9 +106,22 @@ def create_dash_app() -> dash.Dash:
     register_sip_callbacks(app)
     register_advisor_callbacks(app)
 
-    # Trade log callback (inline since it's simple)
-    from dash import Input, Output
+    from dash import Input, Output, State, callback_context
     import httpx
+
+    @app.callback(
+        Output("theme-store", "data"),
+        Output("theme-toggle", "children"),
+        Input("theme-toggle", "n_clicks"),
+        State("theme-store", "data"),
+        prevent_initial_call=True,
+    )
+    def toggle_theme(n_clicks, current_theme):
+        if current_theme == "light":
+            return "dark", "☀️ Light"
+        return "light", "🌙 Dark"
+
+    # Trade log callback (inline since it's simple)
 
     @app.callback(
         Output("trade-log-table", "data"),
