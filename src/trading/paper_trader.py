@@ -11,6 +11,7 @@ Runs in a background asyncio task. Each tick:
 
 import asyncio
 import logging
+from asyncio import Lock
 from datetime import datetime
 
 import redis
@@ -34,6 +35,7 @@ class PaperTrader:
         self._models: dict = {}
         self._scalers: dict = {}
         self._running = False
+        self._lock = Lock()
         self._redis: redis.Redis | None = None
 
     def _init_redis(self):
@@ -107,6 +109,10 @@ class PaperTrader:
 
     async def tick(self):
         """One trading tick — fetch prices, generate signals, execute."""
+        async with self._lock:
+            await self._tick_inner()
+
+    async def _tick_inner(self):
         now = datetime.now()
         current_prices = {}
 
