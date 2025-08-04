@@ -84,6 +84,22 @@ def monthly_returns(equity_curve: pd.Series) -> pd.DataFrame:
     return result
 
 
+def monthly_returns_pivot(equity_curve: pd.Series) -> dict:
+    """Pivot monthly returns into a year x month matrix for heatmap rendering."""
+    monthly = monthly_returns(equity_curve)
+    if monthly.empty:
+        return {"years": [], "months": list(range(1, 13)), "data": []}
+
+    pivot = monthly.pivot_table(index="year", columns="month", values="return", aggfunc="first")
+    pivot = pivot.reindex(columns=range(1, 13))
+
+    return {
+        "years": [int(y) for y in pivot.index],
+        "months": list(range(1, 13)),
+        "data": [[None if pd.isna(v) else round(float(v) * 100, 2) for v in row] for row in pivot.values],
+    }
+
+
 def generate_report(run: BacktestRun) -> dict:
     """
     Generate a complete serializable backtest report.
@@ -129,6 +145,7 @@ def generate_report(run: BacktestRun) -> dict:
         "drawdown_series": drawdown_data,
         "drawdown_periods": dd_periods,
         "monthly_returns": monthly_data,
+        "monthly_heatmap": monthly_returns_pivot(equity),
         "trades": trade_data,
         "monte_carlo": mc,
         "generated_at": datetime.now().isoformat(),
