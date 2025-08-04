@@ -61,9 +61,11 @@ def drawdown_periods(equity_curve: pd.Series) -> list[dict]:
             peak_value = float(rolling_max[date])
         elif dd >= -0.001 and in_drawdown:
             in_drawdown = False
+            duration_days = (pd.Timestamp(date) - pd.Timestamp(start_date)).days
             periods.append({
                 "start": str(start_date),
                 "end": str(date),
+                "duration_days": duration_days,
                 "max_drawdown": float(drawdown[start_date:date].min()),
                 "peak_value": peak_value,
                 "trough_value": float(equity_curve[start_date:date].min()),
