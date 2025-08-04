@@ -112,9 +112,9 @@ class EnsembleModel:
         return (probs >= 0.5).astype(int)
 
     def feature_importances(self) -> dict[str, float]:
-        """Average feature importances from RF, XGBoost, and LightGBM."""
-        rf_imp = self.rf.feature_importances_
-        xgb_imp = self.xgb.feature_importances_
+        """Average normalized feature importances from RF, XGBoost, and LightGBM."""
+        rf_imp = self.rf.feature_importances_ / (self.rf.feature_importances_.sum() or 1)
+        xgb_imp = self.xgb.feature_importances_ / (self.xgb.feature_importances_.sum() or 1)
         lgbm_imp = self.lgbm.feature_importances_ / (self.lgbm.feature_importances_.sum() or 1)
         avg_imp = (rf_imp + xgb_imp + lgbm_imp) / 3
 
