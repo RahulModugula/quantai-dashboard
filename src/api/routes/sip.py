@@ -1,51 +1,41 @@
-from fastapi import APIRouter
-from pydantic import BaseModel
+import logging
+from fastapi import APIRouter, HTTPException
+
+from src.data.schemas import SIPRequest, ReverseSIPRequest
 
 router = APIRouter(prefix="/sip", tags=["sip"])
-
-
-class SIPRequest(BaseModel):
-    monthly_amount: float = 10000.0
-    duration_years: int = 20
-    expected_return: float = 0.12
-    inflation_rate: float = 0.06
-    tax_rate: float = 0.10  # LTCG rate for equity mutual funds (India)
-    step_up_pct: float = 0.0  # Annual step-up in SIP amount (0 = no step-up)
+logger = logging.getLogger(__name__)
 
 
 @router.post("/calculate")
-def calculate_sip(req: SIPRequest):
+def calculate_sip(req: SIPRequest) -> dict:
     """Calculate SIP returns with pre-tax, post-tax, and inflation-adjusted values."""
-    from src.advisor.sip import calculate_sip
-    result = calculate_sip(
-        monthly_amount=req.monthly_amount,
-        duration_years=req.duration_years,
-        expected_return=req.expected_return,
-        inflation_rate=req.inflation_rate,
-        tax_rate=req.tax_rate,
-        step_up_pct=req.step_up_pct,
-    )
-    return result
-
-
-class ReverseSIPRequest(BaseModel):
-    target_corpus: float = 10_000_000.0
-    duration_years: int = 20
-    expected_return: float = 0.12
-    inflation_rate: float = 0.06
-    tax_rate: float = 0.10
-    step_up_pct: float = 0.0
+    try:
+        from src.advisor.sip import calculate_sip as sip_calculate
+        result = sip_calculate(
+            monthly_amount=req.monthly_amount,
+            duration_years=req.duration_years,
+            expected_return=req.expected_annual_return,
+            step_up_pct=req.annual_step_up,
+        )
+        return result.model_dump() if hasattr(result, "model_dump") else result
+    except Exception as e:
+        logger.error(f"Error calculating SIP: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"SIP calculation failed: {str(e)}")
 
 
 @router.post("/reverse")
-def reverse_sip_endpoint(req: ReverseSIPRequest):
+def reverse_sip_endpoint(req: ReverseSIPRequest) -> dict:
     """Goal-based SIP: calculate required monthly investment for a target corpus."""
-    from src.advisor.sip import reverse_sip
-    return reverse_sip(
-        target_corpus=req.target_corpus,
-        duration_years=req.duration_years,
-        expected_return=req.expected_return,
-        inflation_rate=req.inflation_rate,
-        tax_rate=req.tax_rate,
-        step_up_pct=req.step_up_pct,
-    )
+    try:
+        from src.advisor.sip import reverse_sip
+        result = reverse_sip(
+            target_corpus=req.target_corpus,
+            duration_years=req.duration_years,
+            expected_return=req.expected_annual_return,
+            step_up_pct=req.annual_step_up,
+        )
+        return result.model_dump() if hasattr(result, "model_dump") else result
+    except Exception as e:
+        logger.error(f"Error calculating reverse SIP: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Reverse SIP calculation failed: {str(e)}")
