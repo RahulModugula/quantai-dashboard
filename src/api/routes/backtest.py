@@ -1,35 +1,30 @@
+import logging
 from fastapi import APIRouter, BackgroundTasks, HTTPException
-from pydantic import BaseModel
 
 from src.backtest.engine import WalkForwardBacktester
 from src.backtest.report import generate_report
 from src.config import settings
+from src.data.schemas import BacktestRequestSchema
 from src.data.storage import load_ohlcv, save_backtest_result
 from src.models.training import walk_forward_train
 
 router = APIRouter(prefix="/backtest", tags=["backtest"])
+logger = logging.getLogger(__name__)
 
 _backtest_cache: dict[str, dict] = {}
 
 
-class BacktestRequest(BaseModel):
-    ticker: str = "AAPL"
-    initial_capital: float = 100_000.0
-    buy_threshold: float = 0.6
-    sell_threshold: float = 0.4
-
-
 @router.post("/run")
-async def run_backtest(req: BacktestRequest, background_tasks: BackgroundTasks):
+async def run_backtest(req: BacktestRequestSchema, background_tasks: BackgroundTasks) -> dict:
     """Trigger a backtest run (runs in background for large datasets)."""
     key = f"{req.ticker}_{req.initial_capital}"
     _backtest_cache[key] = {"status": "running", "ticker": req.ticker}
-
     background_tasks.add_task(_run_backtest_task, req, key)
     return {"status": "started", "key": key, "ticker": req.ticker}
 
 
-async def _run_backtest_task(req: BacktestRequest, cache_key: str):
+async def _run_backtest_task(req: BacktestRequestSchema, cache_key: str) -> None:
+    """Background task to run backtest and cache results."""
     try:
         train_result = walk_forward_train(req.ticker)
         prices = load_ohlcv(req.ticker)
@@ -53,12 +48,14 @@ async def _run_backtest_task(req: BacktestRequest, cache_key: str):
         })
 
         _backtest_cache[cache_key] = {"status": "complete", "result": report}
+        logger.info(f"Backtest completed for {req.ticker}")
     except Exception as e:
+        logger.error(f"Backtest failed for {req.ticker}: {e}", exc_info=True)
         _backtest_cache[cache_key] = {"status": "error", "error": str(e)}
 
 
 @router.get("/result/{key}")
-def get_backtest_result(key: str):
+def get_backtest_result(key: str) -> dict:
     """Get a backtest result by cache key."""
     if key not in _backtest_cache:
         raise HTTPException(status_code=404, detail="Backtest result not found")
@@ -66,6 +63,6 @@ def get_backtest_result(key: str):
 
 
 @router.get("/results")
-def list_backtest_results():
+def list_backtest_results() -> dict[str, dict]:
     """List all cached backtest results."""
     return {k: {"status": v["status"], "ticker": v.get("ticker")} for k, v in _backtest_cache.items()}
