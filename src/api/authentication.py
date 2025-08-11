@@ -1,9 +1,8 @@
 """Authentication and authorization for API endpoints."""
 import logging
 from typing import Optional
-from datetime import datetime, timedelta
+from datetime import datetime
 import hashlib
-import hmac
 from fastapi import HTTPException, Header, Depends
 from pydantic import BaseModel
 
@@ -28,14 +27,14 @@ class AuthenticationManager:
     def add_api_key(self, key: str):
         """Add a valid API key."""
         self.valid_keys.add(key)
-        logger.info(f"API key added")
+        logger.info("API key added")
 
     def revoke_api_key(self, key: str):
         """Revoke an API key."""
         if key in self.valid_keys:
             self.valid_keys.remove(key)
             self.revoked_keys.add(key)
-            logger.info(f"API key revoked")
+            logger.info("API key revoked")
 
     def validate_api_key(self, key: str) -> bool:
         """Validate an API key."""

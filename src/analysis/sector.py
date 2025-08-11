@@ -1,6 +1,6 @@
 """Sector and industry analysis tools for portfolio insights."""
 import logging
-from typing import Dict, List
+from typing import List
 
 logger = logging.getLogger(__name__)
 
