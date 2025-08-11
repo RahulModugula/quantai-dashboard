@@ -156,3 +156,16 @@ def generate_report(run: BacktestRun) -> dict:
             "Backtested results are theoretical and do not account for real-world market impact."
         ),
     }
+
+
+def export_trades_csv(run: BacktestRun) -> str:
+    """Export trades to CSV string for download."""
+    if run.trades.empty:
+        return "date,ticker,side,shares,price,commission,pnl\n"
+    return run.trades.to_csv(index=False)
+
+
+def export_equity_csv(run: BacktestRun) -> str:
+    """Export equity curve to CSV string for download."""
+    df = pd.DataFrame({"date": run.equity_curve.index, "value": run.equity_curve.values})
+    return df.to_csv(index=False)
