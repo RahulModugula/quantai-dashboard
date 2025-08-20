@@ -100,12 +100,26 @@ def validate_ohlcv(df: pd.DataFrame, ticker: str = "") -> pd.DataFrame:
     return df
 
 
-def download_multiple(tickers: list[str], **kwargs) -> dict[str, pd.DataFrame]:
-    """Download data for multiple tickers."""
+def download_multiple(
+    tickers: list[str],
+    max_retries: int = 3,
+    backoff_factor: float = 1.0,
+    **kwargs,
+) -> dict[str, pd.DataFrame]:
+    """Download data for multiple tickers with retry and exponential backoff."""
+    import time
+
     results = {}
     for ticker in tickers:
-        try:
-            results[ticker] = download_ohlcv(ticker, **kwargs)
-        except Exception as e:
-            logger.error(f"Failed to download {ticker}: {e}")
+        for attempt in range(max_retries):
+            try:
+                results[ticker] = download_ohlcv(ticker, **kwargs)
+                break
+            except Exception as e:
+                wait = backoff_factor * (2 ** attempt)
+                if attempt < max_retries - 1:
+                    logger.warning(f"{ticker} attempt {attempt + 1} failed: {e}. Retrying in {wait:.1f}s")
+                    time.sleep(wait)
+                else:
+                    logger.error(f"Failed to download {ticker} after {max_retries} attempts: {e}")
     return results
