@@ -1,4 +1,4 @@
-.PHONY: setup seed train backtest run test lint docker-up docker-down clean
+.PHONY: setup seed train backtest run test lint format docker-up docker-down clean
 
 PYTHON := python
 
@@ -23,6 +23,10 @@ test:
 
 lint:
 	ruff check src/ tests/
+
+format:
+	ruff check src/ tests/ --fix
+	ruff format src/ tests/
 
 docker-up:
 	docker compose up --build
