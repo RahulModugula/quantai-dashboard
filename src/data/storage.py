@@ -121,9 +121,28 @@ def get_engine(db_path: str | None = None):
 
 
 def init_db(db_path: str | None = None):
-    """Create all tables if they don't exist (idempotent)."""
+    """Create all tables and indexes if they don't exist (idempotent)."""
     engine = get_engine(db_path)
     metadata.create_all(engine)
+
+    # Create indexes for performance optimization
+    with engine.begin() as conn:
+        # OHLCV indexes
+        conn.execute(text("CREATE INDEX IF NOT EXISTS idx_ohlcv_ticker_date ON ohlcv(ticker, date)"))
+
+        # Features indexes
+        conn.execute(text("CREATE INDEX IF NOT EXISTS idx_features_ticker_date ON features(ticker, date)"))
+
+        # Trades indexes
+        conn.execute(text("CREATE INDEX IF NOT EXISTS idx_trades_ticker ON trades(ticker)"))
+        conn.execute(text("CREATE INDEX IF NOT EXISTS idx_trades_timestamp ON trades(timestamp)"))
+
+        # Portfolio snapshots indexes
+        conn.execute(text("CREATE INDEX IF NOT EXISTS idx_snapshots_timestamp ON portfolio_snapshots(timestamp)"))
+
+        # Backtest results indexes
+        conn.execute(text("CREATE INDEX IF NOT EXISTS idx_backtest_ticker ON backtest_results(ticker)"))
+
     logger.info(f"Database initialized at {db_path or settings.db_path}")
     return engine
 
