@@ -34,13 +34,20 @@ class Trade:
 
 
 class Portfolio:
-    def __init__(self, initial_capital: float = 100_000.0, commission_pct: float = 0.001):
+    def __init__(
+        self,
+        initial_capital: float = 100_000.0,
+        commission_pct: float = 0.001,
+        max_drawdown_limit: float = 0.20,
+    ):
         self.cash = initial_capital
         self.initial_capital = initial_capital
         self.commission_pct = commission_pct
+        self.max_drawdown_limit = max_drawdown_limit
         self.positions: dict[str, Position] = {}
         self.trade_history: list[Trade] = []
         self._snapshots: list[dict] = []
+        self._peak_value: float = initial_capital
 
     def buy(self, ticker: str, shares: float, price: float, timestamp: datetime | None = None) -> Trade | None:
         cost = shares * price
@@ -103,6 +110,18 @@ class Portfolio:
         self.trade_history.append(trade)
         logger.info(f"SELL {shares:.4f} {ticker} @ {price:.2f} | pnl={realized_pnl:.2f} | cash={self.cash:.2f}")
         return trade
+
+    def current_drawdown(self, current_prices: dict[str, float]) -> float:
+        """Current drawdown from peak portfolio value."""
+        value = self.get_value(current_prices)
+        if value >= self._peak_value:
+            self._peak_value = value
+            return 0.0
+        return (value - self._peak_value) / self._peak_value
+
+    def is_drawdown_breached(self, current_prices: dict[str, float]) -> bool:
+        """Check if current drawdown exceeds the configured limit."""
+        return abs(self.current_drawdown(current_prices)) >= self.max_drawdown_limit
 
     def get_value(self, current_prices: dict[str, float]) -> float:
         positions_value = sum(
