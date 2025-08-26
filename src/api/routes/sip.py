@@ -26,3 +26,26 @@ def calculate_sip(req: SIPRequest):
         step_up_pct=req.step_up_pct,
     )
     return result
+
+
+class ReverseSIPRequest(BaseModel):
+    target_corpus: float = 10_000_000.0
+    duration_years: int = 20
+    expected_return: float = 0.12
+    inflation_rate: float = 0.06
+    tax_rate: float = 0.10
+    step_up_pct: float = 0.0
+
+
+@router.post("/reverse")
+def reverse_sip_endpoint(req: ReverseSIPRequest):
+    """Goal-based SIP: calculate required monthly investment for a target corpus."""
+    from src.advisor.sip import reverse_sip
+    return reverse_sip(
+        target_corpus=req.target_corpus,
+        duration_years=req.duration_years,
+        expected_return=req.expected_return,
+        inflation_rate=req.inflation_rate,
+        tax_rate=req.tax_rate,
+        step_up_pct=req.step_up_pct,
+    )
