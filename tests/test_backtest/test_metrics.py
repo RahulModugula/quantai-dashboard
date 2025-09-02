@@ -14,7 +14,8 @@ from src.backtest.metrics import (
 
 @pytest.fixture
 def flat_returns():
-    return pd.Series([0.001] * 252)
+    np.random.seed(42)
+    return pd.Series(np.random.normal(0.001, 0.005, 252))
 
 
 @pytest.fixture

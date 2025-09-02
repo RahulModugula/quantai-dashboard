@@ -4,9 +4,9 @@ import pandas as pd
 
 def sharpe_ratio(returns: pd.Series, risk_free: float = 0.04, periods_per_year: int = 252) -> float:
     """Annualized Sharpe ratio."""
-    excess = returns - risk_free / periods_per_year
-    if excess.std() == 0:
+    if returns.std() < 1e-10:
         return 0.0
+    excess = returns - risk_free / periods_per_year
     return float(excess.mean() / excess.std() * np.sqrt(periods_per_year))
 
 
@@ -14,9 +14,13 @@ def sortino_ratio(returns: pd.Series, risk_free: float = 0.04, periods_per_year:
     """Annualized Sortino ratio (uses downside deviation only)."""
     excess = returns - risk_free / periods_per_year
     downside = excess[excess < 0]
-    if len(downside) == 0 or downside.std() == 0:
+    if len(downside) == 0:
         return 0.0
-    return float(excess.mean() / downside.std() * np.sqrt(periods_per_year))
+    downside_std = downside.std()
+    if downside_std < 1e-10:
+        # All downside returns are identical; sign indicates direction
+        return float(-1.0 if excess.mean() < 0 else 0.0)
+    return float(excess.mean() / downside_std * np.sqrt(periods_per_year))
 
 
 def max_drawdown(equity_curve: pd.Series) -> float:
@@ -37,8 +41,8 @@ def calmar_ratio(returns: pd.Series, equity_curve: pd.Series, periods_per_year: 
         return 0.0
     cagr = float((equity_curve.iloc[-1] / equity_curve.iloc[0]) ** (1 / n_years) - 1)
     mdd = abs(max_drawdown(equity_curve))
-    if mdd == 0:
-        return 0.0
+    if mdd < 1e-10:
+        return cagr * 100 if cagr > 0 else 0.0  # near-zero drawdown
     return cagr / mdd
 
 
