@@ -9,11 +9,14 @@ Mounts:
 
 import asyncio
 import logging
+from contextlib import asynccontextmanager
+from datetime import datetime
 
 from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import RedirectResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 
+from src.api.middleware import RequestLoggingMiddleware
 from src.api.routes import backtest, portfolio, predictions
 from src.api.websocket import price_feed_endpoint
 from src.config import settings
@@ -21,23 +24,51 @@ from src.data.storage import init_db
 
 logger = logging.getLogger(__name__)
 
+VERSION = "0.2.0"
+
 DISCLAIMER = (
-    "⚠️ DISCLAIMER: This application is for educational purposes only. "
+    "DISCLAIMER: This application is for educational purposes only. "
     "All predictions, signals, and portfolio data are simulated and do NOT constitute financial advice. "
     "Backtested results are theoretical and do not guarantee future performance. "
     "Past performance is not indicative of future results."
 )
 
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Manage application startup and shutdown."""
+    # Startup
+    init_db()
+    logger.info("Database initialized")
+    try:
+        from src.api.dependencies import get_paper_trader
+        trader = get_paper_trader()
+        task = asyncio.create_task(trader.run())
+        logger.info("Paper trader started")
+    except Exception as e:
+        logger.warning(f"Paper trader not started: {e}")
+        task = None
+
+    yield
+
+    # Shutdown
+    if task and not task.done():
+        task.cancel()
+        logger.info("Paper trader stopped")
+
+
 def create_app() -> FastAPI:
     app = FastAPI(
         title="QuantAI - ML Trading Dashboard",
         description=f"Real-time ML trading dashboard with backtesting and paper trading.\n\n{DISCLAIMER}",
-        version="0.1.0",
+        version=VERSION,
         docs_url="/api/docs",
         redoc_url="/api/redoc",
+        lifespan=lifespan,
     )
 
+    # Middleware — logging first so it wraps everything
+    app.add_middleware(RequestLoggingMiddleware)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],
@@ -50,7 +81,6 @@ def create_app() -> FastAPI:
     app.include_router(portfolio.router, prefix="/api")
     app.include_router(backtest.router, prefix="/api")
 
-    # Import advisor, SIP, and optimizer routes
     try:
         from src.api.routes import advisor, optimizer, sip
         app.include_router(advisor.router, prefix="/api")
@@ -78,18 +108,15 @@ def create_app() -> FastAPI:
     def root():
         return RedirectResponse(url="/dashboard")
 
-    @app.on_event("startup")
-    async def startup():
-        init_db()
-        logger.info("Database initialized")
-        # Start paper trader in background
-        try:
-            from src.api.dependencies import get_paper_trader
-            trader = get_paper_trader()
-            asyncio.create_task(trader.run())
-            logger.info("Paper trader started")
-        except Exception as e:
-            logger.warning(f"Paper trader not started: {e}")
+    @app.get("/api/health", tags=["meta"])
+    def health_check() -> JSONResponse:
+        """Liveness probe — returns 200 when the API is up."""
+        return JSONResponse({
+            "status": "healthy",
+            "version": VERSION,
+            "timestamp": datetime.now().isoformat(),
+            "disclaimer": DISCLAIMER,
+        })
 
     return app
 
