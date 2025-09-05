@@ -4,7 +4,7 @@ Caching utilities for API responses.
 import logging
 from functools import wraps
 from typing import Any, Callable, Optional
-from datetime import datetime, timedelta
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 

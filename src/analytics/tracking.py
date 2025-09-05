@@ -1,6 +1,5 @@
 """Analytics and user event tracking."""
 import logging
-import json
 from typing import Any, Dict, List, Optional
 from datetime import datetime
 from enum import Enum

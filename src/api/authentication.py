@@ -70,7 +70,7 @@ async def verify_api_key(x_api_key: str = Header(None)) -> str:
 
     auth_manager = get_auth_manager()
     if not auth_manager.validate_api_key(x_api_key):
-        logger.warning(f"Invalid API key attempt")
+        logger.warning("Invalid API key attempt")
         raise HTTPException(
             status_code=401,
             detail="Invalid API key",

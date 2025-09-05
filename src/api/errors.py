@@ -1,6 +1,5 @@
 """Enhanced error responses with actionable hints for users."""
 import logging
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 

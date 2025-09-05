@@ -3,7 +3,7 @@
 from functools import lru_cache
 
 from src.config import settings
-from src.data.storage import get_engine, init_db
+from src.data.storage import get_engine
 from src.trading.paper_trader import PaperTrader
 
 _paper_trader: PaperTrader | None = None
