@@ -59,6 +59,28 @@ class Settings(BaseSettings):
             raise ValueError("initial_capital must be positive")
         return v
 
+    @field_validator("commission_pct")
+    @classmethod
+    def commission_range(cls, v):
+        if not 0.0 <= v <= 0.05:
+            raise ValueError("commission_pct must be between 0% and 5%")
+        return v
+
+    @field_validator("ensemble_weights")
+    @classmethod
+    def weights_sum_to_one(cls, v):
+        total = sum(v.values())
+        if abs(total - 1.0) > 0.01:
+            raise ValueError(f"ensemble_weights must sum to 1.0, got {total:.3f}")
+        return v
+
+    @field_validator("lookback_years")
+    @classmethod
+    def lookback_positive(cls, v):
+        if v < 1:
+            raise ValueError("lookback_years must be at least 1")
+        return v
+
     # Pydantic-settings config
     model_config = {"env_prefix": "QUANTAI_", "env_file": ".env", "extra": "ignore"}
 
