@@ -2,7 +2,6 @@ import pandas as pd
 import pytest
 
 from src.data.storage import (
-    get_engine,
     init_db,
     load_ohlcv,
     load_trades,

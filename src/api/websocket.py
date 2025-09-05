@@ -1,7 +1,6 @@
 """WebSocket endpoint for simulated real-time price feed."""
 
 import asyncio
-import json
 import logging
 import random
 from datetime import datetime

@@ -1,6 +1,6 @@
 """Dependency injection container."""
 import logging
-from typing import Any, Callable, Dict, Optional, Type, TypeVar
+from typing import Any, Callable, Dict, TypeVar
 
 logger = logging.getLogger(__name__)
 

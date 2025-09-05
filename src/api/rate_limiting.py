@@ -2,7 +2,6 @@
 import logging
 import time
 from collections import defaultdict
-from typing import Optional
 from fastapi import HTTPException, Request
 from starlette.middleware.base import BaseHTTPMiddleware
 

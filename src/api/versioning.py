@@ -1,6 +1,5 @@
 """API versioning and backward compatibility."""
 from enum import Enum
-from packaging import version
 
 
 class APIVersion(str, Enum):

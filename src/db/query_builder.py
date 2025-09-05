@@ -1,6 +1,6 @@
 """Query builder for constructing database queries."""
 import logging
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Union
 from enum import Enum
 
 logger = logging.getLogger(__name__)

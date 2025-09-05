@@ -1,6 +1,4 @@
 import pytest
-from unittest.mock import Mock, patch
-from fastapi import HTTPException
 
 from src.data.schemas import BacktestRequestSchema
 

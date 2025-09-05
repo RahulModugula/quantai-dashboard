@@ -82,7 +82,7 @@ class DeploymentReadinessChecker:
         check = ReadinessCheck(
             "dependencies",
             CheckStatus.PASS if passed else CheckStatus.FAIL,
-            f"All dependencies installed" if passed else f"Missing: {', '.join(missing)}",
+            "All dependencies installed" if passed else f"Missing: {', '.join(missing)}",
             {"required": dependencies, "missing": missing},
         )
         self.checks.append(check)
@@ -105,7 +105,7 @@ class DeploymentReadinessChecker:
         check = ReadinessCheck(
             "configuration",
             CheckStatus.PASS if passed else CheckStatus.WARN,
-            f"All configs present" if passed else f"Missing: {', '.join(missing)}",
+            "All configs present" if passed else f"Missing: {', '.join(missing)}",
             {"required": required_configs, "missing": missing},
         )
         self.checks.append(check)

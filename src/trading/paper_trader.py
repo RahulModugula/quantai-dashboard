@@ -17,7 +17,7 @@ from datetime import datetime
 import redis
 
 from src.config import settings
-from src.data.storage import save_portfolio_snapshot, save_trades
+from src.data.storage import save_portfolio_snapshot
 from src.models.registry import load_metadata, load_model
 from src.trading.portfolio import Portfolio
 from src.trading.signals import SignalType, generate_signal

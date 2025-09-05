@@ -1,13 +1,12 @@
 from datetime import datetime
 import logging
 
-import numpy as np
 from fastapi import APIRouter, HTTPException
 
 from src.api.dependencies import get_model_bundle, get_paper_trader
 from src.data.schemas import PredictionResponse
 from src.data.storage import load_features
-from src.trading.signals import SignalType, generate_signal
+from src.trading.signals import generate_signal
 
 logger = logging.getLogger(__name__)
 

@@ -1,5 +1,5 @@
 import dash_bootstrap_components as dbc
-from dash import dash_table, dcc, html
+from dash import dash_table, html
 
 
 def trade_log_layout() -> html.Div:

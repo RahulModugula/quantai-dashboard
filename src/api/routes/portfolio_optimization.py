@@ -4,7 +4,6 @@ import numpy as np
 from fastapi import APIRouter, HTTPException
 
 from src.api.dependencies import get_paper_trader
-from src.advisor.rebalancing import PortfolioRebalancer
 
 router = APIRouter(prefix="/optimize", tags=["optimize"])
 logger = logging.getLogger(__name__)

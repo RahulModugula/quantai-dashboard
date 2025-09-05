@@ -4,7 +4,7 @@ from fastapi import APIRouter, HTTPException
 
 from src.api.dependencies import get_model_bundle
 from src.data.storage import load_features
-from src.data.correlation import compute_correlation_matrix, high_correlation_pairs
+from src.data.correlation import high_correlation_pairs
 from src.config import settings
 
 router = APIRouter(prefix="/diagnostics", tags=["diagnostics"])

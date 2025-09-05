@@ -19,7 +19,6 @@ from fastapi.responses import JSONResponse, RedirectResponse
 from src.api.middleware import RequestLoggingMiddleware
 from src.api.routes import backtest, portfolio, predictions
 from src.api.websocket import price_feed_endpoint
-from src.config import settings
 from src.data.storage import init_db
 
 logger = logging.getLogger(__name__)

@@ -1,8 +1,5 @@
-import numpy as np
-import pandas as pd
-import pytest
 
-from src.advisor.optimizer import _build_price_df, _clean_weights
+from src.advisor.optimizer import _clean_weights
 
 
 def test_clean_weights_removes_zeros():

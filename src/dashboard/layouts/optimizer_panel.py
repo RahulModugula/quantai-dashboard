@@ -1,7 +1,7 @@
 """Dashboard layout for portfolio optimizer — efficient frontier + allocation pie."""
 
 import dash_bootstrap_components as dbc
-from dash import dcc, html
+from dash import dcc
 
 
 def optimizer_panel_layout():

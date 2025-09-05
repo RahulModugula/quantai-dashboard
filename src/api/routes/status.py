@@ -1,9 +1,8 @@
 """Status and diagnostics endpoints."""
 import logging
 from datetime import datetime
-from typing import Optional
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 
 from src.data.storage import load_ohlcv
 from src.config import settings

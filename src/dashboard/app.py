@@ -113,7 +113,7 @@ def create_dash_app() -> dash.Dash:
     from src.dashboard.callbacks.optimizer_callbacks import register_optimizer_callbacks
     register_optimizer_callbacks(app)
 
-    from dash import Input, Output, State, callback_context
+    from dash import Input, Output, State
     import httpx
 
     @app.callback(

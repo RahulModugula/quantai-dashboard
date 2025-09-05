@@ -1,5 +1,4 @@
 import pandas as pd
-import pytest
 
 from src.backtest.report import monte_carlo_simulation, monthly_returns_pivot
 

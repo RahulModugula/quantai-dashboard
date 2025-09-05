@@ -1,7 +1,7 @@
 import httpx
 import pandas as pd
 import plotly.graph_objects as go
-from dash import Input, Output, callback, html
+from dash import Input, Output, html
 import dash_bootstrap_components as dbc
 
 BASE_URL = "http://localhost:8000"

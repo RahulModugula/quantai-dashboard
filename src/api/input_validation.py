@@ -1,7 +1,7 @@
 """Input validation and sanitization for API requests."""
 import logging
 import re
-from typing import Any, Optional, List
+from typing import Any, List
 from pydantic import BaseModel, field_validator, ValidationInfo
 
 logger = logging.getLogger(__name__)

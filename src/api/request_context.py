@@ -3,7 +3,7 @@ import contextvars
 import uuid
 import logging
 from typing import Optional
-from fastapi import Request, Response
+from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
 
 logger = logging.getLogger(__name__)

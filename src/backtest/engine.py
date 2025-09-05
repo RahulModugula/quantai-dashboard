@@ -8,7 +8,6 @@ strictly on matching dates, with no lookahead.
 import logging
 from dataclasses import dataclass, field
 
-import numpy as np
 import pandas as pd
 
 from src.backtest.metrics import compute_all_metrics

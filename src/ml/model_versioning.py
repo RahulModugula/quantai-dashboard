@@ -1,6 +1,5 @@
 """Model versioning and management."""
 import logging
-import json
 from typing import Dict, List, Optional
 from datetime import datetime
 from pathlib import Path

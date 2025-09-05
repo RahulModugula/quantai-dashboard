@@ -1,7 +1,7 @@
 """Event bus for decoupled event handling."""
 import logging
 import asyncio
-from typing import Any, Callable, Dict, List, Type
+from typing import Callable, Dict, List, Type
 from datetime import datetime
 from dataclasses import dataclass
 

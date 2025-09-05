@@ -1,5 +1,4 @@
 """Tests for input validation utilities."""
-import pytest
 
 from src.utils.validation import (
     validate_ticker,

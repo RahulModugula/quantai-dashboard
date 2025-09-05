@@ -1,7 +1,5 @@
 """Backup and recovery system."""
 import logging
-import gzip
-import json
 from typing import Dict, List, Optional
 from datetime import datetime
 from pathlib import Path

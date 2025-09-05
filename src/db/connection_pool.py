@@ -2,7 +2,7 @@
 import logging
 from typing import Optional
 from sqlalchemy import create_engine, event
-from sqlalchemy.pool import QueuePool, NullPool
+from sqlalchemy.pool import QueuePool
 from sqlalchemy.orm import sessionmaker, Session
 
 logger = logging.getLogger(__name__)

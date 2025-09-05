@@ -1,6 +1,5 @@
 """Telemetry collection for system monitoring."""
 import logging
-import time
 import psutil
 from typing import Dict
 from datetime import datetime

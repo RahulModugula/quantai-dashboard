@@ -1,6 +1,6 @@
 """Configuration validation and schema enforcement."""
 import logging
-from typing import Any, Dict, List, Optional, Type
+from typing import Any, Dict, List, Type
 from enum import Enum
 
 logger = logging.getLogger(__name__)

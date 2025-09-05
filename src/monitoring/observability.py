@@ -39,7 +39,7 @@ def track_execution_time(func):
             _metrics.set_gauge(f"{func.__name__}_duration_ms", duration * 1000)
             _metrics.increment_counter(f"{func.__name__}_calls")
             return result
-        except Exception as e:
+        except Exception:
             _metrics.increment_counter(f"{func.__name__}_errors")
             raise
     return wrapper
