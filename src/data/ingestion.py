@@ -1,4 +1,5 @@
 import logging
+from abc import ABC, abstractmethod
 from datetime import datetime, timedelta
 
 import pandas as pd
@@ -123,3 +124,92 @@ def download_multiple(
                 else:
                     logger.error(f"Failed to download {ticker} after {max_retries} attempts: {e}")
     return results
+
+
+# ---------------------------------------------------------------------------
+# Data provider abstraction with fallback support
+# ---------------------------------------------------------------------------
+
+
+class DataProvider(ABC):
+    """Abstract base for data providers."""
+
+    @abstractmethod
+    def fetch_ohlcv(
+        self,
+        ticker: str,
+        start: str | datetime | None = None,
+        end: str | datetime | None = None,
+        period: str = "5y",
+    ) -> pd.DataFrame:
+        """Fetch OHLCV data for *ticker*."""
+
+
+class YFinanceProvider(DataProvider):
+    """Provider that wraps the existing ``download_ohlcv`` helper."""
+
+    def fetch_ohlcv(self, ticker, start=None, end=None, period="5y"):
+        return download_ohlcv(ticker, start=start, end=end, period=period)
+
+
+class FREDProvider(DataProvider):
+    """Provider for macro indicators available as yfinance tickers (e.g. ^VIX, ^TNX)."""
+
+    # Mapping of friendly names to yfinance tickers
+    MACRO_TICKERS = {"VIX": "^VIX", "TNX": "^TNX"}
+
+    def fetch_ohlcv(self, ticker, start=None, end=None, period="5y"):
+        resolved = self.MACRO_TICKERS.get(ticker.upper(), ticker)
+        return download_ohlcv(resolved, start=start, end=end, period=period)
+
+
+def download_with_fallback(
+    ticker: str,
+    providers: list[DataProvider] | None = None,
+    **kwargs,
+) -> pd.DataFrame:
+    """Try each provider in order, returning the first successful result."""
+    if providers is None:
+        providers = [YFinanceProvider()]
+
+    last_err: Exception | None = None
+    for provider in providers:
+        try:
+            return provider.fetch_ohlcv(ticker, **kwargs)
+        except Exception as e:
+            logger.warning(f"{provider.__class__.__name__} failed for {ticker}: {e}")
+            last_err = e
+
+    raise DataValidationError(
+        f"All providers failed for {ticker}: {last_err}"
+    )
+
+
+def download_macro_features(
+    tickers: dict[str, str] | None = None,
+    **kwargs,
+) -> pd.DataFrame:
+    """Download macro indicators and return a DataFrame with date, vix_close, tnx_close.
+
+    Parameters
+    ----------
+    tickers : dict, optional
+        Mapping of column-prefix to yfinance ticker.
+        Defaults to ``{"vix": "^VIX", "tnx": "^TNX"}``.
+    **kwargs : passed through to ``download_ohlcv`` (e.g. start, end, period).
+    """
+    if tickers is None:
+        tickers = {"vix": "^VIX", "tnx": "^TNX"}
+
+    frames: list[pd.DataFrame] = []
+    for name, symbol in tickers.items():
+        df = download_ohlcv(symbol, **kwargs)
+        df = df[["date", "close"]].rename(columns={"close": f"{name}_close"})
+        frames.append(df)
+
+    merged = frames[0]
+    for df in frames[1:]:
+        merged = merged.merge(df, on="date", how="outer")
+
+    merged = merged.sort_values("date").reset_index(drop=True)
+    return merged
