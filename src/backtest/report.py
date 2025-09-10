@@ -102,6 +102,25 @@ def monthly_returns_pivot(equity_curve: pd.Series) -> dict:
     }
 
 
+def rolling_sharpe(equity: pd.Series, window: int = 63, annualization: int = 252) -> list[dict]:
+    """Compute trailing-window Sharpe ratio along the equity curve.
+
+    Useful for spotting strategy regimes where risk-adjusted returns degraded.
+    window=63 ≈ one quarter of trading days.
+    """
+    daily_returns = equity.pct_change().dropna()
+    roll_mean = daily_returns.rolling(window).mean()
+    roll_std = daily_returns.rolling(window).std()
+
+    sharpe = (roll_mean / roll_std.replace(0, np.nan)) * np.sqrt(annualization)
+
+    return [
+        {"date": str(date), "sharpe": round(float(v), 4) if not np.isnan(v) else None}
+        for date, v in sharpe.items()
+        if date in equity.index
+    ]
+
+
 def generate_report(run: BacktestRun) -> dict:
     """
     Generate a complete serializable backtest report.
@@ -138,16 +157,27 @@ def generate_report(run: BacktestRun) -> dict:
     # Monte Carlo confidence intervals
     mc = monte_carlo_simulation(trades, run.initial_capital)
 
+    # Rolling Sharpe ratio (63-day window)
+    roll_sharpe = rolling_sharpe(equity)
+
+    # Annualized return
+    n_years = len(equity) / 252
+    total_return = (run.final_value / run.initial_capital) - 1.0
+    annualized_return = (1 + total_return) ** (1 / n_years) - 1.0 if n_years > 0 else 0.0
+
     return {
         "ticker": run.ticker,
         "initial_capital": run.initial_capital,
         "final_value": run.final_value,
+        "total_return": total_return,
+        "annualized_return": round(annualized_return, 6),
         "metrics": run.metrics,
         "equity_curve": equity_data,
         "drawdown_series": drawdown_data,
         "drawdown_periods": dd_periods,
         "monthly_returns": monthly_data,
         "monthly_heatmap": monthly_returns_pivot(equity),
+        "rolling_sharpe": roll_sharpe,
         "trades": trade_data,
         "monte_carlo": mc,
         "generated_at": datetime.now().isoformat(),
