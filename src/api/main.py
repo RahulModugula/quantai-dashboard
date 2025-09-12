@@ -50,13 +50,14 @@ def create_app() -> FastAPI:
     app.include_router(portfolio.router, prefix="/api")
     app.include_router(backtest.router, prefix="/api")
 
-    # Import advisor and SIP routes lazily (created in Phase 5)
+    # Import advisor, SIP, and optimizer routes
     try:
-        from src.api.routes import advisor, sip
+        from src.api.routes import advisor, optimizer, sip
         app.include_router(advisor.router, prefix="/api")
         app.include_router(sip.router, prefix="/api")
+        app.include_router(optimizer.router, prefix="/api")
     except ImportError:
-        logger.warning("Advisor/SIP routes not yet available")
+        logger.warning("Advisor/SIP/Optimizer routes not yet available")
 
     # WebSocket
     @app.websocket("/ws/prices")
