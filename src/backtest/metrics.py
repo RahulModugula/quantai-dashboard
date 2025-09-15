@@ -112,6 +112,31 @@ def benchmark_comparison(
     }
 
 
+def expectancy(trades: pd.DataFrame) -> float:
+    """Expected profit per trade: (win_rate * avg_win) - (loss_rate * avg_loss)."""
+    if trades.empty or "pnl" not in trades.columns:
+        return 0.0
+    closed = trades[trades["pnl"].notna()]
+    if closed.empty:
+        return 0.0
+    wins = closed[closed["pnl"] > 0]["pnl"]
+    losses = closed[closed["pnl"] < 0]["pnl"]
+    w_rate = len(wins) / len(closed)
+    avg_w = float(wins.mean()) if len(wins) > 0 else 0.0
+    avg_l = float(abs(losses.mean())) if len(losses) > 0 else 0.0
+    return round(w_rate * avg_w - (1 - w_rate) * avg_l, 2)
+
+
+def recovery_factor(equity_curve: pd.Series) -> float:
+    """Total net profit / abs(max drawdown dollar value)."""
+    net_profit = float(equity_curve.iloc[-1] - equity_curve.iloc[0])
+    rolling_max = equity_curve.cummax()
+    dollar_dd = (equity_curve - rolling_max).min()
+    if abs(dollar_dd) < 1e-10:
+        return 0.0
+    return round(net_profit / abs(dollar_dd), 4)
+
+
 def compute_all_metrics(
     equity_curve: pd.Series,
     trades: pd.DataFrame,
@@ -119,6 +144,9 @@ def compute_all_metrics(
 ) -> dict:
     """Compute all risk/performance metrics from equity curve and trade log."""
     returns = equity_curve.pct_change().dropna()
+    closed = trades[trades["pnl"].notna()] if not trades.empty else pd.DataFrame()
+    wins = closed[closed["pnl"] > 0]["pnl"] if not closed.empty else pd.Series(dtype=float)
+    losses = closed[closed["pnl"] < 0]["pnl"] if not closed.empty else pd.Series(dtype=float)
 
     return {
         "sharpe_ratio": sharpe_ratio(returns, risk_free),
@@ -127,6 +155,10 @@ def compute_all_metrics(
         "calmar_ratio": calmar_ratio(returns, equity_curve),
         "win_rate": win_rate(trades),
         "profit_factor": profit_factor(trades),
+        "expectancy": expectancy(trades),
+        "recovery_factor": recovery_factor(equity_curve),
+        "avg_win": round(float(wins.mean()), 2) if len(wins) > 0 else 0.0,
+        "avg_loss": round(float(losses.mean()), 2) if len(losses) > 0 else 0.0,
         "total_return": float(equity_curve.iloc[-1] / equity_curve.iloc[0] - 1),
-        "total_trades": len(trades[trades["pnl"].notna()]) if not trades.empty else 0,
+        "total_trades": len(closed),
     }
