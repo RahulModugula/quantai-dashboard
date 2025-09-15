@@ -15,6 +15,7 @@ class Signal:
     probability_up: float
     confidence: float
     suggested_shares: float = 0.0
+    position_value: float = 0.0  # Dollar value of suggested position
 
 
 def kelly_fraction(win_prob: float, win_loss_ratio: float = 1.5, fraction: float = 0.5) -> float:
@@ -71,7 +72,8 @@ def generate_signal(
             signal_type=SignalType.BUY,
             probability_up=probability_up,
             confidence=confidence,
-            suggested_shares=shares,
+            suggested_shares=round(shares, 4),
+            position_value=round(target_value, 2),
         )
     elif probability_up <= sell_threshold and has_position:
         return Signal(
