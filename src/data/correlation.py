@@ -33,3 +33,39 @@ def compute_correlation_matrix(
 
     returns_df = pd.DataFrame(returns).dropna()
     return returns_df.corr().round(4)
+
+
+def high_correlation_pairs(
+    corr_matrix: pd.DataFrame,
+    threshold: float = 0.80,
+) -> list[dict]:
+    """Return ticker pairs with absolute correlation above threshold.
+
+    Useful for identifying concentration risk — highly correlated assets
+    don't provide meaningful diversification.
+    """
+    pairs = []
+    tickers = corr_matrix.columns.tolist()
+    for i, t1 in enumerate(tickers):
+        for t2 in tickers[i + 1:]:
+            val = corr_matrix.loc[t1, t2]
+            if abs(val) >= threshold:
+                pairs.append({
+                    "ticker_a": t1,
+                    "ticker_b": t2,
+                    "correlation": round(float(val), 4),
+                })
+    return sorted(pairs, key=lambda x: abs(x["correlation"]), reverse=True)
+
+
+def correlation_to_dict(corr_matrix: pd.DataFrame) -> dict:
+    """Serialize a correlation DataFrame to a JSON-friendly dict."""
+    if corr_matrix.empty:
+        return {"tickers": [], "matrix": []}
+    return {
+        "tickers": corr_matrix.columns.tolist(),
+        "matrix": [
+            [round(float(v), 4) for v in row]
+            for row in corr_matrix.values
+        ],
+    }
