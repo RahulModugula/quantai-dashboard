@@ -239,6 +239,13 @@ def build_feature_matrix(df: pd.DataFrame, min_rows: int = 60) -> pd.DataFrame:
     vol_df = compute_volume_features(df)
     features = pd.concat([features, vol_df], axis=1)
 
+    # Macro features (VIX) if available in the data
+    # These must be merged externally before calling build_feature_matrix
+    if "vix_close" in df.columns:
+        features["vix_close"] = df["vix_close"]
+        vix_ma = df["vix_close"].rolling(window=20).mean()
+        features["vix_regime"] = (df["vix_close"] > vix_ma).astype(int)
+
     # Target: next-day return direction
     features["target"] = (df["close"].shift(-1) > df["close"]).astype(int)
 
