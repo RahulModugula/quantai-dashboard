@@ -11,6 +11,7 @@ from dash import dcc, html
 
 from src.dashboard.layouts.advisor_panel import advisor_panel_layout
 from src.dashboard.layouts.equity_curve import equity_curve_layout
+from src.dashboard.layouts.optimizer_panel import optimizer_panel_layout
 from src.dashboard.layouts.price_chart import price_chart_layout
 from src.dashboard.layouts.risk_panel import risk_panel_layout
 from src.dashboard.layouts.sip_panel import sip_panel_layout
@@ -86,6 +87,9 @@ def create_dash_app() -> dash.Dash:
             dbc.Tab(label="Advisor", tab_id="tab-advisor", children=[
                 html.Div(className="mt-3", children=advisor_panel_layout()),
             ]),
+            dbc.Tab(label="Optimizer", tab_id="tab-optimizer", children=[
+                html.Div(className="mt-3", children=optimizer_panel_layout()),
+            ]),
         ], id="main-tabs", active_tab="tab-live"),
 
         # Polling interval — fires every 3s
@@ -105,6 +109,9 @@ def create_dash_app() -> dash.Dash:
     register_backtest_callbacks(app)
     register_sip_callbacks(app)
     register_advisor_callbacks(app)
+
+    from src.dashboard.callbacks.optimizer_callbacks import register_optimizer_callbacks
+    register_optimizer_callbacks(app)
 
     from dash import Input, Output, State, callback_context
     import httpx
