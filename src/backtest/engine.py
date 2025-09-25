@@ -139,6 +139,16 @@ class WalkForwardBacktester:
             columns=["date", "ticker", "side", "shares", "price", "commission", "pnl"]
         )
 
+        # Compute trade-level analytics
+        if not trades_df.empty:
+            sell_trades = trades_df[trades_df["side"] == "sell"]
+            buy_trades = trades_df[trades_df["side"] == "buy"]
+            if not sell_trades.empty:
+                avg_win = sell_trades[sell_trades["pnl"] > 0]["pnl"].mean()
+                avg_loss = abs(sell_trades[sell_trades["pnl"] <= 0]["pnl"].mean()) if (sell_trades["pnl"] <= 0).any() else 0
+                trades_df.attrs["avg_win"] = float(avg_win) if not pd.isna(avg_win) else 0
+                trades_df.attrs["avg_loss"] = float(avg_loss) if not pd.isna(avg_loss) else 0
+
         metrics = compute_all_metrics(equity_curve, trades_df)
         final_value = float(equity_curve.iloc[-1]) if len(equity_curve) > 0 else self.initial_capital
 
