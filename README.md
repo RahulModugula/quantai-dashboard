@@ -1,77 +1,22 @@
-# QuantAI — Real-Time ML Trading Dashboard
+# QuantAI — ML Trading Dashboard
 
-> **DISCLAIMER**: This project is for **educational purposes only**. All predictions, signals, and portfolio data are simulated. Nothing here constitutes financial advice. Backtested results are theoretical and do not guarantee future performance.
+> **DISCLAIMER**: This project is for **educational purposes only**. All predictions, signals, and portfolio data are simulated. Nothing here constitutes financial advice.
 
-A full-stack ML trading dashboard combining data engineering, machine learning, walk-forward backtesting, paper trading simulation, portfolio optimization, and an interactive Plotly Dash frontend — all served through a single FastAPI server.
+An ML-powered trading dashboard that combines walk-forward backtesting, ensemble models, paper trading simulation, and portfolio optimization — built with FastAPI, Plotly Dash, and PyTorch.
 
 ---
 
-## Features
+## What It Does
 
-### ML Ensemble Model
-- **Random Forest + XGBoost + LightGBM + LSTM** weighted ensemble
-- Predicts next-day price direction (binary classification)
-- Walk-forward training with expanding windows — no look-ahead bias
-- Model versioning with joblib + metadata JSON
-- **Optuna hyperparameter optimization** for strategy thresholds
-- **Model drift detection** with rolling accuracy monitoring
+The system downloads daily OHLCV data via yfinance, engineers 27+ technical features, trains a 4-model ensemble (Random Forest, XGBoost, LightGBM, LSTM) using walk-forward expanding windows, and generates next-day direction predictions. A paper trading loop executes simulated trades with Half-Kelly position sizing, and a dashboard visualizes everything in real time.
 
-### Feature Engineering (27+ features)
-| Category | Features |
-|----------|----------|
-| Momentum | RSI-14, MACD (12/26/9), Rate of Change (5d, 20d), Lagged Returns (1-5d) |
-| Volatility | Bollinger Bands (%B, bandwidth), ATR-14, Rolling std (5d, 20d) |
-| Trend | ADX-14, Stochastic Oscillator (%K, %D), Price/SMA50, Price/SMA200, SMA50/SMA200 |
-| Mean Reversion | Z-score vs 20-day rolling mean |
-| Volume | Volume ratio vs 20d avg, OBV z-score |
-| Macro | VIX close, VIX regime (above/below 20d MA) |
+### Key Components
 
-### Portfolio Optimization
-- **Efficient Frontier** visualization (mean-variance optimization)
-- **Max Sharpe Ratio** portfolio via PyPortfolioOpt
-- **Minimum Volatility** portfolio
-- **Hierarchical Risk Parity (HRP)** — no expected return estimates needed
-- Cross-asset **correlation matrix** analysis
-
-### Backtesting Engine
-- Walk-forward validation with configurable window size
-- **No look-ahead bias**: predictions[t] use only data before t
-- Risk metrics: Sharpe, Sortino, Calmar, Max Drawdown, Win Rate, Profit Factor
-- **Benchmark comparison** — alpha, beta vs SPY
-- **Rolling Sharpe ratio** over trailing windows
-- **Monte Carlo simulation** — confidence intervals on terminal value
-- Monthly return heatmap, drawdown periods with duration tracking
-- CSV export for trades and equity curve
-
-### Paper Trading
-- Asyncio-based virtual trading loop with async lock for concurrency safety
-- **Half-Kelly criterion** position sizing (probability-weighted)
-- **Max drawdown constraint** — reduces exposure when drawdown limit hit
-- Signal thresholds (buy/sell) tunable per strategy
-- Redis cache for real-time price distribution
-
-### SIP Calculator
-- Pre-tax corpus projection
-- Post-tax (LTCG-aware) corpus
-- Inflation-adjusted real value
-- Annual step-up SIP support
-- **Reverse SIP** — goal-based planning ("how much monthly for X target?")
-
-### Financial Advisor
-- Risk profiling: age, horizon, income stability, loss tolerance, emergency fund, debt ratio
-- Asset allocation by risk category: Conservative / Moderate / Aggressive / Very Aggressive
-- Portfolio rebalancing recommendations
-
-### Dashboard (Plotly Dash)
-- Live candlestick chart with 120-day history
-- Model signal display (buy/sell/hold) with confidence
-- Feature importance visualization
-- Portfolio equity curve with holdings table
-- Backtest runner with equity and drawdown charts
-- SIP calculator with growth chart
-- Advisor panel with allocation pie chart
-- **Portfolio Optimizer** tab with efficient frontier + allocation pie
-- **Dark mode toggle**
+- **Ensemble model** — RF + XGBoost + LightGBM + LSTM with dynamic weighting (0.3/0.3/0.25/0.15). Walk-forward training ensures predictions at time `t` use only data before `t`.
+- **Backtesting engine** — Walk-forward validation with risk metrics (Sharpe, Sortino, Calmar, max drawdown), benchmark comparison vs SPY, Monte Carlo confidence intervals, and CSV export.
+- **Paper trading** — Async trading loop with Half-Kelly position sizing, max drawdown constraints, and Redis-cached price distribution.
+- **Portfolio optimization** — Max Sharpe, min volatility, and HRP allocation via PyPortfolioOpt with efficient frontier visualization.
+- **Dashboard** — Plotly Dash frontend with candlestick charts, signal display, equity curves, backtest runner, SIP calculator, and portfolio optimizer tabs.
 
 ---
 
@@ -95,16 +40,15 @@ Dash (/dashboard) — polling via dcc.Interval
 Optimizer tab → PyPortfolioOpt (EF, HRP, MinVol)
 ```
 
-### Tech Stack
-
 | Layer | Technology |
 |-------|-----------|
-| Data | yfinance, pandas, SQLite (SQLAlchemy Core) |
-| ML | scikit-learn, XGBoost, LightGBM, PyTorch (LSTM), Optuna |
+| Data | yfinance, pandas, SQLite (SQLAlchemy + Alembic) |
+| ML | scikit-learn, XGBoost, LightGBM, PyTorch (LSTM), Optuna, SHAP |
 | Portfolio | PyPortfolioOpt (efficient frontier, HRP) |
-| API | FastAPI, WebSocket |
+| API | FastAPI, WebSocket, Prometheus metrics |
 | Dashboard | Plotly Dash (mounted via WSGIMiddleware) |
 | Cache | Redis |
+| Observability | structlog, Prometheus, health checks |
 | CI/CD | GitHub Actions (lint + test), pre-commit hooks |
 | Infra | Docker Compose |
 
@@ -112,77 +56,40 @@ Optimizer tab → PyPortfolioOpt (EF, HRP, MinVol)
 
 ## Quick Start
 
-### Option 1: Docker
-
 ```bash
+# Docker (recommended)
 docker compose up --build
-```
 
-Then open [http://localhost:8000/dashboard](http://localhost:8000/dashboard)
-
-### Option 2: Local Development
-
-```bash
-# Create virtual environment
+# Or local development
 uv venv .venv --python 3.11
 source .venv/bin/activate
-
-# Install dependencies
-make setup
-
-# Download market data and build features (includes VIX/Treasury)
-make seed
-
-# Train the ensemble model (walk-forward)
-make train
-
-# Run backtest and save report
-make backtest
-
-# Start the server
-make run
+make setup      # install dependencies
+make seed       # download market data + build features
+make train      # walk-forward ensemble training
+make backtest   # run backtest and save report
+make run        # start server at localhost:8000
 ```
 
-### API Docs
-
-Once running, visit [http://localhost:8000/api/docs](http://localhost:8000/api/docs) for interactive Swagger documentation.
-
----
-
-## API Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/predictions/{ticker}` | Latest model prediction |
-| GET | `/api/portfolio/` | Current portfolio state |
-| GET | `/api/portfolio/trades` | Trade history |
-| POST | `/api/backtest/run` | Trigger walk-forward backtest |
-| POST | `/api/advisor/risk-profile` | Score risk profile |
-| GET | `/api/advisor/allocation/{category}` | Get allocation suggestion |
-| POST | `/api/sip/calculate` | SIP projection |
-| POST | `/api/sip/reverse` | Reverse SIP (goal-based) |
-| POST | `/api/optimizer/portfolio` | Optimize portfolio weights |
-| POST | `/api/optimizer/frontier` | Compute efficient frontier |
-| POST | `/api/optimizer/tune` | Optuna threshold optimization |
+Dashboard: http://localhost:8000/dashboard
+API docs: http://localhost:8000/api/docs
+Health check: http://localhost:8000/api/health
+Metrics: http://localhost:8000/api/metrics
 
 ---
 
 ## Design Decisions
 
-### Why walk-forward expanding windows?
-Expanding windows use all available historical data for each training fold, which is more stable for tree-based models. The key constraint is enforced strictly: predictions generated at time `t` use **only** data from before `t`.
+**Why walk-forward expanding windows?**
+Expanding windows use all available history for each training fold, which is more stable for tree-based models. The critical constraint: predictions at time `t` use only data before `t` — enforced by date-aligned joins with no lookahead.
 
-### Why classification instead of regression?
-Predicting direction (up/down) is more actionable for generating trading signals than predicting return magnitude. Direction classification also produces calibrated probabilities that map cleanly to position sizing.
+**Why classification over regression?**
+Direction prediction (up/down) maps cleanly to trading signals and produces calibrated probabilities for position sizing. Return magnitude prediction adds noise without actionable benefit at this frequency.
 
-### Why four ensemble members?
-RF and XGBoost capture different interaction patterns. LightGBM trains faster and often outperforms XGBoost on financial data due to leaf-wise growth. LSTM adds temporal sequence signal. Dynamic weighting (0.3/0.3/0.25/0.15) reduces reliance on any single model.
+**Why Half-Kelly position sizing?**
+Full Kelly is optimal but volatile. Half-Kelly provides ~75% of the growth rate with significantly lower drawdowns — a better risk/reward tradeoff, especially for a system where model calibration is imperfect.
 
-### Why Half-Kelly position sizing?
-Full Kelly criterion is optimal but volatile. Half-Kelly provides ~75% of the growth rate with significantly lower drawdowns — a better risk/reward tradeoff for simulated trading.
-
-### Survivorship Bias
-The current implementation downloads data for tickers specified in config. For a research-grade backtest, you would want to include delisted companies. This is documented as a limitation.
+**Why four ensemble members?**
+RF and XGBoost capture different interaction patterns. LightGBM trains faster and handles categorical splits natively. LSTM adds temporal sequence signal that tree models miss. The weighting intentionally gives LSTM less weight since it's harder to calibrate on small financial datasets.
 
 ---
 
@@ -192,15 +99,36 @@ The current implementation downloads data for tickers specified in config. For a
 make test
 ```
 
-68 tests covering:
-- Feature engineering (RSI bounds, Bollinger ordering, stochastic, ADX, SMA ratios)
-- Backtest metrics (Sharpe, max drawdown, Monte Carlo, monthly heatmap)
-- SIP calculator (forward + reverse, step-up behavior)
-- Portfolio operations (buy/sell/PnL/drawdown constraint)
-- Signal generation (Kelly criterion, threshold behavior)
-- Model drift detection (degradation alerts)
-- Storage module (parameterized queries)
-- Portfolio optimizer (weight cleaning)
+68 tests covering feature engineering, backtest metrics, SIP calculator, portfolio operations, signal generation, model drift detection, storage, and portfolio optimization.
+
+---
+
+## Limitations and Future Work
+
+This section documents known limitations honestly — understanding where a system falls short matters more than the feature list.
+
+### Model Performance
+- **The ensemble likely does not beat buy-and-hold** on a risk-adjusted basis after transaction costs. This is consistent with the efficient market hypothesis for liquid US equities using publicly available technical features. The backtester's Sharpe ratio should be compared against SPY's, not against zero.
+- **All 27 features are well-known technical indicators** already priced into markets by institutional quant desks. For genuine alpha, you'd need alternative data (sentiment, options flow, earnings transcripts) or higher-frequency signals.
+- **The LSTM component may not add value** over tree models alone for daily bars. Sequence models shine with higher-frequency data where temporal patterns are stronger. I haven't run a rigorous ablation study to confirm this.
+
+### Backtesting Realism
+- **Survivorship bias** — the system only downloads data for tickers in the config. A proper backtest would include delisted companies and use a point-in-time universe.
+- **Transaction costs are understated** — the 0.1% commission model doesn't capture spread costs, market impact, or the fact that small-cap fills are worse than modeled.
+- **yfinance data quality** — adjusted close prices are retroactively modified for splits and dividends. This is fine for rough analysis but not research-grade. Professional backtesting uses point-in-time databases (e.g., CRSP, Norgate).
+- **No slippage on volume** — the backtester assumes all orders fill at close price regardless of volume. For small-cap or volatile names, this is unrealistic.
+
+### Infrastructure Gaps
+- **No database migrations in production** — Alembic is set up but migrations should be validated in a staging environment before any real deployment.
+- **Redis is optional but assumed** — the paper trader falls back gracefully, but some cache-dependent features will silently degrade.
+- **No authentication in development** — API keys and RBAC exist but aren't enforced by default. Don't expose this to the internet without enabling them.
+
+### What Would Make This Better
+- **Alternative data integration** — earnings call sentiment (via NLP on SEC filings), options flow from CBOE, or social media sentiment would test whether non-price data adds signal.
+- **Event-driven backtester** — replacing the vectorized backtest with tick-by-tick event processing would enable realistic fill simulation (slippage, partial fills, queue position).
+- **Proper ablation studies** — systematically removing features and ensemble members to measure marginal contribution. SHAP values help but aren't a substitute for out-of-sample ablation.
+- **Live data via WebSocket** — connecting to Alpaca or Polygon.io instead of polling yfinance would enable real-time signal generation.
+- **Regime analysis** — measuring model performance separately in trending vs. mean-reverting vs. high-volatility regimes. Most ML models work well in trends and fail in chop.
 
 ---
 
@@ -209,41 +137,16 @@ make test
 ```
 src/
 ├── config.py              # Pydantic Settings with validators
-├── data/
-│   ├── ingestion.py       # Data providers, yfinance, macro features
-│   ├── features.py        # 27+ technical indicators
-│   ├── storage.py         # SQLite with parameterized queries
-│   ├── correlation.py     # Cross-asset correlation matrix
-│   └── schemas.py         # Pydantic data models
-├── models/
-│   ├── ensemble.py        # RF + XGB + LightGBM + LSTM
-│   ├── lstm.py            # PyTorch LSTM with gradient clipping
-│   ├── training.py        # Walk-forward training pipeline
-│   ├── tuning.py          # Optuna hyperparameter optimization
-│   ├── drift.py           # Model performance monitoring
-│   └── registry.py        # Model versioning (joblib)
-├── backtest/
-│   ├── engine.py          # Walk-forward backtester
-│   ├── metrics.py         # Risk metrics + benchmark comparison
-│   └── report.py          # Monte Carlo, heatmaps, CSV export
-├── trading/
-│   ├── portfolio.py       # Virtual portfolio with drawdown limits
-│   ├── signals.py         # Kelly criterion position sizing
-│   └── paper_trader.py    # Async trading loop with concurrency lock
-├── advisor/
-│   ├── risk_profile.py    # Risk scoring
-│   ├── allocation.py      # Static allocation templates
-│   ├── optimizer.py       # PyPortfolioOpt (EF, HRP, MinVol)
-│   ├── sip.py             # Forward + reverse SIP calculator
-│   └── recommendations.py # Rebalancing suggestions
-├── api/
-│   ├── main.py            # FastAPI app factory
-│   ├── routes/            # REST endpoints
-│   └── websocket.py       # Real-time price feed
-└── dashboard/
-    ├── app.py             # Dash app with 6 tabs + dark mode
-    ├── layouts/           # UI components
-    └── callbacks/         # Interactive behavior
+├── data/                  # Ingestion, features, storage, schemas
+├── models/                # Ensemble, LSTM, training, drift detection
+├── backtest/              # Walk-forward engine, metrics, reports
+├── trading/               # Portfolio, signals, paper trader
+├── advisor/               # Risk profiling, allocation, SIP calculator
+├── api/                   # FastAPI routes, middleware, auth
+├── dashboard/             # Plotly Dash layouts and callbacks
+├── monitoring/            # Prometheus metrics, observability
+├── health/                # Dependency health checks
+└── resilience/            # Circuit breaker, retry with backoff
 ```
 
 ---
