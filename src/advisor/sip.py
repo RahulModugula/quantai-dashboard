@@ -99,6 +99,46 @@ def calculate_sip(
     }
 
 
+def lumpsum_vs_sip(
+    monthly_amount: float,
+    duration_years: int,
+    expected_return: float,
+    inflation_rate: float = 0.06,
+    tax_rate: float = 0.10,
+) -> dict:
+    """Compare lumpsum (investing full amount upfront) vs SIP for same total capital.
+
+    The total capital committed is monthly_amount * 12 * duration_years.
+    Lumpsum invests the entire amount on day 1; SIP spreads it monthly.
+    """
+    total_capital = monthly_amount * 12 * duration_years
+
+    # Lumpsum calculation
+    lump_corpus = total_capital * (1 + expected_return) ** duration_years
+    lump_gains = max(0, lump_corpus - total_capital)
+    lump_post_tax = lump_corpus - lump_gains * tax_rate
+    lump_real = lump_post_tax / (1 + inflation_rate) ** duration_years
+
+    # SIP calculation
+    sip_result = calculate_sip(monthly_amount, duration_years, expected_return, inflation_rate, tax_rate)
+
+    return {
+        "total_capital": round(total_capital, 2),
+        "lumpsum": {
+            "pre_tax_corpus": round(lump_corpus, 2),
+            "post_tax_corpus": round(lump_post_tax, 2),
+            "inflation_adjusted": round(lump_real, 2),
+        },
+        "sip": {
+            "pre_tax_corpus": sip_result["pre_tax_corpus"],
+            "post_tax_corpus": sip_result["post_tax_corpus"],
+            "inflation_adjusted": sip_result["inflation_adjusted_value"],
+        },
+        "winner": "lumpsum" if lump_post_tax > sip_result["post_tax_corpus"] else "sip",
+        "disclaimer": "For educational/illustrative purposes only. Returns are not guaranteed.",
+    }
+
+
 def reverse_sip(
     target_corpus: float,
     duration_years: int,
