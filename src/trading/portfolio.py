@@ -164,3 +164,18 @@ class Portfolio:
             }
             for ticker, pos in self.positions.items()
         ]
+
+    @property
+    def realized_pnl_total(self) -> float:
+        """Sum of realized PnL across all closed trades."""
+        return sum(t.pnl for t in self.trade_history if t.pnl is not None)
+
+    @property
+    def total_commissions(self) -> float:
+        """Total commissions paid across all trades."""
+        return sum(t.commission for t in self.trade_history)
+
+    @property
+    def total_trades_count(self) -> int:
+        """Number of completed round-trip trades (sell-side entries with PnL)."""
+        return sum(1 for t in self.trade_history if t.pnl is not None)
