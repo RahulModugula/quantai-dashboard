@@ -9,7 +9,7 @@ from src.api.exception_handlers import register_exception_handlers
 from src.api.structured_logging import RequestLoggingMiddleware
 from src.config.production import ProductionSettings
 from src.health.checks import HealthChecker
-from src.monitoring.observability import get_metrics_collector
+from src.monitoring.observability import get_metrics_collector, get_prometheus_metrics, get_prometheus_content_type
 from src.api.versioning import get_version_info
 
 logger = logging.getLogger(__name__)
@@ -78,11 +78,21 @@ def create_app(settings: ProductionSettings = None) -> FastAPI:
         """API version information."""
         return get_version_info()
 
-    # Metrics endpoint
+    # Metrics endpoint (JSON summary)
     @app.get("/api/metrics")
     async def metrics():
-        """Application metrics."""
+        """Application metrics summary."""
         collector = get_metrics_collector()
         return collector.get_metrics()
+
+    # Prometheus metrics endpoint
+    @app.get("/api/metrics/prometheus")
+    async def prometheus_metrics():
+        """Prometheus-format metrics for scraping."""
+        from fastapi.responses import Response
+        return Response(
+            content=get_prometheus_metrics(),
+            media_type=get_prometheus_content_type(),
+        )
 
     return app
