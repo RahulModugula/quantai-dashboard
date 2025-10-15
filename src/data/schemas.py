@@ -237,3 +237,19 @@ class PaginatedResponse(BaseModel):
     total: int
     offset: int = 0
     limit: int = 100
+
+
+class LumpsumVsSIPResponse(BaseModel):
+    """Response for lumpsum vs SIP comparison endpoint."""
+    total_capital: float
+    lumpsum: dict
+    sip: dict
+    winner: str
+    disclaimer: str = "Educational purposes only."
+
+
+class CorrelationResponse(BaseModel):
+    """Response for correlation matrix endpoint."""
+    tickers: list[str]
+    matrix: list[list[float]]
+    high_correlation_pairs: list[dict] = Field(default_factory=list)
