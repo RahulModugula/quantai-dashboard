@@ -12,9 +12,27 @@ logger = logging.getLogger(__name__)
 
 
 class EnsembleModel:
-    """Weighted ensemble of Random Forest, XGBoost, LightGBM, and LSTM."""
+    """Weighted ensemble of Random Forest, XGBoost, LightGBM, and LSTM.
+
+    Combines four diverse ML models for robust price direction prediction:
+    - Random Forest (RF): Captures non-linear interactions via bootstrap aggregation
+    - XGBoost (XGB): Sequential error correction, faster convergence
+    - LightGBM (LGBM): Leaf-wise growth, excellent on financial time series
+    - LSTM: Temporal sequence modeling, captures momentum and mean reversion
+
+    Weighted average of probabilities (default: RF=0.3, XGB=0.3, LGBM=0.25, LSTM=0.15)
+    reduces reliance on any single model and improves robustness.
+
+    Use case: Next-day price direction classification for trading signals.
+    """
 
     def __init__(self, weights: dict | None = None, sequence_length: int = 20):
+        """Initialize ensemble with configurable weights.
+
+        Args:
+            weights: Dict of {model_name: weight} summing to 1.0. Defaults from settings.
+            sequence_length: LSTM look-back window (days).
+        """
         self.weights = weights or settings.ensemble_weights
         self.sequence_length = sequence_length
 
@@ -66,7 +84,15 @@ class EnsembleModel:
         self._is_fitted = False
 
     def fit(self, X: np.ndarray, y: np.ndarray, feature_names: list[str] | None = None):
-        """Train all four models on the same data."""
+        """Train all four ensemble members on the same feature matrix.
+
+        Args:
+            X: Feature matrix (n_samples, n_features).
+            y: Binary labels (0=down, 1=up).
+            feature_names: Optional list of feature names for importances.
+
+        Training is sequential (RF → XGB → LGBM → LSTM). Each model trains independently.
+        """
         self._feature_names = feature_names or [f"f{i}" for i in range(X.shape[1])]
 
         logger.info(f"Training RF on {X.shape[0]} samples, {X.shape[1]} features")
@@ -85,7 +111,18 @@ class EnsembleModel:
         logger.info("Ensemble training complete")
 
     def predict_proba(self, X: np.ndarray) -> np.ndarray:
-        """Weighted average of predicted probabilities."""
+        """Return probability of next-day price increase [0, 1].
+
+        Weighted ensemble average of individual model probabilities.
+        LSTM predictions are truncated to match RF/XGB/LGBM length
+        (due to sequence windowing).
+
+        Args:
+            X: Feature matrix (n_samples, n_features).
+
+        Returns:
+            Probability vector (n_samples,) in [0, 1].
+        """
         w_rf = self.weights.get("rf", 0.3)
         w_xgb = self.weights.get("xgb", 0.3)
         w_lgbm = self.weights.get("lgbm", 0.25)
