@@ -92,3 +92,30 @@ def list_predictions() -> list[dict]:
             logger.error(f"Unexpected error for {ticker}: {e}")
             results.append({"ticker": ticker, "error": "prediction failed"})
     return results
+
+
+@router.post("/batch")
+def batch_predictions(tickers: list[str]) -> dict:
+    """Get predictions for a list of tickers in one request."""
+    if not tickers:
+        raise HTTPException(status_code=400, detail="At least one ticker required")
+
+    predictions = []
+    errors = []
+
+    for ticker in tickers:
+        try:
+            pred = get_prediction(ticker)
+            predictions.append(pred.model_dump())
+        except HTTPException as e:
+            errors.append({"ticker": ticker, "error": e.detail})
+        except Exception as e:
+            logger.error(f"Unexpected error for {ticker}: {e}")
+            errors.append({"ticker": ticker, "error": "prediction failed"})
+
+    return {
+        "predictions": predictions,
+        "errors": errors,
+        "success_count": len(predictions),
+        "error_count": len(errors),
+    }

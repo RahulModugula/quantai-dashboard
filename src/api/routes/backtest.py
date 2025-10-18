@@ -66,3 +66,55 @@ def get_backtest_result(key: str) -> dict:
 def list_backtest_results() -> dict[str, dict]:
     """List all cached backtest results."""
     return {k: {"status": v["status"], "ticker": v.get("ticker")} for k, v in _backtest_cache.items()}
+
+
+@router.get("/export/{key}/trades")
+def export_trades_csv(key: str):
+    """Export trades from backtest result as CSV."""
+    if key not in _backtest_cache:
+        raise HTTPException(status_code=404, detail="Backtest result not found")
+
+    result = _backtest_cache[key]
+    if result["status"] != "complete":
+        raise HTTPException(status_code=400, detail="Backtest not complete")
+
+    trades = result["result"]["trades"]
+    if not trades:
+        csv_data = "date,ticker,side,shares,price,commission,pnl\n"
+    else:
+        import csv
+        import io
+        output = io.StringIO()
+        writer = csv.DictWriter(output, fieldnames=trades[0].keys())
+        writer.writeheader()
+        writer.writerows(trades)
+        csv_data = output.getvalue()
+
+    return {
+        "csv": csv_data,
+        "filename": f"{result.get('ticker')}_trades_{key}.csv",
+    }
+
+
+@router.get("/export/{key}/equity")
+def export_equity_csv(key: str):
+    """Export equity curve from backtest result as CSV."""
+    if key not in _backtest_cache:
+        raise HTTPException(status_code=404, detail="Backtest result not found")
+
+    result = _backtest_cache[key]
+    if result["status"] != "complete":
+        raise HTTPException(status_code=400, detail="Backtest not complete")
+
+    equity = result["result"]["equity_curve"]
+    import csv
+    import io
+    output = io.StringIO()
+    writer = csv.DictWriter(output, fieldnames=["date", "value"])
+    writer.writeheader()
+    writer.writerows(equity)
+
+    return {
+        "csv": output.getvalue(),
+        "filename": f"{result.get('ticker')}_equity_{key}.csv",
+    }
