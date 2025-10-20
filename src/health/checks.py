@@ -13,12 +13,14 @@ class HealthChecker:
         """Check database connectivity."""
         try:
             from src.data.storage import get_engine
+            from sqlalchemy import text
+
             engine = get_engine()
             with engine.connect() as conn:
-                conn.execute("SELECT 1")
+                conn.execute(text("SELECT 1"))
             return {"status": "healthy", "service": "database"}
         except Exception as e:
-            logger.error(f"Database check failed: {e}")
+            logger.error("Database check failed: %s", e)
             return {"status": "unhealthy", "service": "database", "error": str(e)}
 
     @staticmethod
@@ -26,24 +28,26 @@ class HealthChecker:
         """Check Redis connectivity."""
         try:
             import redis
-            r = redis.Redis(host='localhost', port=6379)
+
+            r = redis.Redis(host="localhost", port=6379, socket_timeout=2)
             r.ping()
             return {"status": "healthy", "service": "redis"}
         except Exception as e:
-            logger.warning(f"Redis check failed: {e}")
-            return {"status": "unhealthy", "service": "redis", "error": str(e)}
+            logger.warning("Redis check failed: %s", e)
+            return {"status": "degraded", "service": "redis", "error": str(e)}
 
     @staticmethod
     def check_model() -> dict:
         """Check ML model availability."""
         try:
             from src.api.dependencies import get_model_bundle
+
             bundle, meta = get_model_bundle()
             if bundle is None:
                 return {"status": "unavailable", "service": "model"}
             return {"status": "healthy", "service": "model"}
         except Exception as e:
-            logger.warning(f"Model check failed: {e}")
+            logger.warning("Model check failed: %s", e)
             return {"status": "unhealthy", "service": "model", "error": str(e)}
 
     @staticmethod
@@ -59,18 +63,18 @@ class HealthChecker:
                     df = load_ohlcv(ticker)
                     if not df.empty:
                         ready_tickers.append(ticker)
-                except:
+                except Exception:
                     pass
 
             status = "healthy" if len(ready_tickers) > 0 else "unavailable"
             return {"status": status, "service": "data", "tickers": len(ready_tickers)}
         except Exception as e:
-            logger.warning(f"Data check failed: {e}")
+            logger.warning("Data check failed: %s", e)
             return {"status": "unhealthy", "service": "data", "error": str(e)}
 
     @classmethod
     def full_health_check(cls) -> dict:
-        """Run all health checks."""
+        """Run all health checks synchronously."""
         checks = {
             "database": cls.check_database(),
             "redis": cls.check_redis(),
@@ -78,7 +82,11 @@ class HealthChecker:
             "data": cls.check_data(),
         }
 
-        overall = "healthy" if all(c["status"] in ["healthy", "unavailable"] for c in checks.values()) else "unhealthy"
+        overall = (
+            "healthy"
+            if all(c["status"] in ("healthy", "unavailable", "degraded") for c in checks.values())
+            else "unhealthy"
+        )
 
         return {
             "status": overall,

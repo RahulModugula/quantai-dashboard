@@ -1,51 +1,72 @@
-"""Structured logging for production."""
-import json
-import logging
+"""Structured logging with structlog for production."""
 import time
-from fastapi import Request
+
+import structlog
+
+logger = structlog.get_logger(__name__)
 
 
-class JSONFormatter(logging.Formatter):
-    """Format logs as JSON for production."""
+def configure_logging(json_output: bool = True):
+    """Configure structlog for the application.
 
-    def format(self, record: logging.LogRecord) -> str:
-        """Format log record as JSON."""
-        log_data = {
-            "timestamp": self.formatTime(record),
-            "level": record.levelname,
-            "logger": record.name,
-            "message": record.getMessage(),
-            "module": record.module,
-            "function": record.funcName,
-            "line": record.lineno,
-        }
+    Args:
+        json_output: If True, output JSON logs (production). If False, use
+                     colored console output (development).
+    """
+    processors = [
+        structlog.contextvars.merge_contextvars,
+        structlog.processors.add_log_level,
+        structlog.processors.StackInfoRenderer(),
+        structlog.processors.format_exc_info,
+        structlog.processors.TimeStamper(fmt="iso"),
+    ]
 
-        if record.exc_info:
-            log_data["exception"] = self.formatException(record.exc_info)
+    if json_output:
+        processors.append(structlog.processors.JSONRenderer())
+    else:
+        processors.append(structlog.dev.ConsoleRenderer())
 
-        return json.dumps(log_data)
+    structlog.configure(
+        processors=processors,
+        wrapper_class=structlog.make_filtering_bound_logger(0),
+        context_class=dict,
+        logger_factory=structlog.PrintLoggerFactory(),
+        cache_logger_on_first_use=True,
+    )
 
 
 class RequestLoggingMiddleware:
-    """Log all HTTP requests with structured format."""
+    """Log all HTTP requests with structlog."""
 
     def __init__(self, app):
         self.app = app
-        self.logger = logging.getLogger(__name__)
+        self.logger = structlog.get_logger("http")
 
-    async def __call__(self, request: Request, call_next):
-        """Log request and response."""
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
         start = time.time()
-        response = await call_next(request)
-        duration = time.time() - start
+        status_code = 500
 
-        self.logger.info(
-            f"HTTP Request: {request.method} {request.url.path}",
-            extra={
-                "status_code": response.status_code,
-                "duration_ms": int(duration * 1000),
-                "client_ip": request.client.host if request.client else "unknown",
-            },
-        )
+        async def send_wrapper(message):
+            nonlocal status_code
+            if message["type"] == "http.response.start":
+                status_code = message["status"]
+            await send(message)
 
-        return response
+        try:
+            await self.app(scope, receive, send_wrapper)
+        finally:
+            duration = time.time() - start
+            path = scope.get("path", "unknown")
+            method = scope.get("method", "unknown")
+
+            self.logger.info(
+                "request",
+                method=method,
+                path=path,
+                status_code=status_code,
+                duration_ms=round(duration * 1000, 1),
+            )

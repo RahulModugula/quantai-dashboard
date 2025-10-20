@@ -21,8 +21,8 @@ async def lifespan(app: FastAPI):
     # Startup
     logger.info("Starting QuantAI Dashboard application")
     health_checker = HealthChecker()
-    startup_status = await health_checker.full_health_check()
-    logger.info(f"Health check on startup: {startup_status}")
+    startup_status = health_checker.full_health_check()
+    logger.info("Health check on startup: %s", startup_status["status"])
 
     yield
 
@@ -67,10 +67,10 @@ def create_app(settings: ProductionSettings = None) -> FastAPI:
 
     # Health check endpoint
     @app.get("/api/health")
-    async def health_check():
+    def health_check():
         """Health check endpoint."""
         health_checker = HealthChecker()
-        return await health_checker.full_health_check()
+        return health_checker.full_health_check()
 
     # Version endpoint
     @app.get("/api/version")
