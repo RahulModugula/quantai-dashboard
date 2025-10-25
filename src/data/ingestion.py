@@ -5,6 +5,8 @@ from datetime import datetime
 import pandas as pd
 import yfinance as yf
 
+from src.resilience.retry import retry
+
 logger = logging.getLogger(__name__)
 
 
@@ -12,6 +14,7 @@ class DataValidationError(Exception):
     pass
 
 
+@retry(max_attempts=3, initial_delay=2.0, retryable_exceptions=(Exception,))
 def download_ohlcv(
     ticker: str,
     start: str | datetime | None = None,
@@ -103,26 +106,15 @@ def validate_ohlcv(df: pd.DataFrame, ticker: str = "") -> pd.DataFrame:
 
 def download_multiple(
     tickers: list[str],
-    max_retries: int = 3,
-    backoff_factor: float = 1.0,
     **kwargs,
 ) -> dict[str, pd.DataFrame]:
-    """Download data for multiple tickers with retry and exponential backoff."""
-    import time
-
+    """Download data for multiple tickers. Each call retries automatically."""
     results = {}
     for ticker in tickers:
-        for attempt in range(max_retries):
-            try:
-                results[ticker] = download_ohlcv(ticker, **kwargs)
-                break
-            except Exception as e:
-                wait = backoff_factor * (2 ** attempt)
-                if attempt < max_retries - 1:
-                    logger.warning(f"{ticker} attempt {attempt + 1} failed: {e}. Retrying in {wait:.1f}s")
-                    time.sleep(wait)
-                else:
-                    logger.error(f"Failed to download {ticker} after {max_retries} attempts: {e}")
+        try:
+            results[ticker] = download_ohlcv(ticker, **kwargs)
+        except Exception as e:
+            logger.error("Failed to download %s after retries: %s", ticker, e)
     return results
 
 

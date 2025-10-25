@@ -63,7 +63,7 @@ class PaperTrader:
             self._feature_names = []
 
     def _get_latest_price(self, ticker: str) -> float | None:
-        """Fetch latest price from Redis cache, falling back to yfinance."""
+        """Fetch latest price from Redis cache, falling back to yfinance with retry."""
         if self._redis:
             try:
                 price = self._redis.get(f"price:{ticker}")
@@ -72,12 +72,21 @@ class PaperTrader:
             except Exception:
                 pass
 
+        from src.resilience.retry import Retry, RetryPolicy
+
+        retry_executor = Retry(
+            RetryPolicy(max_attempts=3, initial_delay=1.0, max_delay=10.0),
+            retryable_exceptions=(Exception,),
+        )
         try:
             import yfinance as yf
-            data = yf.Ticker(ticker).fast_info
-            return float(data.last_price)
+
+            def _fetch():
+                return float(yf.Ticker(ticker).fast_info.last_price)
+
+            return retry_executor.execute(_fetch)
         except Exception as e:
-            logger.error(f"Could not fetch price for {ticker}: {e}")
+            logger.error("Could not fetch price for %s after retries: %s", ticker, e)
             return None
 
     def _get_prediction(self, ticker: str, price: float) -> float:
