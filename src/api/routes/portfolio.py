@@ -3,6 +3,8 @@ from fastapi import APIRouter, HTTPException
 
 from src.api.dependencies import get_paper_trader
 from src.data.storage import load_trades
+from src.trading.risk_warnings import get_all_warnings
+from src.data.correlation import compute_correlation_matrix
 
 router = APIRouter(prefix="/portfolio", tags=["portfolio"])
 logger = logging.getLogger(__name__)
@@ -83,3 +85,34 @@ def get_trades(ticker: str | None = None, limit: int = 100) -> dict:
     except Exception as e:
         logger.error(f"Error getting trades: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Trade lookup failed: {str(e)}")
+
+
+@router.get("/warnings")
+def portfolio_warnings() -> dict:
+    """Get risk warnings for current portfolio (concentration, correlation, drawdown)."""
+    try:
+        trader = get_paper_trader()
+        portfolio = trader.portfolio
+
+        # Get correlation matrix for held tickers
+        corr_matrix = None
+        if portfolio.positions:
+            tickers = list(portfolio.positions.keys())
+            try:
+                corr_df = compute_correlation_matrix(tickers)
+                if not corr_df.empty:
+                    corr_matrix = corr_df.to_dict()
+            except Exception as e:
+                logger.warning(f"Could not compute correlations: {e}")
+
+        warnings = get_all_warnings(portfolio, corr_matrix)
+
+        return {
+            "has_warnings": any(warnings.values()),
+            "warnings": warnings,
+            "portfolio_value": portfolio.get_value({}),
+            "position_count": len(portfolio.positions),
+        }
+    except Exception as e:
+        logger.error(f"Error generating warnings: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Warning generation failed: {str(e)}")
