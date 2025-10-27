@@ -118,3 +118,42 @@ def export_equity_csv(key: str):
         "csv": output.getvalue(),
         "filename": f"{result.get('ticker')}_equity_{key}.csv",
     }
+
+
+@router.post("/compare")
+def compare_backtests(key_a: str, key_b: str) -> dict:
+    """Compare two backtest results to identify performance differences.
+
+    Args:
+        key_a: Cache key of first backtest result
+        key_b: Cache key of second backtest result
+
+    Returns:
+        Comparison dict showing return, Sharpe, drawdown, and win rate differences
+    """
+    from src.backtest.comparison import compare_backtests as do_compare
+
+    if key_a not in _backtest_cache:
+        raise HTTPException(status_code=404, detail=f"Backtest {key_a} not found")
+    if key_b not in _backtest_cache:
+        raise HTTPException(status_code=404, detail=f"Backtest {key_b} not found")
+
+    result_a = _backtest_cache[key_a]
+    result_b = _backtest_cache[key_b]
+
+    if result_a["status"] != "complete":
+        raise HTTPException(status_code=400, detail=f"Backtest {key_a} is not complete")
+    if result_b["status"] != "complete":
+        raise HTTPException(status_code=400, detail=f"Backtest {key_b} is not complete")
+
+    diff = do_compare(
+        result_a["result"],
+        result_b["result"],
+        name_a=result_a.get("ticker", key_a),
+        name_b=result_b.get("ticker", key_b),
+    )
+
+    return {
+        "comparison": diff.to_dict(),
+        "summary": diff.summary(),
+    }
