@@ -82,12 +82,13 @@ def create_app() -> FastAPI:
     app.include_router(backtest.router, prefix="/api")
 
     try:
-        from src.api.routes import advisor, optimizer, sip, status, diagnostics
+        from src.api.routes import advisor, optimizer, sip, status, diagnostics, analysis
         app.include_router(advisor.router, prefix="/api")
         app.include_router(sip.router, prefix="/api")
         app.include_router(optimizer.router, prefix="/api")
         app.include_router(status.router, prefix="/api")
         app.include_router(diagnostics.router, prefix="/api")
+        app.include_router(analysis.router, prefix="/api")
     except ImportError:
         logger.warning("Some optional routes not yet available")
 
