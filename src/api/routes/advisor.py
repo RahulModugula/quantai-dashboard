@@ -46,3 +46,93 @@ def get_allocation_by_category(risk_category: str) -> dict:
     except Exception as e:
         logger.error(f"Error getting allocation: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Allocation lookup failed: {str(e)}")
+
+
+@router.post("/rebalance/equal-weight")
+def suggest_equal_weight_rebalance() -> dict:
+    """Suggest rebalancing portfolio to equal weight across holdings."""
+    try:
+        from src.api.dependencies import get_paper_trader
+        from src.advisor.rebalancing import PortfolioRebalancer
+
+        trader = get_paper_trader()
+        portfolio = trader.portfolio
+
+        if not portfolio.positions:
+            return {
+                "actions": [],
+                "message": "No open positions to rebalance",
+                "total_trades": 0,
+            }
+
+        actions = PortfolioRebalancer.suggest_equal_weight(
+            positions=portfolio.positions,
+            portfolio_value=portfolio.get_value({}),
+        )
+
+        return {
+            "actions": [
+                {
+                    "ticker": a.ticker,
+                    "action": a.action,
+                    "current_pct": round(a.current_pct, 2),
+                    "target_pct": round(a.target_pct, 2),
+                    "shares_to_trade": a.shares_to_trade,
+                    "estimated_value": round(a.estimated_value, 2),
+                    "reason": a.reason,
+                }
+                for a in actions
+            ],
+            "total_trades": len(actions),
+            "disclaimer": "Educational purposes. Not financial advice.",
+        }
+    except Exception as e:
+        logger.error(f"Error generating rebalance suggestions: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Rebalancing failed: {str(e)}")
+
+
+@router.post("/rebalance/reduce-risk")
+def suggest_risk_reduction_rebalance(max_position_pct: float = 0.30) -> dict:
+    """Suggest selling oversized positions to reduce concentration risk."""
+    try:
+        from src.api.dependencies import get_paper_trader
+        from src.advisor.rebalancing import PortfolioRebalancer
+
+        trader = get_paper_trader()
+        portfolio = trader.portfolio
+
+        actions = PortfolioRebalancer.suggest_risk_reduction(
+            positions=portfolio.positions,
+            portfolio_value=portfolio.get_value({}),
+            max_position_pct=max_position_pct,
+        )
+
+        if not actions:
+            return {
+                "actions": [],
+                "message": f"No positions exceed {max_position_pct*100:.0f}% threshold",
+                "total_trades": 0,
+            }
+
+        tax_impact = PortfolioRebalancer.estimate_tax_impact(actions)
+
+        return {
+            "actions": [
+                {
+                    "ticker": a.ticker,
+                    "action": a.action,
+                    "current_pct": round(a.current_pct, 2),
+                    "target_pct": round(a.target_pct, 2),
+                    "shares_to_trade": a.shares_to_trade,
+                    "estimated_value": round(a.estimated_value, 2),
+                    "reason": a.reason,
+                }
+                for a in actions
+            ],
+            "tax_impact": tax_impact,
+            "total_trades": len(actions),
+            "disclaimer": "Tax estimates are rough. Consult a tax professional.",
+        }
+    except Exception as e:
+        logger.error(f"Error generating risk reduction suggestions: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Risk reduction analysis failed: {str(e)}")
