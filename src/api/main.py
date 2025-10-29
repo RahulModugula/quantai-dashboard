@@ -82,6 +82,12 @@ def create_app() -> FastAPI:
     app.include_router(backtest.router, prefix="/api")
 
     try:
+        from src.api.routes import data
+        app.include_router(data.router, prefix="/api")
+    except ImportError:
+        logger.warning("Data validation routes not available")
+
+    try:
         from src.api.routes import advisor, optimizer, sip, status, diagnostics, analysis
         app.include_router(advisor.router, prefix="/api")
         app.include_router(sip.router, prefix="/api")
