@@ -134,3 +134,48 @@ def get_model_feature_importance(top_n: int = 10) -> dict:
     except Exception as e:
         logger.error(f"Feature importance failed: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Feature importance failed: {str(e)}")
+
+
+@router.get("/shap-importance")
+def get_shap_importance(ticker: str = "AAPL", top_n: int = 15) -> dict:
+    """SHAP-based feature importance (more accurate than built-in importances).
+
+    Uses TreeExplainer for exact Shapley values on the tree-based ensemble
+    members, weighted by their ensemble weights. This avoids the bias of
+    split-based importances toward high-cardinality features.
+    """
+    try:
+        bundle, meta = get_model_bundle()
+        if bundle is None:
+            raise HTTPException(status_code=503, detail="No model available")
+
+        model = bundle["model"]
+        scaler = bundle["scaler"]
+        feature_names = meta.get("feature_names", [])
+
+        from src.data.storage import load_features
+        df = load_features(ticker.upper())
+        if df.empty:
+            raise HTTPException(status_code=404, detail=f"No feature data for {ticker}")
+
+        X = df[feature_names].dropna().values
+        X_scaled = scaler.transform(X)
+
+        from src.models.shap_analysis import compute_shap_importance
+        result = compute_shap_importance(model, X_scaled, feature_names)
+
+        top = sorted(result["mean_abs_shap"].items(), key=lambda x: x[1], reverse=True)[:top_n]
+        return {
+            "method": "shap_tree_explainer",
+            "ticker": ticker.upper(),
+            "top_features": [{"feature": f, "shap_importance": round(v, 6)} for f, v in top],
+            "per_model": {
+                name: sorted(vals.items(), key=lambda x: x[1], reverse=True)[:5]
+                for name, vals in result["per_model"].items()
+            },
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("SHAP importance failed: %s", e, exc_info=True)
+        raise HTTPException(status_code=500, detail=f"SHAP analysis failed: {str(e)}")
