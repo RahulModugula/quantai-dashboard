@@ -1,42 +1,47 @@
-"""Centralized logging configuration."""
+"""Centralized logging configuration using structlog."""
 import logging
-import logging.handlers
 import os
 
+import structlog
 
-def configure_logging(log_level: str = "INFO", log_file: str = None):
-    """Configure application-wide logging.
+
+def configure_logging(log_level: str = "INFO", json_output: bool = None):
+    """Configure application-wide structured logging.
 
     Args:
-        log_level: Logging level (DEBUG, INFO, WARNING, ERROR)
-        log_file: Optional file to log to
+        log_level: Logging level (DEBUG, INFO, WARNING, ERROR).
+        json_output: Force JSON output. Defaults to True in production
+                     (QUANTAI_ENV=production), False otherwise.
     """
+    if json_output is None:
+        json_output = os.getenv("QUANTAI_ENV", "development") == "production"
+
     level = getattr(logging, log_level.upper(), logging.INFO)
 
-    # Root logger
-    root_logger = logging.getLogger()
-    root_logger.setLevel(level)
+    # Configure stdlib logging to route through structlog
+    logging.basicConfig(format="%(message)s", level=level)
 
-    # Console handler
-    console_handler = logging.StreamHandler()
-    console_handler.setLevel(level)
-    formatter = logging.Formatter(
-        '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    processors = [
+        structlog.contextvars.merge_contextvars,
+        structlog.stdlib.filter_by_level,
+        structlog.processors.add_log_level,
+        structlog.processors.StackInfoRenderer(),
+        structlog.processors.format_exc_info,
+        structlog.processors.TimeStamper(fmt="iso"),
+    ]
+
+    if json_output:
+        processors.append(structlog.processors.JSONRenderer())
+    else:
+        processors.append(structlog.dev.ConsoleRenderer())
+
+    structlog.configure(
+        processors=processors,
+        wrapper_class=structlog.make_filtering_bound_logger(level),
+        context_class=dict,
+        logger_factory=structlog.PrintLoggerFactory(),
+        cache_logger_on_first_use=True,
     )
-    console_handler.setFormatter(formatter)
-    root_logger.addHandler(console_handler)
-
-    # File handler (if specified)
-    if log_file:
-        os.makedirs(os.path.dirname(log_file) or '.', exist_ok=True)
-        file_handler = logging.handlers.RotatingFileHandler(
-            log_file,
-            maxBytes=10485760,  # 10MB
-            backupCount=5,
-        )
-        file_handler.setLevel(level)
-        file_handler.setFormatter(formatter)
-        root_logger.addHandler(file_handler)
 
 
 # Configure at module import

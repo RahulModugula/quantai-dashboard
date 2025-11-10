@@ -1,4 +1,4 @@
-.PHONY: setup seed train backtest run test lint format docker-up docker-down clean
+.PHONY: setup seed train backtest analyze run test lint format migrate docker-up docker-down clean
 
 PYTHON := python
 
@@ -14,6 +14,12 @@ train:
 backtest:
 	$(PYTHON) scripts/run_backtest.py --output backtest_report.json
 	@echo "Report saved to backtest_report.json"
+
+analyze:
+	$(PYTHON) -m notebooks.backtest_analysis
+
+migrate:
+	alembic upgrade head
 
 run:
 	uvicorn src.api.main:app --host 0.0.0.0 --port 8000 --reload
