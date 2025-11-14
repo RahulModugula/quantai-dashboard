@@ -1,17 +1,22 @@
 """Input validation and sanitization utilities."""
 import re
+from datetime import datetime
 
 
 def validate_ticker(ticker: str) -> bool:
-    """Validate stock ticker format."""
-    if not ticker or len(ticker) < 1 or len(ticker) > 5:
+    """Validate stock ticker format. Must be 1-5 uppercase letters."""
+    if not ticker or len(ticker) > 5:
         return False
-    return bool(re.match(r"^[A-Z]+$", ticker.upper()))
+    return bool(re.match(r"^[A-Z]+$", ticker))
 
 
 def validate_date_format(date_str: str) -> bool:
-    """Validate ISO date format (YYYY-MM-DD)."""
-    return bool(re.match(r"^\d{4}-\d{2}-\d{2}$", date_str))
+    """Validate ISO date format (YYYY-MM-DD) with actual date validity."""
+    try:
+        datetime.strptime(date_str, "%Y-%m-%d")
+        return True
+    except ValueError:
+        return False
 
 
 def validate_positive_number(value: float) -> bool:
