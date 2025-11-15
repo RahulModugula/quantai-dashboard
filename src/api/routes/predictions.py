@@ -94,8 +94,9 @@ def list_predictions() -> list[dict]:
 
 
 @router.post("/batch")
-def batch_predictions(tickers: list[str]) -> dict:
+def batch_predictions(request: dict) -> dict:
     """Get predictions for a list of tickers in one request."""
+    tickers = request.get("tickers", [])
     if not tickers:
         raise HTTPException(status_code=400, detail="At least one ticker required")
 
