@@ -1,6 +1,6 @@
 import pytest
 
-from src.advisor.sip import calculate_sip
+from src.advisor.sip import calculate_sip, reverse_sip
 
 
 def test_sip_total_invested():
@@ -88,8 +88,6 @@ def test_sip_known_value():
 
 
 # --- Reverse SIP tests ---
-
-from src.advisor.sip import reverse_sip
 
 
 def test_reverse_sip_finds_monthly_amount():

@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.middleware.trustedhost import TrustedHostMiddleware
+
 
 from src.api.exception_handlers import register_exception_handlers
 from src.api.structured_logging import RequestLoggingMiddleware
@@ -44,16 +44,10 @@ def create_app(settings: ProductionSettings = None) -> FastAPI:
         lifespan=lifespan
     )
 
-    # Add security middleware
-    app.add_middleware(
-        TrustedHostMiddleware,
-        allowed_hosts=settings.ALLOWED_HOSTS
-    )
-
     # Add CORS middleware
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=settings.CORS_ORIGINS,
+        allow_origins=settings.cors_origins,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],

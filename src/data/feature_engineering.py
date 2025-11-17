@@ -96,10 +96,6 @@ class FeatureEngineer:
         current_volume = volumes[-1]
         volume_ratio = current_volume / avg_volume if avg_volume > 0 else 1
 
-        # Volume-price correlation
-        price_change = np.diff(prices[-10:])
-        vol_change = np.diff(volumes[-10:])
-
         return {
             "volume_ratio": volume_ratio,
             "high_volume": 1 if volume_ratio > 1.5 else 0,

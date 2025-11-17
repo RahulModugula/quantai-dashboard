@@ -14,9 +14,10 @@ from datetime import datetime
 
 from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.responses import JSONResponse, RedirectResponse, Response
 
 from src.api.middleware import RequestLoggingMiddleware
+from src.monitoring.observability import get_prometheus_metrics, get_prometheus_content_type
 from src.api.routes import backtest, portfolio, predictions
 from src.api.websocket import price_feed_endpoint
 from src.data.storage import init_db
@@ -126,6 +127,14 @@ def create_app() -> FastAPI:
             "timestamp": datetime.now().isoformat(),
             "disclaimer": DISCLAIMER,
         })
+
+    @app.get("/api/metrics/prometheus", tags=["meta"])
+    def prometheus_metrics():
+        """Prometheus-format metrics for scraping."""
+        return Response(
+            content=get_prometheus_metrics(),
+            media_type=get_prometheus_content_type(),
+        )
 
     return app
 

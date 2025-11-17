@@ -110,7 +110,6 @@ class WalkForwardBacktester:
                 # Sell all
                 proceeds = shares * price
                 commission = proceeds * self.commission_pct
-                pnl = proceeds - commission
 
                 # Find last buy to compute realized PnL
                 last_buy = next((t for t in reversed(trades_log) if t["side"] == "buy"), None)
@@ -141,7 +140,6 @@ class WalkForwardBacktester:
         # Compute trade-level analytics
         if not trades_df.empty:
             sell_trades = trades_df[trades_df["side"] == "sell"]
-            buy_trades = trades_df[trades_df["side"] == "buy"]
             if not sell_trades.empty:
                 avg_win = sell_trades[sell_trades["pnl"] > 0]["pnl"].mean()
                 avg_loss = abs(sell_trades[sell_trades["pnl"] <= 0]["pnl"].mean()) if (sell_trades["pnl"] <= 0).any() else 0

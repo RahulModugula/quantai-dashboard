@@ -3,12 +3,13 @@ from dash import dcc, html
 
 
 def risk_panel_layout() -> html.Div:
-    metric_card = lambda label, id_: dbc.Card([
-        dbc.CardBody([
-            html.H6(label, className="text-muted text-center"),
-            html.H4(id=id_, children="—", className="text-center"),
-        ])
-    ], className="h-100")
+    def metric_card(label, id_):
+        return dbc.Card([
+            dbc.CardBody([
+                html.H6(label, className="text-muted text-center"),
+                html.H4(id=id_, children="—", className="text-center"),
+            ])
+        ], className="h-100")
 
     return html.Div([
         dbc.Row([
