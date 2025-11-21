@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from src.backtest.metrics import expectancy, recovery_factor, compute_all_metrics
+from src.backtest.metrics import expectancy, recovery_factor, compute_all_metrics, benchmark_comparison
 
 
 @pytest.fixture
@@ -73,3 +73,36 @@ def test_compute_all_metrics_empty_trades(equity_curve):
     assert metrics["expectancy"] == 0.0
     assert metrics["avg_win"] == 0.0
     assert metrics["avg_loss"] == 0.0
+
+
+# --- Benchmark comparison tests ---
+
+
+def test_benchmark_comparison_returns_keys():
+    dates = pd.bdate_range("2024-01-02", periods=100)
+    equity = pd.Series(100 * (1.001 ** np.arange(100)), index=dates)
+    bench = pd.Series(100 * (1.0005 ** np.arange(100)), index=dates)
+    result = benchmark_comparison(equity, bench)
+    assert "alpha" in result
+    assert "beta" in result
+    assert "benchmark_return" in result
+    assert "benchmark_sharpe" in result
+
+
+def test_benchmark_comparison_no_overlap():
+    eq = pd.Series([100, 101, 102], index=pd.bdate_range("2020-01-02", periods=3))
+    bm = pd.Series([100, 101, 102], index=pd.bdate_range("2024-01-02", periods=3))
+    result = benchmark_comparison(eq, bm)
+    assert result["alpha"] == 0.0
+    assert result["beta"] == 0.0
+
+
+def test_benchmark_beta_near_one_for_identical():
+    """If strategy matches benchmark, beta should be near 1."""
+    dates = pd.bdate_range("2024-01-02", periods=200)
+    rng = np.random.default_rng(42)
+    prices = 100 * (1 + rng.normal(0.0005, 0.01, 200)).cumprod()
+    equity = pd.Series(prices, index=dates)
+    bench = pd.Series(prices, index=dates)
+    result = benchmark_comparison(equity, bench)
+    assert abs(result["beta"] - 1.0) < 0.1
