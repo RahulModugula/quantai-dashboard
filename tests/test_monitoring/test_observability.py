@@ -2,7 +2,6 @@
 from src.monitoring.observability import (
     REQUEST_COUNT,
     REQUEST_LATENCY,
-    MODEL_INFERENCE_LATENCY,
     MODEL_PREDICTIONS,
     get_prometheus_metrics,
     get_prometheus_content_type,
@@ -13,7 +12,6 @@ from src.monitoring.observability import (
 
 class TestPrometheusMetrics:
     def test_request_count_increments(self):
-        before = REQUEST_COUNT._metrics.copy()
         REQUEST_COUNT.labels(method="GET", endpoint="/test", status_code="200").inc()
         output = get_prometheus_metrics().decode()
         assert "http_requests_total" in output
