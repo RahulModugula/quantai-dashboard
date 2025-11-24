@@ -1,4 +1,5 @@
 """Unit tests for the walk-forward backtest engine."""
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -12,11 +13,13 @@ def sample_predictions():
     dates = pd.bdate_range("2024-01-02", periods=20)
     rng = np.random.default_rng(42)
     probs = rng.uniform(0.3, 0.8, size=20)
-    return pd.DataFrame({
-        "date": dates,
-        "ticker": "TEST",
-        "probability_up": probs,
-    })
+    return pd.DataFrame(
+        {
+            "date": dates,
+            "ticker": "TEST",
+            "probability_up": probs,
+        }
+    )
 
 
 @pytest.fixture
@@ -27,11 +30,13 @@ def sample_prices():
     rng = np.random.default_rng(42)
     for _ in range(20):
         prices.append(prices[-1] * (1 + rng.normal(0.001, 0.02)))
-    return pd.DataFrame({
-        "date": dates,
-        "ticker": "TEST",
-        "close": prices,
-    })
+    return pd.DataFrame(
+        {
+            "date": dates,
+            "ticker": "TEST",
+            "close": prices,
+        }
+    )
 
 
 class TestBacktestRun:
@@ -75,11 +80,13 @@ class TestTradeExecution:
     def test_buy_above_threshold(self, sample_prices):
         """High probability should trigger a buy."""
         dates = pd.bdate_range("2024-01-02", periods=5)
-        preds = pd.DataFrame({
-            "date": dates,
-            "ticker": "TEST",
-            "probability_up": [0.8, 0.5, 0.5, 0.5, 0.5],
-        })
+        preds = pd.DataFrame(
+            {
+                "date": dates,
+                "ticker": "TEST",
+                "probability_up": [0.8, 0.5, 0.5, 0.5, 0.5],
+            }
+        )
         bt = WalkForwardBacktester(buy_threshold=0.6, sell_threshold=0.4)
         result = bt.run(preds, sample_prices)
         buys = result.trades[result.trades["side"] == "buy"]
@@ -88,11 +95,13 @@ class TestTradeExecution:
     def test_sell_below_threshold(self, sample_prices):
         """Low probability should trigger a sell after holding."""
         dates = pd.bdate_range("2024-01-02", periods=5)
-        preds = pd.DataFrame({
-            "date": dates,
-            "ticker": "TEST",
-            "probability_up": [0.8, 0.3, 0.5, 0.5, 0.5],
-        })
+        preds = pd.DataFrame(
+            {
+                "date": dates,
+                "ticker": "TEST",
+                "probability_up": [0.8, 0.3, 0.5, 0.5, 0.5],
+            }
+        )
         bt = WalkForwardBacktester(buy_threshold=0.6, sell_threshold=0.4)
         result = bt.run(preds, sample_prices)
         sells = result.trades[result.trades["side"] == "sell"]
@@ -101,11 +110,13 @@ class TestTradeExecution:
     def test_no_trade_in_hold_zone(self, sample_prices):
         """Probabilities between thresholds should not trigger trades."""
         dates = pd.bdate_range("2024-01-02", periods=5)
-        preds = pd.DataFrame({
-            "date": dates,
-            "ticker": "TEST",
-            "probability_up": [0.5, 0.5, 0.5, 0.5, 0.5],
-        })
+        preds = pd.DataFrame(
+            {
+                "date": dates,
+                "ticker": "TEST",
+                "probability_up": [0.5, 0.5, 0.5, 0.5, 0.5],
+            }
+        )
         bt = WalkForwardBacktester(buy_threshold=0.6, sell_threshold=0.4)
         result = bt.run(preds, sample_prices)
         assert len(result.trades) == 0
@@ -113,11 +124,13 @@ class TestTradeExecution:
     def test_commission_reduces_equity(self, sample_prices):
         """Higher commission should produce lower final equity."""
         dates = pd.bdate_range("2024-01-02", periods=5)
-        preds = pd.DataFrame({
-            "date": dates,
-            "ticker": "TEST",
-            "probability_up": [0.8, 0.3, 0.8, 0.3, 0.5],
-        })
+        preds = pd.DataFrame(
+            {
+                "date": dates,
+                "ticker": "TEST",
+                "probability_up": [0.8, 0.3, 0.8, 0.3, 0.5],
+            }
+        )
         bt_low = WalkForwardBacktester(commission_pct=0.0)
         bt_high = WalkForwardBacktester(commission_pct=0.05)
         r_low = bt_low.run(preds, sample_prices)
@@ -127,27 +140,33 @@ class TestTradeExecution:
 
 class TestEdgeCases:
     def test_no_overlapping_dates_raises(self):
-        preds = pd.DataFrame({
-            "date": pd.bdate_range("2020-01-02", periods=5),
-            "ticker": "TEST",
-            "probability_up": [0.5] * 5,
-        })
-        prices = pd.DataFrame({
-            "date": pd.bdate_range("2024-01-02", periods=5),
-            "ticker": "TEST",
-            "close": [100.0] * 5,
-        })
+        preds = pd.DataFrame(
+            {
+                "date": pd.bdate_range("2020-01-02", periods=5),
+                "ticker": "TEST",
+                "probability_up": [0.5] * 5,
+            }
+        )
+        prices = pd.DataFrame(
+            {
+                "date": pd.bdate_range("2024-01-02", periods=5),
+                "ticker": "TEST",
+                "close": [100.0] * 5,
+            }
+        )
         bt = WalkForwardBacktester()
         with pytest.raises(ValueError, match="No overlapping dates"):
             bt.run(preds, prices)
 
     def test_single_prediction(self, sample_prices):
         """Should handle a single prediction without crashing."""
-        preds = pd.DataFrame({
-            "date": [pd.Timestamp("2024-01-02")],
-            "ticker": "TEST",
-            "probability_up": [0.7],
-        })
+        preds = pd.DataFrame(
+            {
+                "date": [pd.Timestamp("2024-01-02")],
+                "ticker": "TEST",
+                "probability_up": [0.7],
+            }
+        )
         bt = WalkForwardBacktester()
         result = bt.run(preds, sample_prices)
         assert len(result.equity_curve) == 1

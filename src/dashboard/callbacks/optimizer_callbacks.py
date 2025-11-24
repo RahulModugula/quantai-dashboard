@@ -35,12 +35,16 @@ def register_optimizer_callbacks(app):
             return empty_fig, empty_fig
 
         # Pie chart
-        pie = go.Figure(data=[go.Pie(
-            labels=list(weights.keys()),
-            values=list(weights.values()),
-            hole=0.4,
-            textinfo="label+percent",
-        )])
+        pie = go.Figure(
+            data=[
+                go.Pie(
+                    labels=list(weights.keys()),
+                    values=list(weights.values()),
+                    hole=0.4,
+                    textinfo="label+percent",
+                )
+            ]
+        )
         pie.update_layout(
             template="plotly_white",
             title=f"{method.replace('_', ' ').title()} Allocation",
@@ -58,13 +62,15 @@ def register_optimizer_callbacks(app):
             data = resp.json()
             frontier = data.get("frontier", [])
             if frontier:
-                frontier_fig.add_trace(go.Scatter(
-                    x=[p["risk"] for p in frontier],
-                    y=[p["return"] for p in frontier],
-                    mode="lines",
-                    name="Efficient Frontier",
-                    line=dict(color="#2c7be5", width=2),
-                ))
+                frontier_fig.add_trace(
+                    go.Scatter(
+                        x=[p["risk"] for p in frontier],
+                        y=[p["return"] for p in frontier],
+                        mode="lines",
+                        name="Efficient Frontier",
+                        line=dict(color="#2c7be5", width=2),
+                    )
+                )
         except Exception:
             pass
 

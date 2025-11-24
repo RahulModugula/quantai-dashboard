@@ -1,4 +1,5 @@
 """Request context management and correlation IDs."""
+
 import contextvars
 import uuid
 import logging
@@ -9,12 +10,8 @@ from starlette.middleware.base import BaseHTTPMiddleware
 logger = logging.getLogger(__name__)
 
 # Context variables for request tracking
-request_id_context: contextvars.ContextVar[str] = contextvars.ContextVar(
-    "request_id", default=""
-)
-user_context: contextvars.ContextVar[Optional[str]] = contextvars.ContextVar(
-    "user", default=None
-)
+request_id_context: contextvars.ContextVar[str] = contextvars.ContextVar("request_id", default="")
+user_context: contextvars.ContextVar[Optional[str]] = contextvars.ContextVar("user", default=None)
 
 
 class RequestContextMiddleware(BaseHTTPMiddleware):

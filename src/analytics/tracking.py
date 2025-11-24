@@ -1,4 +1,5 @@
 """Analytics and user event tracking."""
+
 import logging
 from typing import Any, Dict, List, Optional
 from datetime import datetime
@@ -169,9 +170,7 @@ class AnalyticsCollector:
 
             completion_rate = 0
             if i > 0 and funnel.get(actions[i - 1], {}).get("count", 0) > 0:
-                completion_rate = (
-                    count / funnel[actions[i - 1]]["count"] * 100
-                )
+                completion_rate = count / funnel[actions[i - 1]]["count"] * 100
 
             funnel[action] = {
                 "count": count,
@@ -184,9 +183,7 @@ class AnalyticsCollector:
         return {
             "actions": actions,
             "funnel": funnel,
-            "completion_rate": round(
-                (completed_count / len(actions) * 100) if actions else 0, 2
-            ),
+            "completion_rate": round((completed_count / len(actions) * 100) if actions else 0, 2),
         }
 
     def get_summary(self) -> Dict:

@@ -1,4 +1,5 @@
 """Alert and notification system."""
+
 import logging
 from typing import Dict, List, Optional, Callable
 from datetime import datetime
@@ -105,7 +106,7 @@ class AlertManager:
 
         logger.log(
             logging.WARNING if severity == AlertSeverity.WARNING else logging.ERROR,
-            f"Alert created: {title}"
+            f"Alert created: {title}",
         )
 
         return alert
@@ -188,11 +189,14 @@ class AlertManager:
         if acknowledged is not None:
             alerts = [a for a in alerts if a.acknowledged == acknowledged]
 
-        return [a.to_dict() for a in sorted(
-            alerts,
-            key=lambda a: a.created_at,
-            reverse=True,
-        )]
+        return [
+            a.to_dict()
+            for a in sorted(
+                alerts,
+                key=lambda a: a.created_at,
+                reverse=True,
+            )
+        ]
 
     def acknowledge_alert(self, alert_id: str) -> bool:
         """Acknowledge an alert."""

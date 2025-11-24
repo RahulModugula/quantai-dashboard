@@ -46,14 +46,16 @@ def mock_paper_trader():
 def sample_features_df():
     """Create sample features DataFrame."""
     dates = pd.date_range("2023-01-01", periods=100, freq="D")
-    return pd.DataFrame({
-        "date": dates,
-        "ticker": "AAPL",
-        "rsi_14": np.random.uniform(30, 70, 100),
-        "macd": np.random.randn(100),
-        "bb_pct_b": np.random.uniform(0, 1, 100),
-        "close": 150.0 + np.cumsum(np.random.randn(100) * 0.5),
-    })
+    return pd.DataFrame(
+        {
+            "date": dates,
+            "ticker": "AAPL",
+            "rsi_14": np.random.uniform(30, 70, 100),
+            "macd": np.random.randn(100),
+            "bb_pct_b": np.random.uniform(0, 1, 100),
+            "close": 150.0 + np.cumsum(np.random.randn(100) * 0.5),
+        }
+    )
 
 
 @patch("src.api.routes.predictions.get_paper_trader")

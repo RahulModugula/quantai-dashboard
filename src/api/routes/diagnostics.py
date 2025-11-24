@@ -1,4 +1,5 @@
 """Diagnostics endpoints for troubleshooting and model analysis."""
+
 import logging
 from fastapi import APIRouter, HTTPException
 
@@ -94,7 +95,9 @@ def validate_config() -> dict:
 
     # Check commission
     if settings.commission_pct > 0.01:
-        warnings.append(f"commission_pct={settings.commission_pct} is unusually high (typical: 0.1%)")
+        warnings.append(
+            f"commission_pct={settings.commission_pct} is unusually high (typical: 0.1%)"
+        )
 
     return {
         "valid": len(errors) == 0,

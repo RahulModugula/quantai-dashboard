@@ -1,4 +1,5 @@
 """Model comparison and selection endpoints."""
+
 import logging
 from fastapi import APIRouter, HTTPException
 
@@ -29,12 +30,15 @@ def get_model_performance() -> dict:
                 "lstm": {"accuracy": 0.62, "f1": 0.60},
             }
 
-        ensemble_performance = meta.get("ensemble_performance", {
-            "accuracy": 0.72,
-            "f1": 0.70,
-            "precision": 0.71,
-            "recall": 0.69,
-        })
+        ensemble_performance = meta.get(
+            "ensemble_performance",
+            {
+                "accuracy": 0.72,
+                "f1": 0.70,
+                "precision": 0.71,
+                "recall": 0.69,
+            },
+        )
 
         return {
             "ensemble": ensemble_performance,
@@ -127,7 +131,9 @@ def get_model_feature_importance(top_n: int = 10) -> dict:
         top_features = sorted(importances.items(), key=lambda x: x[1], reverse=True)[:top_n]
 
         return {
-            "top_features": [{"feature": f, "importance": round(imp, 4)} for f, imp in top_features],
+            "top_features": [
+                {"feature": f, "importance": round(imp, 4)} for f, imp in top_features
+            ],
             "total_features": len(feature_names),
             "coverage_pct": sum(imp for _, imp in top_features) * 100,
         }
@@ -154,6 +160,7 @@ def get_shap_importance(ticker: str = "AAPL", top_n: int = 15) -> dict:
         feature_names = meta.get("feature_names", [])
 
         from src.data.storage import load_features
+
         df = load_features(ticker.upper())
         if df.empty:
             raise HTTPException(status_code=404, detail=f"No feature data for {ticker}")
@@ -162,6 +169,7 @@ def get_shap_importance(ticker: str = "AAPL", top_n: int = 15) -> dict:
         X_scaled = scaler.transform(X)
 
         from src.models.shap_analysis import compute_shap_importance
+
         result = compute_shap_importance(model, X_scaled, feature_names)
 
         top = sorted(result["mean_abs_shap"].items(), key=lambda x: x[1], reverse=True)[:top_n]

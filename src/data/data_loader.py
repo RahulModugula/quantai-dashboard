@@ -1,4 +1,5 @@
 """Unified data loading interface."""
+
 import logging
 import pandas as pd
 
@@ -12,7 +13,9 @@ class DataLoader:
         self.cache_enabled = cache_enabled
         self._cache = {}
 
-    def load_prices(self, ticker: str, start_date: str = None, end_date: str = None) -> pd.DataFrame:
+    def load_prices(
+        self, ticker: str, start_date: str = None, end_date: str = None
+    ) -> pd.DataFrame:
         """Load OHLCV price data.
 
         Args:

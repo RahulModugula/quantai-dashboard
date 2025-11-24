@@ -1,4 +1,5 @@
 """Feature flags for gradual rollout of new functionality."""
+
 import logging
 from typing import Dict, Set, Optional
 from datetime import datetime
@@ -118,7 +119,7 @@ class FeatureFlagManager:
         name: str,
         enabled: bool = False,
         strategy: RolloutStrategy = RolloutStrategy.ALL_USERS,
-        **kwargs
+        **kwargs,
     ) -> FeatureFlag:
         """Register a new feature flag."""
         flag = FeatureFlag(name, enabled, strategy, **kwargs)

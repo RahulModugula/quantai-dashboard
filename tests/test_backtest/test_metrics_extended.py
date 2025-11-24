@@ -1,20 +1,28 @@
 """Tests for expectancy, recovery_factor, and extended compute_all_metrics."""
+
 import numpy as np
 import pandas as pd
 import pytest
 
-from src.backtest.metrics import expectancy, recovery_factor, compute_all_metrics, benchmark_comparison
+from src.backtest.metrics import (
+    expectancy,
+    recovery_factor,
+    compute_all_metrics,
+    benchmark_comparison,
+)
 
 
 @pytest.fixture
 def sample_trades():
-    return pd.DataFrame([
-        {"pnl": 200.0},
-        {"pnl": -80.0},
-        {"pnl": 150.0},
-        {"pnl": -40.0},
-        {"pnl": 300.0},
-    ])
+    return pd.DataFrame(
+        [
+            {"pnl": 200.0},
+            {"pnl": -80.0},
+            {"pnl": 150.0},
+            {"pnl": -40.0},
+            {"pnl": 300.0},
+        ]
+    )
 
 
 @pytest.fixture

@@ -5,11 +5,16 @@ from torch.utils.data import DataLoader, TensorDataset
 
 
 class LSTMNet(nn.Module):
-    def __init__(self, input_dim: int, hidden_dim: int = 64, num_layers: int = 2, dropout: float = 0.2):
+    def __init__(
+        self, input_dim: int, hidden_dim: int = 64, num_layers: int = 2, dropout: float = 0.2
+    ):
         super().__init__()
         self.lstm = nn.LSTM(
-            input_dim, hidden_dim, num_layers=num_layers,
-            batch_first=True, dropout=dropout if num_layers > 1 else 0,
+            input_dim,
+            hidden_dim,
+            num_layers=num_layers,
+            batch_first=True,
+            dropout=dropout if num_layers > 1 else 0,
         )
         self.fc = nn.Sequential(
             nn.Linear(hidden_dim, 32),
@@ -71,9 +76,9 @@ class LSTMWrapper:
             return self
 
         self.input_dim = X_seq.shape[2]
-        self.model = LSTMNet(
-            self.input_dim, self.hidden_dim, self.num_layers, self.dropout
-        ).to(self.device)
+        self.model = LSTMNet(self.input_dim, self.hidden_dim, self.num_layers, self.dropout).to(
+            self.device
+        )
 
         dataset = TensorDataset(
             torch.FloatTensor(X_seq).to(self.device),

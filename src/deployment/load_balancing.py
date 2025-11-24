@@ -1,4 +1,5 @@
 """Load balancing strategies."""
+
 import logging
 from typing import List, Optional
 from enum import Enum
@@ -80,10 +81,7 @@ class LoadBalancer:
 
     def remove_server(self, host: str, port: int):
         """Remove server from load balancer."""
-        self.servers = [
-            s for s in self.servers
-            if not (s.host == host and s.port == port)
-        ]
+        self.servers = [s for s in self.servers if not (s.host == host and s.port == port)]
 
         logger.info(f"Server removed from load balancer: {host}:{port}")
 

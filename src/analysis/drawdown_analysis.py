@@ -1,4 +1,5 @@
 """Drawdown and loss analysis utilities."""
+
 import numpy as np
 
 
@@ -35,15 +36,17 @@ class DrawdownAnalyzer:
             elif drawdown[i] >= 0 and in_drawdown:
                 in_drawdown = False
                 end_idx = i
-                drawdown_periods.append({
-                    "start_idx": start_idx,
-                    "end_idx": end_idx,
-                    "duration": end_idx - start_idx,
-                    "peak_value": float(peak_value),
-                    "trough_value": float(np.min(equity[start_idx:end_idx])),
-                    "magnitude": float(np.min(drawdown[start_idx:end_idx])),
-                    "recovery_time": end_idx - start_idx,
-                })
+                drawdown_periods.append(
+                    {
+                        "start_idx": start_idx,
+                        "end_idx": end_idx,
+                        "duration": end_idx - start_idx,
+                        "peak_value": float(peak_value),
+                        "trough_value": float(np.min(equity[start_idx:end_idx])),
+                        "magnitude": float(np.min(drawdown[start_idx:end_idx])),
+                        "recovery_time": end_idx - start_idx,
+                    }
+                )
 
         return drawdown_periods
 

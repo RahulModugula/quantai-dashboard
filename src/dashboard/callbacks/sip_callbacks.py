@@ -33,14 +33,18 @@ def register_sip_callbacks(app):
     )
     def calculate_sip(n_clicks, amount, duration, ret, inflation, tax, stepup):
         try:
-            resp = httpx.post(f"{BASE_URL}/api/sip/calculate", json={
-                "monthly_amount": amount or 10000,
-                "duration_years": duration or 20,
-                "expected_return": (ret or 12) / 100,
-                "inflation_rate": (inflation or 6) / 100,
-                "tax_rate": (tax or 10) / 100,
-                "step_up_pct": (stepup or 0) / 100,
-            }, timeout=5)
+            resp = httpx.post(
+                f"{BASE_URL}/api/sip/calculate",
+                json={
+                    "monthly_amount": amount or 10000,
+                    "duration_years": duration or 20,
+                    "expected_return": (ret or 12) / 100,
+                    "inflation_rate": (inflation or 6) / 100,
+                    "tax_rate": (tax or 10) / 100,
+                    "step_up_pct": (stepup or 0) / 100,
+                },
+                timeout=5,
+            )
 
             if resp.status_code != 200:
                 return "—", "—", "—", "—", go.Figure(), html.Div("Error")
@@ -57,15 +61,39 @@ def register_sip_callbacks(app):
             fig = go.Figure()
             if breakdown:
                 years = [b["year"] for b in breakdown]
-                fig.add_trace(go.Scatter(x=years, y=[b["total_invested"] for b in breakdown],
-                                         name="Total Invested", fill="tozeroy",
-                                         line=dict(color="#adb5bd", width=1)))
-                fig.add_trace(go.Scatter(x=years, y=[b["pre_tax_corpus"] for b in breakdown],
-                                         name="Pre-Tax Corpus", line=dict(color="#4A90D9", width=2)))
-                fig.add_trace(go.Scatter(x=years, y=[b["post_tax_corpus"] for b in breakdown],
-                                         name="Post-Tax Corpus", line=dict(color="#28a745", width=2)))
-                fig.add_trace(go.Scatter(x=years, y=[b["inflation_adjusted"] for b in breakdown],
-                                         name="Real Value", line=dict(color="#fd7e14", width=2, dash="dot")))
+                fig.add_trace(
+                    go.Scatter(
+                        x=years,
+                        y=[b["total_invested"] for b in breakdown],
+                        name="Total Invested",
+                        fill="tozeroy",
+                        line=dict(color="#adb5bd", width=1),
+                    )
+                )
+                fig.add_trace(
+                    go.Scatter(
+                        x=years,
+                        y=[b["pre_tax_corpus"] for b in breakdown],
+                        name="Pre-Tax Corpus",
+                        line=dict(color="#4A90D9", width=2),
+                    )
+                )
+                fig.add_trace(
+                    go.Scatter(
+                        x=years,
+                        y=[b["post_tax_corpus"] for b in breakdown],
+                        name="Post-Tax Corpus",
+                        line=dict(color="#28a745", width=2),
+                    )
+                )
+                fig.add_trace(
+                    go.Scatter(
+                        x=years,
+                        y=[b["inflation_adjusted"] for b in breakdown],
+                        name="Real Value",
+                        line=dict(color="#fd7e14", width=2, dash="dot"),
+                    )
+                )
                 fig.update_layout(
                     template="plotly_white",
                     xaxis_title="Year",
@@ -74,14 +102,21 @@ def register_sip_callbacks(app):
                     legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
                 )
 
-            summary = html.Div([
-                html.P([html.Strong("Wealth Gain: "), fmt_inr(data["wealth_gain"])]),
-                html.P([html.Strong("Gain %: "), f"{data['wealth_gain_pct']:.1f}%"]),
-                html.P([html.Strong("Effective Return (post-tax): "), f"{data['effective_return_post_tax']:.2f}%"]),
-                html.P([html.Strong("Tax Paid: "), fmt_inr(data["tax_amount"])]),
-                html.Hr(),
-                html.Small(data.get("disclaimer", ""), className="text-muted"),
-            ])
+            summary = html.Div(
+                [
+                    html.P([html.Strong("Wealth Gain: "), fmt_inr(data["wealth_gain"])]),
+                    html.P([html.Strong("Gain %: "), f"{data['wealth_gain_pct']:.1f}%"]),
+                    html.P(
+                        [
+                            html.Strong("Effective Return (post-tax): "),
+                            f"{data['effective_return_post_tax']:.2f}%",
+                        ]
+                    ),
+                    html.P([html.Strong("Tax Paid: "), fmt_inr(data["tax_amount"])]),
+                    html.Hr(),
+                    html.Small(data.get("disclaimer", ""), className="text-muted"),
+                ]
+            )
 
             return invested, pretax, posttax, real, fig, summary
 

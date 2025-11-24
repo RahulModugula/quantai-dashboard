@@ -1,4 +1,5 @@
 """Query builder for constructing database queries."""
+
 import logging
 from typing import Any, Dict, List, Union
 from enum import Enum
@@ -132,11 +133,13 @@ class QueryBuilder:
         Returns:
             Self for chaining
         """
-        self.where_conditions.append({
-            "field": field,
-            "operator": ComparisonOperator.IS_NULL.value,
-            "value": None,
-        })
+        self.where_conditions.append(
+            {
+                "field": field,
+                "operator": ComparisonOperator.IS_NULL.value,
+                "value": None,
+            }
+        )
         return self
 
     def order_by(self, field: str, order: Union[SortOrder, str] = SortOrder.ASC) -> "QueryBuilder":
@@ -220,11 +223,16 @@ class QueryBuilder:
                 operator = condition["operator"]
                 value = condition["value"]
 
-                if operator in (ComparisonOperator.IS_NULL.value, ComparisonOperator.IS_NOT_NULL.value):
+                if operator in (
+                    ComparisonOperator.IS_NULL.value,
+                    ComparisonOperator.IS_NOT_NULL.value,
+                ):
                     where_parts.append(f"{field} {operator}")
                 elif operator in (ComparisonOperator.IN.value, ComparisonOperator.NOT_IN.value):
                     if isinstance(value, list):
-                        values_str = ", ".join(f"'{v}'" if isinstance(v, str) else str(v) for v in value)
+                        values_str = ", ".join(
+                            f"'{v}'" if isinstance(v, str) else str(v) for v in value
+                        )
                         where_parts.append(f"{field} {operator} ({values_str})")
                 else:
                     if isinstance(value, str):

@@ -1,4 +1,5 @@
 """Retry mechanism with exponential backoff."""
+
 import logging
 import time
 import asyncio
@@ -46,11 +47,12 @@ class RetryPolicy:
 
     def get_delay(self, attempt: int) -> float:
         """Calculate delay for attempt."""
-        delay = self.initial_delay * (self.exponential_base ** attempt)
+        delay = self.initial_delay * (self.exponential_base**attempt)
         delay = min(delay, self.max_delay)
 
         if self.jitter:
             import random
+
             delay *= random.uniform(0.5, 1.5)
 
         return delay
@@ -88,9 +90,7 @@ class Retry:
                 last_exception = e
 
                 if not self.policy.should_retry(attempt, e):
-                    logger.error(
-                        f"Max retries exceeded for {func.__name__}: {str(e)}"
-                    )
+                    logger.error(f"Max retries exceeded for {func.__name__}: {str(e)}")
                     raise RetryException(
                         f"Failed after {self.policy.max_attempts} attempts",
                         last_exception,
@@ -119,9 +119,7 @@ class Retry:
                 last_exception = e
 
                 if not self.policy.should_retry(attempt, e):
-                    logger.error(
-                        f"Max retries exceeded for {func.__name__}: {str(e)}"
-                    )
+                    logger.error(f"Max retries exceeded for {func.__name__}: {str(e)}")
                     raise RetryException(
                         f"Failed after {self.policy.max_attempts} attempts",
                         last_exception,

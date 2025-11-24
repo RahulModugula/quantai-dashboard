@@ -1,4 +1,5 @@
 """Backup and recovery system."""
+
 import logging
 from typing import Dict, List, Optional
 from datetime import datetime
@@ -88,9 +89,7 @@ class BackupManager:
         )
 
         self.backups.append(metadata)
-        logger.info(
-            f"Backup created: {backup_id} ({size_bytes} bytes, {file_count} files)"
-        )
+        logger.info(f"Backup created: {backup_id} ({size_bytes} bytes, {file_count} files)")
 
         return metadata
 
@@ -107,9 +106,7 @@ class BackupManager:
                 for directory in ["./data", "./config", "./src"]:
                     if os.path.exists(directory):
                         tar.add(directory, arcname=directory)
-                        file_count += len(
-                            [f for f in Path(directory).rglob("*")]
-                        )
+                        file_count += len([f for f in Path(directory).rglob("*")])
         except Exception as e:
             logger.error(f"Failed to create backup: {e}")
             raise
@@ -133,6 +130,7 @@ class BackupManager:
 
         try:
             import tarfile
+
             with tarfile.open(backup_file, "r:gz") as tar:
                 tar.extractall(path="./")
 
@@ -168,11 +166,14 @@ class BackupManager:
 
     def list_backups(self) -> List[Dict]:
         """List all backups."""
-        return [b.to_dict() for b in sorted(
-            self.backups,
-            key=lambda b: b.timestamp,
-            reverse=True,
-        )]
+        return [
+            b.to_dict()
+            for b in sorted(
+                self.backups,
+                key=lambda b: b.timestamp,
+                reverse=True,
+            )
+        ]
 
     def get_backup_info(self, backup_id: str) -> Optional[Dict]:
         """Get information about a backup."""
@@ -218,17 +219,9 @@ class BackupManager:
         return {
             "total_backups": len(self.backups),
             "total_size_bytes": total_size,
-            "total_size_gb": round(total_size / (1024 ** 3), 2),
-            "oldest_backup": (
-                self.backups[-1].timestamp.isoformat()
-                if self.backups
-                else None
-            ),
-            "newest_backup": (
-                self.backups[0].timestamp.isoformat()
-                if self.backups
-                else None
-            ),
+            "total_size_gb": round(total_size / (1024**3), 2),
+            "oldest_backup": (self.backups[-1].timestamp.isoformat() if self.backups else None),
+            "newest_backup": (self.backups[0].timestamp.isoformat() if self.backups else None),
         }
 
 

@@ -5,6 +5,7 @@ Critical invariant: predictions[t] were generated using ONLY data available
 before time t. The engine enforces this by aligning predictions with prices
 strictly on matching dates, with no lookahead.
 """
+
 import logging
 from dataclasses import dataclass, field
 
@@ -96,15 +97,17 @@ class WalkForwardBacktester:
                 if cash >= cost + commission:
                     cash -= cost + commission
                     shares += shares_to_buy
-                    trades_log.append({
-                        "date": date,
-                        "ticker": ticker,
-                        "side": "buy",
-                        "shares": shares_to_buy,
-                        "price": price,
-                        "commission": commission,
-                        "pnl": None,
-                    })
+                    trades_log.append(
+                        {
+                            "date": date,
+                            "ticker": ticker,
+                            "side": "buy",
+                            "shares": shares_to_buy,
+                            "price": price,
+                            "commission": commission,
+                            "pnl": None,
+                        }
+                    )
 
             elif prob_up <= self.sell_threshold and shares > 0:
                 # Sell all
@@ -116,15 +119,17 @@ class WalkForwardBacktester:
                 realized_pnl = (price - last_buy["price"]) * shares - commission if last_buy else 0
 
                 cash += proceeds - commission
-                trades_log.append({
-                    "date": date,
-                    "ticker": ticker,
-                    "side": "sell",
-                    "shares": shares,
-                    "price": price,
-                    "commission": commission,
-                    "pnl": realized_pnl,
-                })
+                trades_log.append(
+                    {
+                        "date": date,
+                        "ticker": ticker,
+                        "side": "sell",
+                        "shares": shares,
+                        "price": price,
+                        "commission": commission,
+                        "pnl": realized_pnl,
+                    }
+                )
                 shares = 0.0
 
             portfolio_value = cash + shares * price
@@ -133,8 +138,12 @@ class WalkForwardBacktester:
         equity_df = pd.DataFrame(equity_values).set_index("date")
         equity_curve = equity_df["value"]
 
-        trades_df = pd.DataFrame(trades_log) if trades_log else pd.DataFrame(
-            columns=["date", "ticker", "side", "shares", "price", "commission", "pnl"]
+        trades_df = (
+            pd.DataFrame(trades_log)
+            if trades_log
+            else pd.DataFrame(
+                columns=["date", "ticker", "side", "shares", "price", "commission", "pnl"]
+            )
         )
 
         # Compute trade-level analytics
@@ -142,12 +151,18 @@ class WalkForwardBacktester:
             sell_trades = trades_df[trades_df["side"] == "sell"]
             if not sell_trades.empty:
                 avg_win = sell_trades[sell_trades["pnl"] > 0]["pnl"].mean()
-                avg_loss = abs(sell_trades[sell_trades["pnl"] <= 0]["pnl"].mean()) if (sell_trades["pnl"] <= 0).any() else 0
+                avg_loss = (
+                    abs(sell_trades[sell_trades["pnl"] <= 0]["pnl"].mean())
+                    if (sell_trades["pnl"] <= 0).any()
+                    else 0
+                )
                 trades_df.attrs["avg_win"] = float(avg_win) if not pd.isna(avg_win) else 0
                 trades_df.attrs["avg_loss"] = float(avg_loss) if not pd.isna(avg_loss) else 0
 
         metrics = compute_all_metrics(equity_curve, trades_df)
-        final_value = float(equity_curve.iloc[-1]) if len(equity_curve) > 0 else self.initial_capital
+        final_value = (
+            float(equity_curve.iloc[-1]) if len(equity_curve) > 0 else self.initial_capital
+        )
 
         logger.info(
             f"Backtest {ticker}: final={final_value:.2f}, "

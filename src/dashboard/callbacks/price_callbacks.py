@@ -33,16 +33,20 @@ def register_price_callbacks(app):
             df["date"] = pd.to_datetime(df["date"])
             df = df.tail(120)
 
-            fig = go.Figure(data=[go.Candlestick(
-                x=df["date"],
-                open=df["open"],
-                high=df["high"],
-                low=df["low"],
-                close=df["close"],
-                name=ticker,
-                increasing_line_color="#28a745",
-                decreasing_line_color="#dc3545",
-            )])
+            fig = go.Figure(
+                data=[
+                    go.Candlestick(
+                        x=df["date"],
+                        open=df["open"],
+                        high=df["high"],
+                        low=df["low"],
+                        close=df["close"],
+                        name=ticker,
+                        increasing_line_color="#28a745",
+                        decreasing_line_color="#dc3545",
+                    )
+                ]
+            )
             fig.update_layout(
                 title=f"{ticker} — Last 120 Trading Days",
                 xaxis_rangeslider_visible=False,
@@ -71,12 +75,14 @@ def register_price_callbacks(app):
                 importances = data.get("feature_importances", {})
                 if importances:
                     top = dict(list(importances.items())[:10])
-                    feat_fig = go.Figure(go.Bar(
-                        x=list(top.values()),
-                        y=list(top.keys()),
-                        orientation="h",
-                        marker_color="#4A90D9",
-                    ))
+                    feat_fig = go.Figure(
+                        go.Bar(
+                            x=list(top.values()),
+                            y=list(top.keys()),
+                            orientation="h",
+                            marker_color="#4A90D9",
+                        )
+                    )
                     feat_fig.update_layout(
                         title="Top Feature Importances",
                         template="plotly_white",

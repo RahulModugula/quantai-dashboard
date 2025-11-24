@@ -1,4 +1,5 @@
 """Main FastAPI application with production infrastructure."""
+
 from contextlib import asynccontextmanager
 import logging
 from fastapi import FastAPI
@@ -9,7 +10,11 @@ from src.api.exception_handlers import register_exception_handlers
 from src.api.structured_logging import RequestLoggingMiddleware
 from src.config.production import ProductionSettings
 from src.health.checks import HealthChecker
-from src.monitoring.observability import get_metrics_collector, get_prometheus_metrics, get_prometheus_content_type
+from src.monitoring.observability import (
+    get_metrics_collector,
+    get_prometheus_metrics,
+    get_prometheus_content_type,
+)
 from src.api.versioning import get_version_info
 
 logger = logging.getLogger(__name__)
@@ -41,7 +46,7 @@ def create_app(settings: ProductionSettings = None) -> FastAPI:
         title="QuantAI Dashboard",
         description="Real-time ML trading dashboard with backtesting",
         version=get_version_info()["current"],
-        lifespan=lifespan
+        lifespan=lifespan,
     )
 
     # Add CORS middleware
@@ -84,6 +89,7 @@ def create_app(settings: ProductionSettings = None) -> FastAPI:
     async def prometheus_metrics():
         """Prometheus-format metrics for scraping."""
         from fastapi.responses import Response
+
         return Response(
             content=get_prometheus_metrics(),
             media_type=get_prometheus_content_type(),

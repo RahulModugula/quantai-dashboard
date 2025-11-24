@@ -1,4 +1,5 @@
 """Slippage modeling for more realistic backtests."""
+
 import logging
 
 logger = logging.getLogger(__name__)
@@ -99,6 +100,6 @@ class SlippageModel:
             return price
 
         order_ratio = order_value / market_cap
-        impact = (order_ratio ** impact_elasticity) * 0.01  # Up to 1% impact
+        impact = (order_ratio**impact_elasticity) * 0.01  # Up to 1% impact
 
         return price * (1 + impact)

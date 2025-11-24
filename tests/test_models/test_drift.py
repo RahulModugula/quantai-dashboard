@@ -11,11 +11,13 @@ def _make_predictions(n: int, accuracy: float, seed: int = 42) -> pd.DataFrame:
     flip_count = int(n * (1 - accuracy))
     flip_idx = rng.choice(n, size=flip_count, replace=False)
     prediction[flip_idx] = 1 - prediction[flip_idx]
-    return pd.DataFrame({
-        "date": pd.date_range("2023-01-01", periods=n, freq="B"),
-        "prediction": prediction,
-        "actual": actual,
-    })
+    return pd.DataFrame(
+        {
+            "date": pd.date_range("2023-01-01", periods=n, freq="B"),
+            "prediction": prediction,
+            "actual": actual,
+        }
+    )
 
 
 def test_no_drift_stable_model():

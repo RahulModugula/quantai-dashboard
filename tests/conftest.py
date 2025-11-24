@@ -16,20 +16,23 @@ def sample_ohlcv():
     open_ = close * (1 + np.random.randn(n) * 0.003)
     volume = np.random.randint(1_000_000, 10_000_000, n)
 
-    return pd.DataFrame({
-        "date": dates,
-        "ticker": "TEST",
-        "open": open_,
-        "high": high,
-        "low": low,
-        "close": close,
-        "volume": volume,
-    })
+    return pd.DataFrame(
+        {
+            "date": dates,
+            "ticker": "TEST",
+            "open": open_,
+            "high": high,
+            "low": low,
+            "close": close,
+            "volume": volume,
+        }
+    )
 
 
 @pytest.fixture
 def sample_features(sample_ohlcv):
     from src.data.features import build_feature_matrix
+
     return build_feature_matrix(sample_ohlcv)
 
 

@@ -25,6 +25,7 @@ def get_model_bundle():
     """Load model bundle once and cache it."""
     try:
         from src.models.registry import load_metadata, load_model
+
         bundle = load_model()
         meta = load_metadata()
         return bundle, meta

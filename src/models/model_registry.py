@@ -1,4 +1,5 @@
 """Registry for managing multiple model versions."""
+
 import logging
 from datetime import datetime
 

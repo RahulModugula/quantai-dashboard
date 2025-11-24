@@ -49,13 +49,17 @@ class Portfolio:
         self._snapshots: list[dict] = []
         self._peak_value: float = initial_capital
 
-    def buy(self, ticker: str, shares: float, price: float, timestamp: datetime | None = None) -> Trade | None:
+    def buy(
+        self, ticker: str, shares: float, price: float, timestamp: datetime | None = None
+    ) -> Trade | None:
         cost = shares * price
         commission = cost * self.commission_pct
         total = cost + commission
 
         if total > self.cash:
-            logger.warning(f"Insufficient cash for {ticker}: need {total:.2f}, have {self.cash:.2f}")
+            logger.warning(
+                f"Insufficient cash for {ticker}: need {total:.2f}, have {self.cash:.2f}"
+            )
             return None
 
         self.cash -= total
@@ -80,7 +84,9 @@ class Portfolio:
         logger.info(f"BUY {shares:.4f} {ticker} @ {price:.2f} | cash={self.cash:.2f}")
         return trade
 
-    def sell(self, ticker: str, shares: float, price: float, timestamp: datetime | None = None) -> Trade | None:
+    def sell(
+        self, ticker: str, shares: float, price: float, timestamp: datetime | None = None
+    ) -> Trade | None:
         if ticker not in self.positions or self.positions[ticker].shares < shares:
             logger.warning(f"Cannot sell {shares} {ticker}: not enough shares")
             return None
@@ -108,7 +114,9 @@ class Portfolio:
             pnl=realized_pnl,
         )
         self.trade_history.append(trade)
-        logger.info(f"SELL {shares:.4f} {ticker} @ {price:.2f} | pnl={realized_pnl:.2f} | cash={self.cash:.2f}")
+        logger.info(
+            f"SELL {shares:.4f} {ticker} @ {price:.2f} | pnl={realized_pnl:.2f} | cash={self.cash:.2f}"
+        )
         return trade
 
     def current_drawdown(self, current_prices: dict[str, float]) -> float:
@@ -160,7 +168,8 @@ class Portfolio:
                 "current_price": current_prices.get(ticker, pos.avg_price),
                 "current_value": pos.current_value(current_prices.get(ticker, pos.avg_price)),
                 "unrealized_pnl": pos.unrealized_pnl(current_prices.get(ticker, pos.avg_price)),
-                "pnl_pct": pos.unrealized_pnl(current_prices.get(ticker, pos.avg_price)) / pos.cost_basis,
+                "pnl_pct": pos.unrealized_pnl(current_prices.get(ticker, pos.avg_price))
+                / pos.cost_basis,
             }
             for ticker, pos in self.positions.items()
         ]

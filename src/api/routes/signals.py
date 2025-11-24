@@ -1,4 +1,5 @@
 """Real-time trading signals and alert management."""
+
 import logging
 from datetime import datetime
 from fastapi import APIRouter, HTTPException
@@ -35,11 +36,13 @@ def get_latest_signal(ticker: str) -> dict:
         # Store in history
         if ticker not in _signal_history:
             _signal_history[ticker] = []
-        _signal_history[ticker].append({
-            "timestamp": datetime.now().isoformat(),
-            "signal": signal.signal_type.value,
-            "strength": signal.strength,
-        })
+        _signal_history[ticker].append(
+            {
+                "timestamp": datetime.now().isoformat(),
+                "signal": signal.signal_type.value,
+                "strength": signal.strength,
+            }
+        )
 
         # Keep only last 100 signals
         _signal_history[ticker] = _signal_history[ticker][-100:]
@@ -119,7 +122,11 @@ def get_signal_consensus(tickers: str = "AAPL,GOOGL,MSFT") -> dict:
                 "sell_pct": (sell_count / total * 100) if total > 0 else 0,
                 "hold_pct": (hold_count / total * 100) if total > 0 else 0,
             },
-            "overall_signal": "BUY" if buy_count > total / 2 else "SELL" if sell_count > total / 2 else "HOLD",
+            "overall_signal": "BUY"
+            if buy_count > total / 2
+            else "SELL"
+            if sell_count > total / 2
+            else "HOLD",
         }
     except Exception as e:
         logger.error(f"Consensus failed: {e}", exc_info=True)

@@ -1,4 +1,5 @@
 """Stress testing and scenario analysis for portfolios."""
+
 import logging
 import numpy as np
 
@@ -68,7 +69,13 @@ class StressTestRunner:
         return results
 
     @classmethod
-    def monte_carlo_simulation(cls, portfolio_value: float, daily_volatility: float, days: int = 252, simulations: int = 1000) -> dict:
+    def monte_carlo_simulation(
+        cls,
+        portfolio_value: float,
+        daily_volatility: float,
+        days: int = 252,
+        simulations: int = 1000,
+    ) -> dict:
         """Run Monte Carlo simulation of portfolio outcomes."""
         results = []
 
@@ -76,7 +83,7 @@ class StressTestRunner:
             value = portfolio_value
             for _ in range(days):
                 daily_return = np.random.normal(0, daily_volatility)
-                value *= (1 + daily_return)
+                value *= 1 + daily_return
             results.append(value)
 
         results = np.array(results)

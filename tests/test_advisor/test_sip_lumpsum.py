@@ -1,4 +1,5 @@
 """Tests for lumpsum_vs_sip comparison."""
+
 import pytest
 
 from src.advisor.sip import lumpsum_vs_sip

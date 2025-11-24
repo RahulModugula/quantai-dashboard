@@ -1,4 +1,5 @@
 """Tests for correlation utilities."""
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -10,11 +11,13 @@ from src.data.correlation import high_correlation_pairs, correlation_to_dict
 def corr_matrix():
     """Build a synthetic 3x3 correlation matrix."""
     tickers = ["AAPL", "MSFT", "GOOGL"]
-    data = np.array([
-        [1.00, 0.85, 0.40],
-        [0.85, 1.00, 0.35],
-        [0.40, 0.35, 1.00],
-    ])
+    data = np.array(
+        [
+            [1.00, 0.85, 0.40],
+            [0.85, 1.00, 0.35],
+            [0.40, 0.35, 1.00],
+        ]
+    )
     return pd.DataFrame(data, index=tickers, columns=tickers)
 
 

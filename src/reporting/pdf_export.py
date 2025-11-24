@@ -10,27 +10,33 @@ class PDFReportGenerator:
 
     def add_summary_section(self, metrics: dict):
         """Add performance summary section."""
-        self.sections.append({
-            "type": "summary",
-            "title": "Performance Summary",
-            "metrics": metrics,
-        })
+        self.sections.append(
+            {
+                "type": "summary",
+                "title": "Performance Summary",
+                "metrics": metrics,
+            }
+        )
 
     def add_trades_section(self, trades: list):
         """Add trades table section."""
-        self.sections.append({
-            "type": "trades",
-            "title": "Trade History",
-            "trades": trades,
-        })
+        self.sections.append(
+            {
+                "type": "trades",
+                "title": "Trade History",
+                "trades": trades,
+            }
+        )
 
     def add_charts_section(self, charts: list):
         """Add charts section."""
-        self.sections.append({
-            "type": "charts",
-            "title": "Performance Charts",
-            "charts": charts,
-        })
+        self.sections.append(
+            {
+                "type": "charts",
+                "title": "Performance Charts",
+                "charts": charts,
+            }
+        )
 
     def generate(self) -> str:
         """Generate PDF (placeholder)."""

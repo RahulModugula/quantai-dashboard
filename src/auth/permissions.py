@@ -1,4 +1,5 @@
 """Permission and authorization management."""
+
 from enum import Enum
 
 

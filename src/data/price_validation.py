@@ -1,4 +1,5 @@
 """Detect and handle anomalous price data."""
+
 import logging
 import numpy as np
 
@@ -82,7 +83,9 @@ class PriceAnomalyDetector:
         return stale
 
     @staticmethod
-    def validate_ohlc_consistency(open_: float, high: float, low: float, close: float) -> tuple[bool, str]:
+    def validate_ohlc_consistency(
+        open_: float, high: float, low: float, close: float
+    ) -> tuple[bool, str]:
         """Validate OHLC data consistency.
 
         Args:
@@ -111,7 +114,9 @@ class PriceAnomalyDetector:
         suggestions = []
 
         if "gaps" in str(issues):
-            suggestions.append("Investigate price gaps - may indicate stock splits or corporate actions")
+            suggestions.append(
+                "Investigate price gaps - may indicate stock splits or corporate actions"
+            )
 
         if "outliers" in str(issues):
             suggestions.append("Review outlier prices - may be data entry errors")

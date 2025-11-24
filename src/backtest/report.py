@@ -19,8 +19,14 @@ def monte_carlo_simulation(
     """
     closed = trades[trades["pnl"].notna()]
     if closed.empty:
-        return {"p5": initial_capital, "p25": initial_capital, "p50": initial_capital,
-                "p75": initial_capital, "p95": initial_capital, "mean": initial_capital}
+        return {
+            "p5": initial_capital,
+            "p25": initial_capital,
+            "p50": initial_capital,
+            "p75": initial_capital,
+            "p95": initial_capital,
+            "mean": initial_capital,
+        }
 
     trade_returns = closed["pnl"].values
     rng = np.random.default_rng(seed)
@@ -62,14 +68,16 @@ def drawdown_periods(equity_curve: pd.Series) -> list[dict]:
         elif dd >= -0.001 and in_drawdown:
             in_drawdown = False
             duration_days = (pd.Timestamp(date) - pd.Timestamp(start_date)).days
-            periods.append({
-                "start": str(start_date),
-                "end": str(date),
-                "duration_days": duration_days,
-                "max_drawdown": float(drawdown[start_date:date].min()),
-                "peak_value": peak_value,
-                "trough_value": float(equity_curve[start_date:date].min()),
-            })
+            periods.append(
+                {
+                    "start": str(start_date),
+                    "end": str(date),
+                    "duration_days": duration_days,
+                    "max_drawdown": float(drawdown[start_date:date].min()),
+                    "peak_value": peak_value,
+                    "trough_value": float(equity_curve[start_date:date].min()),
+                }
+            )
 
     return periods
 
@@ -78,11 +86,13 @@ def monthly_returns(equity_curve: pd.Series) -> pd.DataFrame:
     """Compute monthly return matrix for heatmap."""
     returns = equity_curve.resample("ME").last().pct_change().dropna()
     returns.index = pd.to_datetime(returns.index)
-    result = pd.DataFrame({
-        "year": returns.index.year,
-        "month": returns.index.month,
-        "return": returns.values,
-    })
+    result = pd.DataFrame(
+        {
+            "year": returns.index.year,
+            "month": returns.index.month,
+            "return": returns.values,
+        }
+    )
     return result
 
 
@@ -98,7 +108,9 @@ def monthly_returns_pivot(equity_curve: pd.Series) -> dict:
     return {
         "years": [int(y) for y in pivot.index],
         "months": list(range(1, 13)),
-        "data": [[None if pd.isna(v) else round(float(v) * 100, 2) for v in row] for row in pivot.values],
+        "data": [
+            [None if pd.isna(v) else round(float(v) * 100, 2) for v in row] for row in pivot.values
+        ],
     }
 
 
@@ -131,18 +143,12 @@ def generate_report(run: BacktestRun) -> dict:
     trades = run.trades
 
     # Equity curve data
-    equity_data = [
-        {"date": str(date), "value": float(val)}
-        for date, val in equity.items()
-    ]
+    equity_data = [{"date": str(date), "value": float(val)} for date, val in equity.items()]
 
     # Drawdown series
     rolling_max = equity.cummax()
     drawdown = ((equity - rolling_max) / rolling_max).fillna(0)
-    drawdown_data = [
-        {"date": str(date), "drawdown": float(val)}
-        for date, val in drawdown.items()
-    ]
+    drawdown_data = [{"date": str(date), "drawdown": float(val)} for date, val in drawdown.items()]
 
     # Trade summary
     trade_data = trades.to_dict(orient="records") if not trades.empty else []

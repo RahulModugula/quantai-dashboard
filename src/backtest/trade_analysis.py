@@ -1,4 +1,5 @@
 """Detailed trade-level analysis and categorization."""
+
 import logging
 from enum import Enum
 
@@ -83,7 +84,9 @@ class TradeAnalyzer:
     @staticmethod
     def find_winning_patterns(trades: list[dict], min_trades: int = 5) -> dict:
         """Identify patterns in winning trades."""
-        winning_trades = [t for t in trades if (t.get("exit_price", 0) - t.get("entry_price", 0)) > 0]
+        winning_trades = [
+            t for t in trades if (t.get("exit_price", 0) - t.get("entry_price", 0)) > 0
+        ]
 
         if len(winning_trades) < min_trades:
             return {"message": f"Not enough winning trades (need {min_trades})"}

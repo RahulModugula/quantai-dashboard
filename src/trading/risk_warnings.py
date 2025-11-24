@@ -1,4 +1,5 @@
 """Portfolio risk assessment and warnings for traders."""
+
 import logging
 
 logger = logging.getLogger(__name__)
@@ -26,8 +27,8 @@ def concentration_warning(positions: dict, threshold: float = 0.25) -> list[str]
         weight = pos.cost_basis / total_value
         if weight > threshold:
             warnings.append(
-                f"⚠️  {ticker} is {weight*100:.1f}% of portfolio "
-                f"(threshold: {threshold*100:.0f}%). Consider taking profits or diversifying."
+                f"⚠️  {ticker} is {weight * 100:.1f}% of portfolio "
+                f"(threshold: {threshold * 100:.0f}%). Consider taking profits or diversifying."
             )
 
     return warnings
@@ -49,7 +50,7 @@ def correlation_risk_warning(positions: dict, correlation_matrix: dict) -> list[
 
     held_tickers = list(positions.keys())
     for i, t1 in enumerate(held_tickers):
-        for t2 in held_tickers[i + 1:]:
+        for t2 in held_tickers[i + 1 :]:
             if t1 not in correlation_matrix or t2 not in correlation_matrix[t1]:
                 continue
 

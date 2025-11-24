@@ -1,4 +1,5 @@
 """Model versioning and management."""
+
 import logging
 from typing import Dict, List, Optional
 from datetime import datetime
@@ -188,12 +189,10 @@ class ModelRegistry:
             "model_name": model_name,
             "total_versions": len(versions),
             "versions": [v.to_dict() for v in versions],
-            "best_by_accuracy": max(
-                versions, key=lambda v: v.accuracy
-            ).to_dict() if versions else None,
-            "best_by_f1": max(
-                versions, key=lambda v: v.f1_score
-            ).to_dict() if versions else None,
+            "best_by_accuracy": max(versions, key=lambda v: v.accuracy).to_dict()
+            if versions
+            else None,
+            "best_by_f1": max(versions, key=lambda v: v.f1_score).to_dict() if versions else None,
         }
 
     def deprecate_version(self, model_name: str, version: str) -> bool:

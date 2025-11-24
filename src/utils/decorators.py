@@ -1,4 +1,5 @@
 """Useful decorators for trading application."""
+
 import functools
 import logging
 import time
@@ -8,6 +9,7 @@ logger = logging.getLogger(__name__)
 
 def timer(func):
     """Decorator to measure function execution time."""
+
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         start = time.time()
@@ -15,6 +17,7 @@ def timer(func):
         elapsed = time.time() - start
         logger.debug(f"{func.__name__} took {elapsed:.3f}s")
         return result
+
     return wrapper
 
 
@@ -25,6 +28,7 @@ def retry(max_attempts: int = 3, delay: float = 1.0):
         max_attempts: Maximum number of attempts
         delay: Delay between attempts in seconds
     """
+
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
@@ -36,18 +40,22 @@ def retry(max_attempts: int = 3, delay: float = 1.0):
                         raise
                     logger.warning(f"Attempt {attempt + 1} failed: {e}. Retrying...")
                     time.sleep(delay)
+
         return wrapper
+
     return decorator
 
 
 def log_calls(func):
     """Decorator to log function calls and returns."""
+
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         logger.info(f"Calling {func.__name__} with args={args}, kwargs={kwargs}")
         result = func(*args, **kwargs)
         logger.info(f"{func.__name__} returned {result}")
         return result
+
     return wrapper
 
 
@@ -59,6 +67,7 @@ def validate_input(**validators):
         def predict(ticker):
             pass
     """
+
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
@@ -66,5 +75,7 @@ def validate_input(**validators):
                 if key in kwargs and not validator(kwargs[key]):
                     raise ValueError(f"Invalid {key}: {kwargs[key]}")
             return func(*args, **kwargs)
+
         return wrapper
+
     return decorator

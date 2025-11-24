@@ -1,4 +1,5 @@
 """Trade execution and management."""
+
 import logging
 
 logger = logging.getLogger(__name__)

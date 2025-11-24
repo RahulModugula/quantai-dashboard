@@ -45,6 +45,7 @@ def efficient_frontier(req: OptimizerRequest) -> dict:
     """Compute efficient frontier for a set of tickers."""
     try:
         from src.advisor.optimizer import compute_efficient_frontier
+
         return compute_efficient_frontier(req.tickers, req.lookback_days)
     except Exception as e:
         logger.error(f"Error computing efficient frontier: {e}", exc_info=True)
@@ -56,6 +57,7 @@ def tune_thresholds(req: TuneRequest) -> dict:
     """Optimize buy/sell thresholds using Optuna."""
     try:
         from src.models.tuning import optimize_thresholds
+
         return optimize_thresholds(req.ticker, n_trials=req.n_trials)
     except Exception as e:
         logger.error(f"Error tuning thresholds: {e}", exc_info=True)

@@ -128,20 +128,30 @@ def init_db(db_path: str | None = None):
     # Create indexes for performance optimization
     with engine.begin() as conn:
         # OHLCV indexes
-        conn.execute(text("CREATE INDEX IF NOT EXISTS idx_ohlcv_ticker_date ON ohlcv(ticker, date)"))
+        conn.execute(
+            text("CREATE INDEX IF NOT EXISTS idx_ohlcv_ticker_date ON ohlcv(ticker, date)")
+        )
 
         # Features indexes
-        conn.execute(text("CREATE INDEX IF NOT EXISTS idx_features_ticker_date ON features(ticker, date)"))
+        conn.execute(
+            text("CREATE INDEX IF NOT EXISTS idx_features_ticker_date ON features(ticker, date)")
+        )
 
         # Trades indexes
         conn.execute(text("CREATE INDEX IF NOT EXISTS idx_trades_ticker ON trades(ticker)"))
         conn.execute(text("CREATE INDEX IF NOT EXISTS idx_trades_timestamp ON trades(timestamp)"))
 
         # Portfolio snapshots indexes
-        conn.execute(text("CREATE INDEX IF NOT EXISTS idx_snapshots_timestamp ON portfolio_snapshots(timestamp)"))
+        conn.execute(
+            text(
+                "CREATE INDEX IF NOT EXISTS idx_snapshots_timestamp ON portfolio_snapshots(timestamp)"
+            )
+        )
 
         # Backtest results indexes
-        conn.execute(text("CREATE INDEX IF NOT EXISTS idx_backtest_ticker ON backtest_results(ticker)"))
+        conn.execute(
+            text("CREATE INDEX IF NOT EXISTS idx_backtest_ticker ON backtest_results(ticker)")
+        )
 
     logger.info(f"Database initialized at {db_path or settings.db_path}")
     return engine
@@ -248,13 +258,9 @@ def load_trades(
 
 def save_portfolio_snapshot(snapshot: dict, db_path: str | None = None):
     engine = get_engine(db_path)
-    pd.DataFrame([snapshot]).to_sql(
-        "portfolio_snapshots", engine, if_exists="append", index=False
-    )
+    pd.DataFrame([snapshot]).to_sql("portfolio_snapshots", engine, if_exists="append", index=False)
 
 
 def save_backtest_result(result: dict, db_path: str | None = None):
     engine = get_engine(db_path)
-    pd.DataFrame([result]).to_sql(
-        "backtest_results", engine, if_exists="append", index=False
-    )
+    pd.DataFrame([result]).to_sql("backtest_results", engine, if_exists="append", index=False)

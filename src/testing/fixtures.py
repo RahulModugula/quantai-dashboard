@@ -1,4 +1,5 @@
 """Test fixtures and utilities."""
+
 import logging
 from typing import Dict, Any, List
 from datetime import datetime, timedelta
@@ -16,16 +17,18 @@ class TestDataFactory:
         base_date = datetime.now() - timedelta(days=30)
 
         for i in range(count):
-            trades.append({
-                "trade_id": f"trade_{i}",
-                "symbol": ["AAPL", "MSFT", "GOOGL", "AMZN"][i % 4],
-                "entry_price": 150 + (i * 2),
-                "exit_price": 152 + (i * 2),
-                "entry_date": (base_date + timedelta(days=i)).isoformat(),
-                "exit_date": (base_date + timedelta(days=i+1)).isoformat(),
-                "pnl": 200 + (i * 10),
-                "quantity": 10 + i,
-            })
+            trades.append(
+                {
+                    "trade_id": f"trade_{i}",
+                    "symbol": ["AAPL", "MSFT", "GOOGL", "AMZN"][i % 4],
+                    "entry_price": 150 + (i * 2),
+                    "exit_price": 152 + (i * 2),
+                    "entry_date": (base_date + timedelta(days=i)).isoformat(),
+                    "exit_date": (base_date + timedelta(days=i + 1)).isoformat(),
+                    "pnl": 200 + (i * 10),
+                    "quantity": 10 + i,
+                }
+            )
 
         return trades
 
@@ -37,14 +40,16 @@ class TestDataFactory:
 
         for i in range(days):
             date = (base_date + timedelta(days=i)).isoformat()
-            data.append({
-                "date": date,
-                "open": 150.0 + (i * 0.5),
-                "high": 152.0 + (i * 0.5),
-                "low": 149.0 + (i * 0.5),
-                "close": 151.0 + (i * 0.5),
-                "volume": 1000000 + (i * 10000),
-            })
+            data.append(
+                {
+                    "date": date,
+                    "open": 150.0 + (i * 0.5),
+                    "high": 152.0 + (i * 0.5),
+                    "low": 149.0 + (i * 0.5),
+                    "close": 151.0 + (i * 0.5),
+                    "volume": 1000000 + (i * 10000),
+                }
+            )
 
         return data
 
@@ -54,14 +59,16 @@ class TestDataFactory:
         predictions = []
 
         for i in range(count):
-            predictions.append({
-                "prediction_id": f"pred_{i}",
-                "symbol": ["AAPL", "MSFT", "GOOGL", "AMZN"][i % 4],
-                "timestamp": datetime.now().isoformat(),
-                "signal": ["BUY", "SELL", "HOLD"][i % 3],
-                "confidence": 0.7 + (i * 0.05),
-                "price_target": 150.0 + (i * 2),
-            })
+            predictions.append(
+                {
+                    "prediction_id": f"pred_{i}",
+                    "symbol": ["AAPL", "MSFT", "GOOGL", "AMZN"][i % 4],
+                    "timestamp": datetime.now().isoformat(),
+                    "signal": ["BUY", "SELL", "HOLD"][i % 3],
+                    "confidence": 0.7 + (i * 0.05),
+                    "price_target": 150.0 + (i * 2),
+                }
+            )
 
         return predictions
 

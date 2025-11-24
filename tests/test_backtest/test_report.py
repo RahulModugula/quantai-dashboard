@@ -24,7 +24,7 @@ def test_monte_carlo_all_profitable():
 
 def test_monthly_returns_pivot_structure():
     dates = pd.date_range("2023-01-01", periods=252, freq="B")
-    equity = pd.Series([100 * (1.001 ** i) for i in range(252)], index=dates)
+    equity = pd.Series([100 * (1.001**i) for i in range(252)], index=dates)
     result = monthly_returns_pivot(equity)
     assert "years" in result
     assert "months" in result

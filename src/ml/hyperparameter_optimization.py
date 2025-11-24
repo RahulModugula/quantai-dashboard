@@ -1,4 +1,5 @@
 """Automated hyperparameter optimization for models."""
+
 import logging
 
 logger = logging.getLogger(__name__)
@@ -12,7 +13,7 @@ class BayesianOptimizer:
         self.param_space = param_space
         self.history = []
         self.best_params = None
-        self.best_score = float('-inf')
+        self.best_score = float("-inf")
 
     def optimize(self, X_train, y_train, X_val, y_val, n_iterations: int = 10):
         """Run Bayesian optimization.
@@ -26,10 +27,7 @@ class BayesianOptimizer:
 
         for iteration in range(n_iterations):
             # Random sampling from param space
-            params = {
-                key: random.choice(values)
-                for key, values in self.param_space.items()
-            }
+            params = {key: random.choice(values) for key, values in self.param_space.items()}
 
             try:
                 # Train and evaluate
@@ -38,11 +36,13 @@ class BayesianOptimizer:
                 score = self.model.score(X_val, y_val)
 
                 # Track
-                self.history.append({
-                    "iteration": iteration,
-                    "params": params,
-                    "score": score,
-                })
+                self.history.append(
+                    {
+                        "iteration": iteration,
+                        "params": params,
+                        "score": score,
+                    }
+                )
 
                 if score > self.best_score:
                     self.best_score = score
@@ -84,7 +84,7 @@ class GridSearchOptimizer:
         keys = self.param_grid.keys()
         values = self.param_grid.values()
 
-        best_score = float('-inf')
+        best_score = float("-inf")
         best_params = None
 
         for param_values in product(*values):
@@ -95,10 +95,12 @@ class GridSearchOptimizer:
                 self.model.fit(X_train, y_train)
                 score = self.model.score(X_val, y_val)
 
-                self.results.append({
-                    "params": params,
-                    "score": score,
-                })
+                self.results.append(
+                    {
+                        "params": params,
+                        "score": score,
+                    }
+                )
 
                 if score > best_score:
                     best_score = score

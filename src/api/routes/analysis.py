@@ -1,4 +1,5 @@
 """Portfolio and market analysis endpoints."""
+
 import logging
 from fastapi import APIRouter, HTTPException
 
@@ -70,6 +71,7 @@ def get_sector_examples(sector: str) -> dict:
 
         if not examples:
             from src.analysis.sector import TICKER_SECTORS
+
             return {
                 "sector": sector,
                 "examples": [],

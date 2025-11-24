@@ -14,14 +14,33 @@ from src.models.registry import save_model
 logger = logging.getLogger(__name__)
 
 FEATURE_COLS = [
-    "rsi_14", "macd", "macd_signal", "macd_hist",
-    "bb_upper", "bb_middle", "bb_lower", "bb_pct_b", "bb_bandwidth",
-    "atr_14", "stoch_k", "stoch_d", "adx_14",
-    "close_to_sma50", "close_to_sma200", "sma50_to_sma200",
-    "return_lag_1", "return_lag_2", "return_lag_3", "return_lag_5",
-    "volatility_5", "volatility_20",
-    "momentum_5", "momentum_20", "mean_reversion_20",
-    "volume_ratio", "obv",
+    "rsi_14",
+    "macd",
+    "macd_signal",
+    "macd_hist",
+    "bb_upper",
+    "bb_middle",
+    "bb_lower",
+    "bb_pct_b",
+    "bb_bandwidth",
+    "atr_14",
+    "stoch_k",
+    "stoch_d",
+    "adx_14",
+    "close_to_sma50",
+    "close_to_sma200",
+    "sma50_to_sma200",
+    "return_lag_1",
+    "return_lag_2",
+    "return_lag_3",
+    "return_lag_5",
+    "volatility_5",
+    "volatility_20",
+    "momentum_5",
+    "momentum_20",
+    "mean_reversion_20",
+    "volume_ratio",
+    "obv",
 ]
 
 
@@ -87,7 +106,9 @@ def walk_forward_train(
     all_oos_preds = []
 
     fold_idx = 0
-    test_start_idx = window  # expanding window: train on [0, window], test on [window, window+interval]
+    test_start_idx = (
+        window  # expanding window: train on [0, window], test on [window, window+interval]
+    )
 
     while test_start_idx < len(X):
         test_end_idx = min(test_start_idx + retrain_interval, len(X))
@@ -104,7 +125,9 @@ def walk_forward_train(
         model = EnsembleModel(sequence_length=settings.sequence_length)
         model.fit(X_train_scaled, y_train, feature_names=feature_names)
 
-        train_acc = float(np.mean(model.predict(X_train_scaled) == y_train[-len(model.predict(X_train_scaled)):]))
+        train_acc = float(
+            np.mean(model.predict(X_train_scaled) == y_train[-len(model.predict(X_train_scaled)) :])
+        )
 
         oos_proba = model.predict_proba(X_test_scaled)
         oos_pred = (oos_proba >= 0.5).astype(int)
@@ -125,13 +148,15 @@ def walk_forward_train(
 
         # Store OOS predictions aligned with dates
         test_dates = dates.iloc[test_start_idx:test_end_idx].values[-n_preds:]
-        oos_df = pd.DataFrame({
-            "date": test_dates,
-            "ticker": ticker,
-            "probability_up": oos_proba,
-            "prediction": oos_pred,
-            "actual": y_test[-n_preds:],
-        })
+        oos_df = pd.DataFrame(
+            {
+                "date": test_dates,
+                "ticker": ticker,
+                "probability_up": oos_proba,
+                "prediction": oos_pred,
+                "actual": y_test[-n_preds:],
+            }
+        )
         all_oos_preds.append(oos_df)
 
         logger.info(
@@ -149,7 +174,9 @@ def walk_forward_train(
     final_model = EnsembleModel(sequence_length=settings.sequence_length)
     final_model.fit(X_scaled, y, feature_names=feature_names)
 
-    oos_predictions = pd.concat(all_oos_preds, ignore_index=True) if all_oos_preds else pd.DataFrame()
+    oos_predictions = (
+        pd.concat(all_oos_preds, ignore_index=True) if all_oos_preds else pd.DataFrame()
+    )
 
     mean_acc = np.mean([f.test_accuracy for f in fold_results]) if fold_results else 0.0
 

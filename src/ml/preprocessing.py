@@ -1,4 +1,5 @@
 """ML data preprocessing pipeline."""
+
 import numpy as np
 
 
@@ -29,4 +30,4 @@ def create_lagged_features(data: np.ndarray, lags: list[int]) -> np.ndarray:
     features = [data]
     for lag in lags:
         features.append(np.roll(data, lag))
-    return np.column_stack(features)[max(lags):]
+    return np.column_stack(features)[max(lags) :]

@@ -1,4 +1,5 @@
 """Reporting and report generation."""
+
 import logging
 from typing import Dict, List, Optional, Any
 from datetime import datetime
@@ -210,11 +211,14 @@ class ReportGenerator:
         if report_type:
             reports = [r for r in reports if r.report_type == report_type]
 
-        return [r.to_dict() for r in sorted(
-            reports,
-            key=lambda r: r.created_at,
-            reverse=True,
-        )]
+        return [
+            r.to_dict()
+            for r in sorted(
+                reports,
+                key=lambda r: r.created_at,
+                reverse=True,
+            )
+        ]
 
     def get_stats(self) -> Dict:
         """Get report generation statistics."""

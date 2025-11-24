@@ -1,4 +1,5 @@
 """Enhanced API versioning with migration support."""
+
 import logging
 from typing import Callable, Dict, List, Optional
 from enum import Enum

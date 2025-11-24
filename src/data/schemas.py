@@ -218,6 +218,7 @@ class OptimizerRequest(BaseModel):
 # Response schemas for API consistency
 class ErrorResponse(BaseModel):
     """Standard error response format."""
+
     error: str
     detail: str
     request_id: Optional[str] = None
@@ -226,6 +227,7 @@ class ErrorResponse(BaseModel):
 
 class HealthCheckResponse(BaseModel):
     """Health check response."""
+
     status: str  # "healthy" or "degraded"
     timestamp: datetime = Field(default_factory=datetime.now)
     version: str = "1.0.0"
@@ -233,6 +235,7 @@ class HealthCheckResponse(BaseModel):
 
 class PaginatedResponse(BaseModel):
     """Paginated response wrapper."""
+
     data: list
     total: int
     offset: int = 0
@@ -241,6 +244,7 @@ class PaginatedResponse(BaseModel):
 
 class LumpsumVsSIPResponse(BaseModel):
     """Response for lumpsum vs SIP comparison endpoint."""
+
     total_capital: float
     lumpsum: dict
     sip: dict
@@ -250,6 +254,7 @@ class LumpsumVsSIPResponse(BaseModel):
 
 class CorrelationResponse(BaseModel):
     """Response for correlation matrix endpoint."""
+
     tickers: list[str]
     matrix: list[list[float]]
     high_correlation_pairs: list[dict] = Field(default_factory=list)

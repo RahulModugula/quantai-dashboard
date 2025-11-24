@@ -1,4 +1,5 @@
 """Webhook management and delivery."""
+
 import logging
 import asyncio
 import json
@@ -94,19 +95,14 @@ class WebhookManager:
         if event not in self.webhooks:
             return
 
-        subscriptions = [
-            s for s in self.subscriptions.values()
-            if s.event == event and s.active
-        ]
+        subscriptions = [s for s in self.subscriptions.values() if s.event == event and s.active]
 
         tasks = []
         for url in self.webhooks.get(event, []):
             tasks.append(self._deliver_webhook(url, data))
 
         for subscription in subscriptions:
-            tasks.append(
-                self._deliver_subscription_webhook(subscription, data)
-            )
+            tasks.append(self._deliver_subscription_webhook(subscription, data))
 
         await asyncio.gather(*tasks, return_exceptions=True)
 
@@ -137,6 +133,7 @@ class WebhookManager:
                 if subscription.secret:
                     import hmac
                     import hashlib
+
                     signature = hmac.new(
                         subscription.secret.encode(),
                         json.dumps(data).encode(),
@@ -182,12 +179,7 @@ class WebhookManager:
         """Get webhook statistics."""
         return {
             "total_subscriptions": len(self.subscriptions),
-            "active_subscriptions": len(
-                [s for s in self.subscriptions.values() if s.active]
-            ),
+            "active_subscriptions": len([s for s in self.subscriptions.values() if s.active]),
             "total_webhooks": sum(len(urls) for urls in self.webhooks.values()),
-            "by_event": {
-                event: len(urls)
-                for event, urls in self.webhooks.items()
-            },
+            "by_event": {event: len(urls) for event, urls in self.webhooks.items()},
         }

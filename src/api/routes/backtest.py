@@ -38,14 +38,16 @@ async def _run_backtest_task(req: BacktestRequestSchema, cache_key: str) -> None
         run = backtester.run(train_result.oos_predictions, prices)
         report = generate_report(run)
 
-        save_backtest_result({
-            "ticker": req.ticker,
-            "start_date": report["equity_curve"][0]["date"] if report["equity_curve"] else None,
-            "end_date": report["equity_curve"][-1]["date"] if report["equity_curve"] else None,
-            "initial_capital": req.initial_capital,
-            "final_value": run.final_value,
-            **report["metrics"],
-        })
+        save_backtest_result(
+            {
+                "ticker": req.ticker,
+                "start_date": report["equity_curve"][0]["date"] if report["equity_curve"] else None,
+                "end_date": report["equity_curve"][-1]["date"] if report["equity_curve"] else None,
+                "initial_capital": req.initial_capital,
+                "final_value": run.final_value,
+                **report["metrics"],
+            }
+        )
 
         _backtest_cache[cache_key] = {"status": "complete", "result": report}
         logger.info(f"Backtest completed for {req.ticker}")
@@ -65,7 +67,9 @@ def get_backtest_result(key: str) -> dict:
 @router.get("/results")
 def list_backtest_results() -> dict[str, dict]:
     """List all cached backtest results."""
-    return {k: {"status": v["status"], "ticker": v.get("ticker")} for k, v in _backtest_cache.items()}
+    return {
+        k: {"status": v["status"], "ticker": v.get("ticker")} for k, v in _backtest_cache.items()
+    }
 
 
 @router.get("/export/{key}/trades")
@@ -84,6 +88,7 @@ def export_trades_csv(key: str):
     else:
         import csv
         import io
+
         output = io.StringIO()
         writer = csv.DictWriter(output, fieldnames=trades[0].keys())
         writer.writeheader()
@@ -109,6 +114,7 @@ def export_equity_csv(key: str):
     equity = result["result"]["equity_curve"]
     import csv
     import io
+
     output = io.StringIO()
     writer = csv.DictWriter(output, fieldnames=["date", "value"])
     writer.writeheader()

@@ -1,4 +1,5 @@
 """Generate comprehensive performance reports."""
+
 import logging
 
 logger = logging.getLogger(__name__)
@@ -29,8 +30,12 @@ class PerformanceReport:
             "losing_trades": len(losing_trades),
             "win_rate": round(win_rate, 4),
             "total_pnl": round(total_pnl, 2),
-            "avg_win": round(sum(t.get("pnl", 0) for t in winning_trades) / len(winning_trades), 2) if winning_trades else 0,
-            "avg_loss": round(sum(t.get("pnl", 0) for t in losing_trades) / len(losing_trades), 2) if losing_trades else 0,
+            "avg_win": round(sum(t.get("pnl", 0) for t in winning_trades) / len(winning_trades), 2)
+            if winning_trades
+            else 0,
+            "avg_loss": round(sum(t.get("pnl", 0) for t in losing_trades) / len(losing_trades), 2)
+            if losing_trades
+            else 0,
         }
 
     def monthly_breakdown(self) -> dict:

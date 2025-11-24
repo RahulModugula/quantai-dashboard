@@ -1,4 +1,5 @@
 """Portfolio optimization endpoints."""
+
 import logging
 import numpy as np
 from fastapi import APIRouter, HTTPException
@@ -63,10 +64,7 @@ def minimize_portfolio_risk() -> dict:
         num_positions = len(portfolio.positions)
         equal_weight = 1.0 / num_positions
 
-        allocation = {
-            ticker: round(equal_weight, 4)
-            for ticker in portfolio.positions.keys()
-        }
+        allocation = {ticker: round(equal_weight, 4) for ticker in portfolio.positions.keys()}
 
         return {
             "strategy": "Minimum Variance Portfolio",

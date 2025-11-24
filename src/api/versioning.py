@@ -1,4 +1,5 @@
 """API versioning and backward compatibility."""
+
 from enum import Enum
 
 

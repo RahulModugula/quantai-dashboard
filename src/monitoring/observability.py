@@ -1,4 +1,5 @@
 """Prometheus metrics for request tracking, model inference, and predictions."""
+
 import time
 from functools import wraps
 
@@ -71,6 +72,7 @@ def get_prometheus_content_type() -> str:
 
 def track_execution_time(func):
     """Decorator to track function execution time as a Prometheus histogram."""
+
     @wraps(func)
     def wrapper(*args, **kwargs):
         start = time.time()
@@ -80,6 +82,7 @@ def track_execution_time(func):
         finally:
             duration = time.time() - start
             MODEL_INFERENCE_LATENCY.labels(model_name=func.__name__).observe(duration)
+
     return wrapper
 
 

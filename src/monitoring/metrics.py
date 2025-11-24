@@ -1,4 +1,5 @@
 """System metrics collection and monitoring."""
+
 import time
 
 
@@ -13,11 +14,13 @@ class MetricsCollector:
         """Record a metric value."""
         if name not in self.metrics:
             self.metrics[name] = []
-        self.metrics[name].append({
-            "value": value,
-            "unit": unit,
-            "timestamp": time.time(),
-        })
+        self.metrics[name].append(
+            {
+                "value": value,
+                "unit": unit,
+                "timestamp": time.time(),
+            }
+        )
 
     def get_average(self, metric_name: str) -> float:
         """Get average value of a metric."""

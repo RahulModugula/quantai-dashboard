@@ -1,4 +1,5 @@
 """Alert system for monitoring important events."""
+
 import logging
 from enum import Enum
 

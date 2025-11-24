@@ -18,16 +18,22 @@ def register_backtest_callbacks(app):
     )
     def trigger_backtest(n_clicks, ticker, capital, buy_threshold):
         try:
-            resp = httpx.post(f"{BASE_URL}/api/backtest/run", json={
-                "ticker": ticker,
-                "initial_capital": capital or 100000,
-                "buy_threshold": buy_threshold or 0.6,
-                "sell_threshold": 1 - (buy_threshold or 0.6),
-            }, timeout=5)
+            resp = httpx.post(
+                f"{BASE_URL}/api/backtest/run",
+                json={
+                    "ticker": ticker,
+                    "initial_capital": capital or 100000,
+                    "buy_threshold": buy_threshold or 0.6,
+                    "sell_threshold": 1 - (buy_threshold or 0.6),
+                },
+                timeout=5,
+            )
             if resp.status_code == 200:
                 data = resp.json()
                 _last_key["key"] = data.get("key")
-                return dbc.Alert(f"Backtest started for {ticker}. Results will appear below.", color="info")
+                return dbc.Alert(
+                    f"Backtest started for {ticker}. Results will appear below.", color="info"
+                )
         except Exception as e:
             return dbc.Alert(f"Error: {e}", color="danger")
         return no_update
@@ -73,24 +79,34 @@ def register_backtest_callbacks(app):
 
             eq_fig = go.Figure()
             if equity_data:
-                eq_fig.add_trace(go.Scatter(
-                    x=[d["date"] for d in equity_data],
-                    y=[d["value"] for d in equity_data],
-                    mode="lines", name="Backtest Equity",
-                    line=dict(color="#4A90D9"),
-                ))
+                eq_fig.add_trace(
+                    go.Scatter(
+                        x=[d["date"] for d in equity_data],
+                        y=[d["value"] for d in equity_data],
+                        mode="lines",
+                        name="Backtest Equity",
+                        line=dict(color="#4A90D9"),
+                    )
+                )
                 eq_fig.update_layout(template="plotly_white", margin=dict(l=40, r=20, t=20, b=40))
 
             dd_fig = go.Figure()
             if dd_data:
-                dd_fig.add_trace(go.Scatter(
-                    x=[d["date"] for d in dd_data],
-                    y=[d["drawdown"] * 100 for d in dd_data],
-                    fill="tozeroy", mode="lines", name="Drawdown %",
-                    line=dict(color="#dc3545"),
-                ))
-                dd_fig.update_layout(template="plotly_white", margin=dict(l=40, r=20, t=20, b=40),
-                                      yaxis_title="Drawdown (%)")
+                dd_fig.add_trace(
+                    go.Scatter(
+                        x=[d["date"] for d in dd_data],
+                        y=[d["drawdown"] * 100 for d in dd_data],
+                        fill="tozeroy",
+                        mode="lines",
+                        name="Drawdown %",
+                        line=dict(color="#dc3545"),
+                    )
+                )
+                dd_fig.update_layout(
+                    template="plotly_white",
+                    margin=dict(l=40, r=20, t=20, b=40),
+                    yaxis_title="Drawdown (%)",
+                )
 
             return sharpe, sortino, mdd, wr, ret, trades, eq_fig, dd_fig
         except Exception:

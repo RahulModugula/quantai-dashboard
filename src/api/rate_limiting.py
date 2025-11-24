@@ -1,4 +1,5 @@
 """Rate limiting for API endpoints."""
+
 import logging
 import time
 from collections import defaultdict
@@ -18,7 +19,9 @@ class RateLimiter:
             requests_per_minute: Maximum requests per minute
         """
         self.requests_per_minute = requests_per_minute
-        self.buckets = defaultdict(lambda: {"tokens": requests_per_minute, "last_update": time.time()})
+        self.buckets = defaultdict(
+            lambda: {"tokens": requests_per_minute, "last_update": time.time()}
+        )
 
     def is_allowed(self, identifier: str) -> bool:
         """Check if request is allowed for identifier."""

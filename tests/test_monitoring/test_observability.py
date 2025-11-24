@@ -1,4 +1,5 @@
 """Tests for Prometheus observability metrics."""
+
 from src.monitoring.observability import (
     REQUEST_COUNT,
     REQUEST_LATENCY,

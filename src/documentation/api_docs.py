@@ -1,4 +1,5 @@
 """API documentation generation."""
+
 import logging
 from typing import Dict, List, Optional
 from datetime import datetime
@@ -182,6 +183,7 @@ class APIDocumentation:
                     lines.append("#### Response\n")
                     lines.append("```json\n")
                     import json
+
                     lines.append(
                         json.dumps(endpoint.response_example or endpoint.response_schema, indent=2)
                     )
@@ -214,9 +216,7 @@ class APIDocumentation:
             "total_endpoints": len(self.endpoints),
             "methods": methods,
             "tags": sorted(list(tags)),
-            "documented_parameters": sum(
-                len(e.parameters) for e in self.endpoints.values()
-            ),
+            "documented_parameters": sum(len(e.parameters) for e in self.endpoints.values()),
         }
 
 

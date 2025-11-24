@@ -32,70 +32,107 @@ def create_dash_app() -> dash.Dash:
         suppress_callback_exceptions=True,
     )
 
-    app.layout = dbc.Container([
-        # Theme state
-        dcc.Store(id="theme-store", data="light"),
-
-        # Header
-        dbc.Navbar(
-            dbc.Container([
-                dbc.NavbarBrand([
-                    html.Span("⚡ QuantAI", className="fw-bold"),
-                    html.Span(" ML Trading Dashboard", className="text-muted ms-1 small"),
-                ]),
-                dbc.Nav([
-                    dbc.NavItem(dbc.Badge(
-                        "PAPER TRADING ONLY",
-                        color="warning",
-                        text_color="dark",
-                        className="ms-2",
-                    )),
-                    dbc.NavItem(
-                        dbc.Button(
-                            "🌙 Dark",
-                            id="theme-toggle",
-                            color="outline-light",
-                            size="sm",
-                            className="ms-3",
+    app.layout = dbc.Container(
+        [
+            # Theme state
+            dcc.Store(id="theme-store", data="light"),
+            # Header
+            dbc.Navbar(
+                dbc.Container(
+                    [
+                        dbc.NavbarBrand(
+                            [
+                                html.Span("⚡ QuantAI", className="fw-bold"),
+                                html.Span(
+                                    " ML Trading Dashboard", className="text-muted ms-1 small"
+                                ),
+                            ]
                         ),
+                        dbc.Nav(
+                            [
+                                dbc.NavItem(
+                                    dbc.Badge(
+                                        "PAPER TRADING ONLY",
+                                        color="warning",
+                                        text_color="dark",
+                                        className="ms-2",
+                                    )
+                                ),
+                                dbc.NavItem(
+                                    dbc.Button(
+                                        "🌙 Dark",
+                                        id="theme-toggle",
+                                        color="outline-light",
+                                        size="sm",
+                                        className="ms-3",
+                                    ),
+                                ),
+                            ],
+                            navbar=True,
+                        ),
+                    ]
+                ),
+                color="dark",
+                dark=True,
+                className="mb-4",
+            ),
+            # Disclaimer banner
+            dbc.Alert(DISCLAIMER, color="warning", dismissable=True, className="mb-3"),
+            # Tabs
+            dbc.Tabs(
+                [
+                    dbc.Tab(
+                        label="Live Trading",
+                        tab_id="tab-live",
+                        children=[
+                            html.Div(className="mt-3", children=price_chart_layout()),
+                            html.Div(className="mt-3", children=trade_log_layout()),
+                        ],
                     ),
-                ], navbar=True),
-            ]),
-            color="dark",
-            dark=True,
-            className="mb-4",
-        ),
-
-        # Disclaimer banner
-        dbc.Alert(DISCLAIMER, color="warning", dismissable=True, className="mb-3"),
-
-        # Tabs
-        dbc.Tabs([
-            dbc.Tab(label="Live Trading", tab_id="tab-live", children=[
-                html.Div(className="mt-3", children=price_chart_layout()),
-                html.Div(className="mt-3", children=trade_log_layout()),
-            ]),
-            dbc.Tab(label="Portfolio", tab_id="tab-portfolio", children=[
-                html.Div(className="mt-3", children=equity_curve_layout()),
-            ]),
-            dbc.Tab(label="Backtesting", tab_id="tab-backtest", children=[
-                html.Div(className="mt-3", children=risk_panel_layout()),
-            ]),
-            dbc.Tab(label="SIP Calculator", tab_id="tab-sip", children=[
-                html.Div(className="mt-3", children=sip_panel_layout()),
-            ]),
-            dbc.Tab(label="Advisor", tab_id="tab-advisor", children=[
-                html.Div(className="mt-3", children=advisor_panel_layout()),
-            ]),
-            dbc.Tab(label="Optimizer", tab_id="tab-optimizer", children=[
-                html.Div(className="mt-3", children=optimizer_panel_layout()),
-            ]),
-        ], id="main-tabs", active_tab="tab-live"),
-
-        # Polling interval — fires every 3s
-        dcc.Interval(id="interval-update", interval=3000, n_intervals=0),
-
-    ], fluid=True)
+                    dbc.Tab(
+                        label="Portfolio",
+                        tab_id="tab-portfolio",
+                        children=[
+                            html.Div(className="mt-3", children=equity_curve_layout()),
+                        ],
+                    ),
+                    dbc.Tab(
+                        label="Backtesting",
+                        tab_id="tab-backtest",
+                        children=[
+                            html.Div(className="mt-3", children=risk_panel_layout()),
+                        ],
+                    ),
+                    dbc.Tab(
+                        label="SIP Calculator",
+                        tab_id="tab-sip",
+                        children=[
+                            html.Div(className="mt-3", children=sip_panel_layout()),
+                        ],
+                    ),
+                    dbc.Tab(
+                        label="Advisor",
+                        tab_id="tab-advisor",
+                        children=[
+                            html.Div(className="mt-3", children=advisor_panel_layout()),
+                        ],
+                    ),
+                    dbc.Tab(
+                        label="Optimizer",
+                        tab_id="tab-optimizer",
+                        children=[
+                            html.Div(className="mt-3", children=optimizer_panel_layout()),
+                        ],
+                    ),
+                ],
+                id="main-tabs",
+                active_tab="tab-live",
+            ),
+            # Polling interval — fires every 3s
+            dcc.Interval(id="interval-update", interval=3000, n_intervals=0),
+        ],
+        fluid=True,
+    )
 
     # Register all callbacks
     from src.dashboard.callbacks.advisor_callbacks import register_advisor_callbacks
@@ -111,6 +148,7 @@ def create_dash_app() -> dash.Dash:
     register_advisor_callbacks(app)
 
     from src.dashboard.callbacks.optimizer_callbacks import register_optimizer_callbacks
+
     register_optimizer_callbacks(app)
 
     from dash import Input, Output, State

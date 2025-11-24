@@ -40,13 +40,15 @@ def download_ohlcv(
     if isinstance(df.columns, pd.MultiIndex):
         df.columns = df.columns.get_level_values(0)
 
-    df = df.rename(columns={
-        "Open": "open",
-        "High": "high",
-        "Low": "low",
-        "Close": "close",
-        "Volume": "volume",
-    })
+    df = df.rename(
+        columns={
+            "Open": "open",
+            "High": "high",
+            "Low": "low",
+            "Close": "close",
+            "Volume": "volume",
+        }
+    )
 
     # Keep only the columns we need; adj_close absent for some tickers
     expected = ["open", "high", "low", "close", "volume"]
@@ -172,9 +174,7 @@ def download_with_fallback(
             logger.warning(f"{provider.__class__.__name__} failed for {ticker}: {e}")
             last_err = e
 
-    raise DataValidationError(
-        f"All providers failed for {ticker}: {last_err}"
-    )
+    raise DataValidationError(f"All providers failed for {ticker}: {last_err}")
 
 
 def download_macro_features(

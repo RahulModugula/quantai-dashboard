@@ -23,7 +23,7 @@ def round_portfolio_value(value: float) -> float:
 
 def truncate_decimals(value: float, places: int = 2) -> float:
     """Truncate (not round) to specific decimal places."""
-    multiplier = 10 ** places
+    multiplier = 10**places
     return int(value * multiplier) / multiplier
 
 

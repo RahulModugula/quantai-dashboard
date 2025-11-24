@@ -1,4 +1,5 @@
 """Sector and industry analysis tools for portfolio insights."""
+
 import logging
 from typing import List
 
@@ -68,7 +69,7 @@ class SectorAnalyzer:
         }
 
         # Herfindahl-Hirschman Index for concentration (0-10000 scale, higher = more concentrated)
-        hhi = sum((pct ** 2) for pct in sector_pcts.values())
+        hhi = sum((pct**2) for pct in sector_pcts.values())
         concentration_pct = hhi / 100  # Convert to percentage
 
         # Simple diversification score (0-100, higher = more diversified)

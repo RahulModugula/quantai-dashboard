@@ -20,19 +20,17 @@ def flat_returns():
 
 @pytest.fixture
 def equity_up():
-    return pd.Series([100 * (1.001 ** i) for i in range(252)])
+    return pd.Series([100 * (1.001**i) for i in range(252)])
 
 
 @pytest.fixture
 def equity_down():
-    return pd.Series([100 * (0.999 ** i) for i in range(252)])
+    return pd.Series([100 * (0.999**i) for i in range(252)])
 
 
 @pytest.fixture
 def mixed_trades():
-    return pd.DataFrame({
-        "pnl": [100, -50, 200, -30, 150, -20, 80]
-    })
+    return pd.DataFrame({"pnl": [100, -50, 200, -30, 150, -20, 80]})
 
 
 def test_sharpe_positive_returns(flat_returns):

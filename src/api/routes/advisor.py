@@ -39,6 +39,7 @@ def get_allocation_by_category(risk_category: str) -> dict:
     """Get asset allocation for a specific risk category."""
     try:
         from src.advisor.allocation import get_allocation
+
         allocation = get_allocation(risk_category)
         return allocation.model_dump()
     except ValueError as e:
@@ -110,7 +111,7 @@ def suggest_risk_reduction_rebalance(max_position_pct: float = 0.30) -> dict:
         if not actions:
             return {
                 "actions": [],
-                "message": f"No positions exceed {max_position_pct*100:.0f}% threshold",
+                "message": f"No positions exceed {max_position_pct * 100:.0f}% threshold",
                 "total_trades": 0,
             }
 

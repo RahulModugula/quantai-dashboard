@@ -1,4 +1,5 @@
 """Portfolio rebalancing suggestions and helper tools."""
+
 import logging
 from dataclasses import dataclass
 
@@ -58,14 +59,16 @@ class PortfolioRebalancer:
                     target_pct=target_weight * 100,
                     shares_to_trade=abs(shares_to_trade),
                     estimated_value=abs(diff_value),
-                    reason=f"Align {ticker} from {current_pct*100:.1f}% to {target_weight*100:.1f}%",
+                    reason=f"Align {ticker} from {current_pct * 100:.1f}% to {target_weight * 100:.1f}%",
                 )
             )
 
         return sorted(actions, key=lambda a: a.estimated_value, reverse=True)
 
     @staticmethod
-    def suggest_risk_reduction(positions: dict, portfolio_value: float, max_position_pct: float = 0.30) -> list[RebalanceAction]:
+    def suggest_risk_reduction(
+        positions: dict, portfolio_value: float, max_position_pct: float = 0.30
+    ) -> list[RebalanceAction]:
         """Suggest selling positions that exceed max allocation.
 
         Args:
@@ -96,7 +99,7 @@ class PortfolioRebalancer:
                         target_pct=(max_value / portfolio_value * 100),
                         shares_to_trade=shares_to_sell,
                         estimated_value=excess,
-                        reason=f"Reduce {ticker} from {current_value/portfolio_value*100:.1f}% to {max_position_pct*100:.0f}%",
+                        reason=f"Reduce {ticker} from {current_value / portfolio_value * 100:.1f}% to {max_position_pct * 100:.0f}%",
                     )
                 )
 

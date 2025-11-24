@@ -47,14 +47,16 @@ def high_correlation_pairs(
     pairs = []
     tickers = corr_matrix.columns.tolist()
     for i, t1 in enumerate(tickers):
-        for t2 in tickers[i + 1:]:
+        for t2 in tickers[i + 1 :]:
             val = corr_matrix.loc[t1, t2]
             if abs(val) >= threshold:
-                pairs.append({
-                    "ticker_a": t1,
-                    "ticker_b": t2,
-                    "correlation": round(float(val), 4),
-                })
+                pairs.append(
+                    {
+                        "ticker_a": t1,
+                        "ticker_b": t2,
+                        "correlation": round(float(val), 4),
+                    }
+                )
     return sorted(pairs, key=lambda x: abs(x["correlation"]), reverse=True)
 
 
@@ -64,8 +66,5 @@ def correlation_to_dict(corr_matrix: pd.DataFrame) -> dict:
         return {"tickers": [], "matrix": []}
     return {
         "tickers": corr_matrix.columns.tolist(),
-        "matrix": [
-            [round(float(v), 4) for v in row]
-            for row in corr_matrix.values
-        ],
+        "matrix": [[round(float(v), 4) for v in row] for row in corr_matrix.values],
     }

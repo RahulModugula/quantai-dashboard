@@ -1,4 +1,5 @@
 """Telemetry collection for system monitoring."""
+
 import logging
 import psutil
 from typing import Dict
@@ -57,20 +58,25 @@ class SystemMetrics:
             },
             "memory": {
                 "percent": round(memory_percent, 2),
-                "available": round(memory.available / (1024 ** 3), 2) if memory else 0,
-                "used": round(memory.used / (1024 ** 3), 2) if memory else 0,
-            } if memory else {},
+                "available": round(memory.available / (1024**3), 2) if memory else 0,
+                "used": round(memory.used / (1024**3), 2) if memory else 0,
+            }
+            if memory
+            else {},
             "disk": {
                 "percent": round(disk_percent, 2),
-                "free": round(disk.free / (1024 ** 3), 2) if disk else 0,
-                "total": round(disk.total / (1024 ** 3), 2) if disk else 0,
-            } if disk else {},
+                "free": round(disk.free / (1024**3), 2) if disk else 0,
+                "total": round(disk.total / (1024**3), 2) if disk else 0,
+            }
+            if disk
+            else {},
         }
 
         return metrics
 
     def get_averages(self) -> dict:
         """Get average metrics over window."""
+
         def avg(samples):
             return round(sum(samples) / len(samples), 2) if samples else 0
 
@@ -132,16 +138,10 @@ class ApplicationTelemetry:
         """Get application statistics."""
         uptime = self.get_uptime()
         avg_request_time = (
-            self.total_request_time / self.request_count
-            if self.request_count > 0
-            else 0
+            self.total_request_time / self.request_count if self.request_count > 0 else 0
         )
 
-        error_rate = (
-            (self.error_count / self.request_count * 100)
-            if self.request_count > 0
-            else 0
-        )
+        error_rate = (self.error_count / self.request_count * 100) if self.request_count > 0 else 0
 
         requests_per_second = self.request_count / uptime if uptime > 0 else 0
 

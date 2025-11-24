@@ -1,4 +1,5 @@
 """Different order types and execution strategies."""
+
 from enum import Enum
 
 

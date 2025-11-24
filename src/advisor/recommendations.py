@@ -39,14 +39,16 @@ def generate_recommendations(
         else:
             action = "reduce"
 
-        recommendations.append({
-            "asset_class": asset,
-            "current_pct": round(current_pct, 1),
-            "target_pct": round(target_pct, 1),
-            "delta_pct": round(delta, 1),
-            "action": action,
-            "priority": "high" if abs(delta) >= 10 else "medium" if abs(delta) >= 5 else "low",
-        })
+        recommendations.append(
+            {
+                "asset_class": asset,
+                "current_pct": round(current_pct, 1),
+                "target_pct": round(target_pct, 1),
+                "delta_pct": round(delta, 1),
+                "action": action,
+                "priority": "high" if abs(delta) >= 10 else "medium" if abs(delta) >= 5 else "low",
+            }
+        )
 
     # Sort by priority (high first) then abs delta
     priority_order = {"high": 0, "medium": 1, "low": 2}

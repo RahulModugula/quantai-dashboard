@@ -18,14 +18,16 @@ def recovery_factor(net_profit: float, max_drawdown: float) -> float:
 def ulcer_index(returns: list[float], lookback: int = 14) -> float:
     """Ulcer index (measure of downside volatility)."""
     import numpy as np
+
     running_max = np.maximum.accumulate(returns[-lookback:])
     drawdowns = (np.array(returns[-lookback:]) - running_max) / running_max
-    return np.sqrt(np.mean(drawdowns ** 2))
+    return np.sqrt(np.mean(drawdowns**2))
 
 
 def pain_index(returns: list[float]) -> float:
     """Pain index (average duration and magnitude of drawdowns)."""
     import numpy as np
+
     cumulative = np.cumprod(1 + np.array(returns))
     running_max = np.maximum.accumulate(cumulative)
     drawdowns = (cumulative - running_max) / running_max

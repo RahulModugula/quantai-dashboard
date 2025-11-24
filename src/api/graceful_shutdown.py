@@ -1,4 +1,5 @@
 """Graceful shutdown handlers for application termination."""
+
 import logging
 import asyncio
 import signal

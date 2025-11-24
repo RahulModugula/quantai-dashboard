@@ -1,4 +1,5 @@
 """Unit tests for the ensemble model."""
+
 import numpy as np
 import pytest
 

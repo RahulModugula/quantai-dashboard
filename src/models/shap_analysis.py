@@ -6,6 +6,7 @@ their ensemble weights. This avoids the bias inherent in built-in
 feature importances (split-based importances overweight high-cardinality
 and correlated features).
 """
+
 import logging
 
 import numpy as np
@@ -37,7 +38,11 @@ def compute_shap_importance(
         import shap
     except ImportError:
         logger.warning("shap not installed — falling back to built-in importances")
-        return {"mean_abs_shap": ensemble.feature_importances(), "per_model": {}, "shap_values": None}
+        return {
+            "mean_abs_shap": ensemble.feature_importances(),
+            "per_model": {},
+            "shap_values": None,
+        }
 
     names = feature_names or ensemble._feature_names
     if not names:
@@ -70,9 +75,7 @@ def compute_shap_importance(
                 sv = sv[1]  # class 1 = "up" direction
 
             mean_abs = np.abs(sv).mean(axis=0)
-            per_model[model_name] = {
-                name: float(val) for name, val in zip(names, mean_abs)
-            }
+            per_model[model_name] = {name: float(val) for name, val in zip(names, mean_abs)}
             weighted_shap += weight * sv
             total_weight += weight
         except Exception as e:

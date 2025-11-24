@@ -23,7 +23,9 @@ def get_prediction(ticker: str) -> PredictionResponse:
         bundle, meta = get_model_bundle()
 
         if bundle is None:
-            raise HTTPException(status_code=503, detail="No trained model available. Run train_model.py first.")
+            raise HTTPException(
+                status_code=503, detail="No trained model available. Run train_model.py first."
+            )
 
         model = bundle["model"]
         scaler = bundle["scaler"]
@@ -31,7 +33,9 @@ def get_prediction(ticker: str) -> PredictionResponse:
 
         df = load_features(ticker.upper())
         if df.empty:
-            raise HTTPException(status_code=404, detail=f"No feature data for {ticker}. Run seed_data.py first.")
+            raise HTTPException(
+                status_code=404, detail=f"No feature data for {ticker}. Run seed_data.py first."
+            )
 
         row = df[feature_names].iloc[-1:].values
         row_scaled = scaler.transform(row)
@@ -79,6 +83,7 @@ def get_prediction(ticker: str) -> PredictionResponse:
 def list_predictions() -> list[dict]:
     """Get predictions for all configured tickers."""
     from src.config import settings
+
     results = []
     for ticker in settings.tickers:
         try:

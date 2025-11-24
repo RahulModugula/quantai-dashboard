@@ -10,7 +10,9 @@ def sharpe_ratio(returns: pd.Series, risk_free: float = 0.04, periods_per_year: 
     return float(excess.mean() / excess.std() * np.sqrt(periods_per_year))
 
 
-def sortino_ratio(returns: pd.Series, risk_free: float = 0.04, periods_per_year: int = 252) -> float:
+def sortino_ratio(
+    returns: pd.Series, risk_free: float = 0.04, periods_per_year: int = 252
+) -> float:
     """Annualized Sortino ratio (uses downside deviation only)."""
     excess = returns - risk_free / periods_per_year
     downside = excess[excess < 0]

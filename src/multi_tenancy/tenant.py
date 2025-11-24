@@ -1,4 +1,5 @@
 """Multi-tenancy support."""
+
 import logging
 from typing import Dict, List, Optional, Set
 from datetime import datetime
@@ -227,15 +228,11 @@ class TenantManager:
             "total_tenants": len(self.tenants),
             "total_users": len(self.user_to_tenant),
             "by_plan": {
-                plan.value: len(
-                    [t for t in self.tenants.values() if t.plan == plan]
-                )
+                plan.value: len([t for t in self.tenants.values() if t.plan == plan])
                 for plan in TenantPlan
             },
             "by_status": {
-                status.value: len(
-                    [t for t in self.tenants.values() if t.status == status]
-                )
+                status.value: len([t for t in self.tenants.values() if t.status == status])
                 for status in TenantStatus
             },
         }

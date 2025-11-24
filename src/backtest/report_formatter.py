@@ -1,4 +1,5 @@
 """Format backtest results for display."""
+
 import pandas as pd
 
 
@@ -59,5 +60,5 @@ class ReportFormatter:
             "Sharpe Ratio": f"{metrics.get('sharpe_ratio', 0):.2f}",
             "Max Drawdown": f"{metrics.get('max_drawdown', 0):.2%}",
             "Win Rate": f"{metrics.get('win_rate', 0):.2%}",
-            "Total Trades": metrics.get('total_trades', 0),
+            "Total Trades": metrics.get("total_trades", 0),
         }

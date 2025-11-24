@@ -1,4 +1,5 @@
 """Structured logging with structlog for production."""
+
 import time
 
 import structlog

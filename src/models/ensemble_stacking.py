@@ -1,4 +1,5 @@
 """Ensemble stacking for improved predictions."""
+
 import logging
 import numpy as np
 
@@ -56,7 +57,7 @@ class EnsembleStacking:
 
         meta_features = self._generate_meta_features(X)
 
-        if hasattr(self.meta_model, 'predict_proba'):
+        if hasattr(self.meta_model, "predict_proba"):
             return self.meta_model.predict_proba(meta_features)
         else:
             return self.meta_model.predict(meta_features)
@@ -66,7 +67,7 @@ class EnsembleStacking:
         meta_features_list = []
 
         for model in self.base_models:
-            if hasattr(model, 'predict_proba'):
+            if hasattr(model, "predict_proba"):
                 predictions = model.predict_proba(X)
                 # Take probability of positive class
                 if predictions.ndim > 1:
@@ -85,7 +86,7 @@ class EnsembleStacking:
             return {}
 
         # If meta_model has feature_importances_, use those as weights
-        if hasattr(self.meta_model, 'feature_importances_'):
+        if hasattr(self.meta_model, "feature_importances_"):
             importances = self.meta_model.feature_importances_
             weights = {
                 model.__class__.__name__: float(imp)

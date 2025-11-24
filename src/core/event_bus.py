@@ -1,4 +1,5 @@
 """Event bus for decoupled event handling."""
+
 import logging
 import asyncio
 from typing import Callable, Dict, List, Type
@@ -53,23 +54,17 @@ class EventBus:
 
         self.handlers[event_type].append(handler)
 
-        logger.info(
-            f"Handler registered for {event_type.__name__}: {handler.__name__}"
-        )
+        logger.info(f"Handler registered for {event_type.__name__}: {handler.__name__}")
 
     def unsubscribe(self, event_type: Type[Event], handler: Callable):
         """Unsubscribe from an event type."""
         if event_type in self.handlers:
-            self.handlers[event_type] = [
-                h for h in self.handlers[event_type] if h != handler
-            ]
+            self.handlers[event_type] = [h for h in self.handlers[event_type] if h != handler]
 
             if not self.handlers[event_type]:
                 del self.handlers[event_type]
 
-            logger.info(
-                f"Handler unregistered for {event_type.__name__}: {handler.__name__}"
-            )
+            logger.info(f"Handler unregistered for {event_type.__name__}: {handler.__name__}")
 
     async def publish(self, event: Event):
         """Publish an event.
@@ -126,15 +121,12 @@ class EventBus:
                 if asyncio.iscoroutinefunction(handler):
                     # Skip async handlers in sync publish
                     logger.warning(
-                        f"Cannot call async handler {handler.__name__} "
-                        f"from sync publish"
+                        f"Cannot call async handler {handler.__name__} from sync publish"
                     )
                 else:
                     handler(event)
             except Exception as e:
-                logger.error(
-                    f"Error in handler {handler.__name__} for {event_type.__name__}: {e}"
-                )
+                logger.error(f"Error in handler {handler.__name__} for {event_type.__name__}: {e}")
 
     def get_event_history(self, event_type: Type[Event] = None, limit: int = 100) -> List:
         """Get event history.
@@ -160,8 +152,7 @@ class EventBus:
             "total_handlers": sum(len(h) for h in self.handlers.values()),
             "subscribed_types": len(self.handlers),
             "handler_distribution": {
-                event_type.__name__: len(handlers)
-                for event_type, handlers in self.handlers.items()
+                event_type.__name__: len(handlers) for event_type, handlers in self.handlers.items()
             },
         }
 
@@ -200,6 +191,7 @@ def publish_sync(event: Event):
 
 
 # Common events
+
 
 class ApplicationStartedEvent(Event):
     """Fired when application starts."""

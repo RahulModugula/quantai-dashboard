@@ -1,4 +1,5 @@
 """Data quality monitoring and validation."""
+
 import logging
 from typing import List, Dict
 from datetime import datetime
@@ -46,9 +47,7 @@ class DataQualityMonitor:
             return DataQualityCheck(name, True, "No data to check")
 
         total_fields = len(data) * len(data[0])
-        null_count = sum(
-            sum(1 for v in row.values() if v is None) for row in data
-        )
+        null_count = sum(sum(1 for v in row.values() if v is None) for row in data)
         null_rate = null_count / total_fields if total_fields > 0 else 0
 
         passed = null_rate <= self.thresholds["null_rate"]
@@ -58,7 +57,9 @@ class DataQualityMonitor:
         self.checks.append(check)
         return check
 
-    def check_duplicates(self, data: List[Dict], key: str, name: str = "duplicate_check") -> DataQualityCheck:
+    def check_duplicates(
+        self, data: List[Dict], key: str, name: str = "duplicate_check"
+    ) -> DataQualityCheck:
         """Check for duplicate values."""
         if not data:
             return DataQualityCheck(name, True, "No data to check")
@@ -91,13 +92,17 @@ class DataQualityMonitor:
         outlier_rate = outliers / len(values) if values else 0
 
         passed = outlier_rate <= self.thresholds["outlier_rate"]
-        message = f"Outlier rate: {outlier_rate:.2%} (bounds: {lower_bound:.2f} - {upper_bound:.2f})"
+        message = (
+            f"Outlier rate: {outlier_rate:.2%} (bounds: {lower_bound:.2f} - {upper_bound:.2f})"
+        )
 
         check = DataQualityCheck(name, passed, message)
         self.checks.append(check)
         return check
 
-    def check_missing_fields(self, data: List[Dict], required_fields: List[str], name: str = "missing_check") -> DataQualityCheck:
+    def check_missing_fields(
+        self, data: List[Dict], required_fields: List[str], name: str = "missing_check"
+    ) -> DataQualityCheck:
         """Check for missing required fields."""
         if not data:
             return DataQualityCheck(name, True, "No data to check")
@@ -116,7 +121,9 @@ class DataQualityMonitor:
         self.checks.append(check)
         return check
 
-    def check_data_consistency(self, data: List[Dict], field_types: Dict[str, type], name: str = "consistency_check") -> DataQualityCheck:
+    def check_data_consistency(
+        self, data: List[Dict], field_types: Dict[str, type], name: str = "consistency_check"
+    ) -> DataQualityCheck:
         """Check data type consistency."""
         inconsistencies = 0
 

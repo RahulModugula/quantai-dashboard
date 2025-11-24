@@ -42,6 +42,7 @@ async def lifespan(app: FastAPI):
     logger.info("Database initialized")
     try:
         from src.api.dependencies import get_paper_trader
+
         trader = get_paper_trader()
         task = asyncio.create_task(trader.run())
         logger.info("Paper trader started")
@@ -83,12 +84,14 @@ def create_app() -> FastAPI:
 
     try:
         from src.api.routes import data
+
         app.include_router(data.router, prefix="/api")
     except ImportError:
         logger.warning("Data validation routes not available")
 
     try:
         from src.api.routes import advisor, optimizer, sip, status, diagnostics, analysis, signals
+
         app.include_router(advisor.router, prefix="/api")
         app.include_router(sip.router, prefix="/api")
         app.include_router(optimizer.router, prefix="/api")
@@ -108,6 +111,7 @@ def create_app() -> FastAPI:
     try:
         from a2wsgi import WSGIMiddleware
         from src.dashboard.app import create_dash_app
+
         dash_app = create_dash_app()
         app.mount("/dashboard", WSGIMiddleware(dash_app.server))
         logger.info("Dash dashboard mounted at /dashboard")
@@ -121,12 +125,14 @@ def create_app() -> FastAPI:
     @app.get("/api/health", tags=["meta"])
     def health_check() -> JSONResponse:
         """Liveness probe — returns 200 when the API is up."""
-        return JSONResponse({
-            "status": "healthy",
-            "version": VERSION,
-            "timestamp": datetime.now().isoformat(),
-            "disclaimer": DISCLAIMER,
-        })
+        return JSONResponse(
+            {
+                "status": "healthy",
+                "version": VERSION,
+                "timestamp": datetime.now().isoformat(),
+                "disclaimer": DISCLAIMER,
+            }
+        )
 
     @app.get("/api/metrics/prometheus", tags=["meta"])
     def prometheus_metrics():

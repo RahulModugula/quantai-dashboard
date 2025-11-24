@@ -65,11 +65,13 @@ def optimize_thresholds(
     n_preds = len(probabilities)
     test_tail = test_df.iloc[-n_preds:].copy()
 
-    oos_predictions = pd.DataFrame({
-        "date": pd.to_datetime(test_tail["date"]).values,
-        "ticker": ticker,
-        "probability_up": probabilities,
-    })
+    oos_predictions = pd.DataFrame(
+        {
+            "date": pd.to_datetime(test_tail["date"]).values,
+            "ticker": ticker,
+            "probability_up": probabilities,
+        }
+    )
 
     prices = ohlcv_df[["date", "ticker", "close"]].copy()
     prices["date"] = pd.to_datetime(prices["date"])
@@ -108,8 +110,7 @@ def optimize_thresholds(
             "n_trials": len(study.trials),
             "best_trial_number": best.number,
             "param_importances": {
-                p: float(v)
-                for p, v in optuna.importance.get_param_importances(study).items()
+                p: float(v) for p, v in optuna.importance.get_param_importances(study).items()
             },
         },
     }

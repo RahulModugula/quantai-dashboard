@@ -1,4 +1,5 @@
 """Feature normalization and scaling utilities."""
+
 import logging
 import numpy as np
 
@@ -9,7 +10,9 @@ class FeatureNormalizer:
     """Normalize features for consistent ML model input."""
 
     @staticmethod
-    def minmax_scale(data: np.ndarray, min_val: float = 0, max_val: float = 1) -> tuple[np.ndarray, tuple]:
+    def minmax_scale(
+        data: np.ndarray, min_val: float = 0, max_val: float = 1
+    ) -> tuple[np.ndarray, tuple]:
         """MinMax scaling to [min_val, max_val] range.
 
         Args:

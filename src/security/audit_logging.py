@@ -1,4 +1,5 @@
 """Audit logging for security and compliance."""
+
 import logging
 import json
 from typing import Any, Dict, Optional
@@ -83,7 +84,7 @@ class AuditLogger:
 
         # Keep events list manageable
         if len(self.events) > self.max_events:
-            self.events = self.events[-self.max_events:]
+            self.events = self.events[-self.max_events :]
 
         # Log to audit logger
         self.logger.info(event.to_json())

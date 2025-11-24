@@ -1,4 +1,5 @@
 """Task scheduler for background jobs."""
+
 import logging
 import asyncio
 from typing import Callable, Dict, List, Optional
@@ -105,9 +106,7 @@ class TaskScheduler:
         task = ScheduledTask(name, func, schedule_type, schedule_time)
         self.tasks[task.task_id] = task
 
-        logger.info(
-            f"Task scheduled: {name} ({schedule_type.value}) - ID: {task.task_id}"
-        )
+        logger.info(f"Task scheduled: {name} ({schedule_type.value}) - ID: {task.task_id}")
 
         return task
 
@@ -153,9 +152,7 @@ class TaskScheduler:
 
             if task.retry_count < task.max_retries:
                 task.status = TaskStatus.PENDING
-                logger.warning(
-                    f"Task failed, will retry: {task.name} ({task_id}): {e}"
-                )
+                logger.warning(f"Task failed, will retry: {task.name} ({task_id}): {e}")
             else:
                 task.status = TaskStatus.FAILED
                 logger.error(f"Task failed permanently: {task.name} ({task_id}): {e}")
@@ -205,18 +202,21 @@ class TaskScheduler:
         if status:
             tasks = [t for t in tasks if t.status == status]
 
-        return [t.to_dict() for t in sorted(
-            tasks,
-            key=lambda t: t.created_at,
-            reverse=True,
-        )]
+        return [
+            t.to_dict()
+            for t in sorted(
+                tasks,
+                key=lambda t: t.created_at,
+                reverse=True,
+            )
+        ]
 
     def get_pending_tasks(self) -> List[ScheduledTask]:
         """Get pending tasks."""
         return [
-            t for t in self.tasks.values()
-            if t.status == TaskStatus.PENDING
-            and t.schedule_time <= datetime.now()
+            t
+            for t in self.tasks.values()
+            if t.status == TaskStatus.PENDING and t.schedule_time <= datetime.now()
         ]
 
     def get_stats(self) -> dict:
@@ -230,9 +230,7 @@ class TaskScheduler:
             "completed_tasks": len(
                 [t for t in self.tasks.values() if t.status == TaskStatus.COMPLETED]
             ),
-            "failed_tasks": len(
-                [t for t in self.tasks.values() if t.status == TaskStatus.FAILED]
-            ),
+            "failed_tasks": len([t for t in self.tasks.values() if t.status == TaskStatus.FAILED]),
         }
 
 

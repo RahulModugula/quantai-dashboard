@@ -1,4 +1,5 @@
 """Performance tracking and latency monitoring."""
+
 import logging
 from typing import Dict, List, Optional
 from collections import defaultdict
@@ -31,13 +32,15 @@ class PerformanceTracker:
         """
         self.window_size = window_size
         self.records: List[LatencyRecord] = []
-        self.endpoint_stats: Dict[str, dict] = defaultdict(lambda: {
-            "count": 0,
-            "total_time": 0,
-            "min": float("inf"),
-            "max": 0,
-            "errors": 0,
-        })
+        self.endpoint_stats: Dict[str, dict] = defaultdict(
+            lambda: {
+                "count": 0,
+                "total_time": 0,
+                "min": float("inf"),
+                "max": 0,
+                "errors": 0,
+            }
+        )
 
     def record(self, endpoint: str, method: str, duration: float, status_code: int):
         """Record a request latency."""
@@ -73,9 +76,7 @@ class PerformanceTracker:
 
     def _calculate_stats_for_endpoint(self, endpoint: str) -> Dict:
         """Calculate detailed stats for specific endpoint."""
-        endpoint_records = [
-            r for r in self.records if endpoint in r.endpoint
-        ]
+        endpoint_records = [r for r in self.records if endpoint in r.endpoint]
 
         if not endpoint_records:
             return {}
@@ -113,9 +114,7 @@ class PerformanceTracker:
             for key, stats in self.endpoint_stats.items()
         ]
 
-        return sorted(
-            stats_list, key=lambda x: x["avg_time"], reverse=True
-        )[:limit]
+        return sorted(stats_list, key=lambda x: x["avg_time"], reverse=True)[:limit]
 
     def get_recent_latencies(self, limit: int = 100) -> List[Dict]:
         """Get recent latency records."""
@@ -134,13 +133,15 @@ class PerformanceTracker:
     def reset(self):
         """Reset all statistics."""
         self.records = []
-        self.endpoint_stats = defaultdict(lambda: {
-            "count": 0,
-            "total_time": 0,
-            "min": float("inf"),
-            "max": 0,
-            "errors": 0,
-        })
+        self.endpoint_stats = defaultdict(
+            lambda: {
+                "count": 0,
+                "total_time": 0,
+                "min": float("inf"),
+                "max": 0,
+                "errors": 0,
+            }
+        )
         logger.info("Performance statistics reset")
 
 

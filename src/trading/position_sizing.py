@@ -1,4 +1,5 @@
 """Advanced position sizing strategies."""
+
 import logging
 
 logger = logging.getLogger(__name__)

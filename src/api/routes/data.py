@@ -1,4 +1,5 @@
 """Data validation and quality check endpoints."""
+
 import logging
 from fastapi import APIRouter, HTTPException
 
@@ -59,7 +60,9 @@ def validate_ticker_data(ticker: str) -> dict:
             dates = ohlcv.index if ohlcv.index.name == "date" else ohlcv["date"]
             date_gaps = (dates.diff().dt.days > 3).sum()
             if date_gaps > 20:
-                warnings.append(f"Data has {date_gaps} gaps > 3 days (may indicate missing holidays)")
+                warnings.append(
+                    f"Data has {date_gaps} gaps > 3 days (may indicate missing holidays)"
+                )
 
         # Check features
         features = load_features(ticker)
@@ -121,9 +124,14 @@ def get_data_quality_summary() -> dict:
 
         return {
             "summary": summary,
-            "overall_health": "Good" if summary["tickers_with_issues"] == 0 else "Fair" if summary["tickers_with_issues"] < len(settings.tickers) / 2 else "Poor",
+            "overall_health": "Good"
+            if summary["tickers_with_issues"] == 0
+            else "Fair"
+            if summary["tickers_with_issues"] < len(settings.tickers) / 2
+            else "Poor",
             "recommendation": (
-                "Ready for training" if summary["tickers_valid"] > 0
+                "Ready for training"
+                if summary["tickers_valid"] > 0
                 else "Run seed_data.py to populate database"
             ),
         }
@@ -157,7 +165,8 @@ def get_missing_tickers() -> dict:
             "missing_count": len(missing),
             "next_step": (
                 f"Run: python -m scripts.seed_data --tickers {' '.join(missing)}"
-                if missing else "All tickers are ready!"
+                if missing
+                else "All tickers are ready!"
             ),
         }
     except Exception as e:

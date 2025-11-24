@@ -1,4 +1,5 @@
 """Tests for Portfolio computed properties."""
+
 from datetime import datetime
 import pytest
 

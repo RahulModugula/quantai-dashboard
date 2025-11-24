@@ -1,4 +1,5 @@
 """Deployment readiness checks."""
+
 import logging
 from typing import Dict, List
 from datetime import datetime
@@ -115,6 +116,7 @@ class DeploymentReadinessChecker:
         """Check database connectivity."""
         if database_url is None:
             import os
+
             database_url = os.getenv("DATABASE_URL", "")
 
         if not database_url:
@@ -129,6 +131,7 @@ class DeploymentReadinessChecker:
 
         try:
             from sqlalchemy import create_engine
+
             engine = create_engine(database_url)
             with engine.connect() as conn:
                 conn.execute("SELECT 1")

@@ -1,4 +1,5 @@
 """Serialization utilities for JSON and data structures."""
+
 import json
 from datetime import datetime
 from decimal import Decimal
@@ -13,7 +14,7 @@ class CustomEncoder(json.JSONEncoder):
             return obj.isoformat()
         elif isinstance(obj, Decimal):
             return float(obj)
-        elif hasattr(obj, '__dict__'):
+        elif hasattr(obj, "__dict__"):
             return obj.__dict__
         return super().default(obj)
 
@@ -30,14 +31,14 @@ def deserialize_from_json(json_str: str):
 
 def to_dict(obj) -> dict:
     """Convert object to dictionary."""
-    if hasattr(obj, '__dict__'):
-        return {k: v for k, v in obj.__dict__.items() if not k.startswith('_')}
+    if hasattr(obj, "__dict__"):
+        return {k: v for k, v in obj.__dict__.items() if not k.startswith("_")}
     elif isinstance(obj, dict):
         return obj
     return {}
 
 
-def flatten_dict(d: dict, parent_key: str = '', sep: str = '.') -> dict:
+def flatten_dict(d: dict, parent_key: str = "", sep: str = ".") -> dict:
     """Flatten nested dictionary."""
     items = []
 

@@ -1,4 +1,5 @@
 """Configuration validation and schema enforcement."""
+
 import logging
 from typing import Any, Dict, List, Type
 from enum import Enum
@@ -94,8 +95,7 @@ class ConfigValidator:
             for item in value:
                 if not isinstance(item, item_type):
                     raise ConfigValidationError(
-                        f"List item must be {item_type.__name__}, "
-                        f"got {type(item).__name__}"
+                        f"List item must be {item_type.__name__}, got {type(item).__name__}"
                     )
 
         return value
@@ -110,13 +110,11 @@ class ConfigValidator:
             for k, v in value.items():
                 if key_type and not isinstance(k, key_type):
                     raise ConfigValidationError(
-                        f"Dict key must be {key_type.__name__}, "
-                        f"got {type(k).__name__}"
+                        f"Dict key must be {key_type.__name__}, got {type(k).__name__}"
                     )
                 if value_type and not isinstance(v, value_type):
                     raise ConfigValidationError(
-                        f"Dict value must be {value_type.__name__}, "
-                        f"got {type(v).__name__}"
+                        f"Dict value must be {value_type.__name__}, got {type(v).__name__}"
                     )
 
         return value
@@ -136,7 +134,7 @@ class ConfigSchema:
         field_type: ConfigType,
         required: bool = True,
         default: Any = None,
-        **kwargs
+        **kwargs,
     ):
         """Add field to schema."""
         self.fields[field_name] = {
@@ -200,7 +198,9 @@ class ApplicationConfigSchema(ConfigSchema):
         self.add_field("DEBUG", ConfigType.BOOLEAN, required=False, default=False)
         self.add_field("LOG_LEVEL", ConfigType.STRING, required=False, default="INFO")
         self.add_field("DATABASE_URL", ConfigType.STRING, required=True)
-        self.add_field("API_PORT", ConfigType.INTEGER, required=False, default=8000, min_val=1, max_val=65535)
+        self.add_field(
+            "API_PORT", ConfigType.INTEGER, required=False, default=8000, min_val=1, max_val=65535
+        )
         self.add_field("WORKERS", ConfigType.INTEGER, required=False, default=4, min_val=1)
         self.add_field("CORS_ORIGINS", ConfigType.LIST, required=False, default=["*"])
         self.add_field("SECRET_KEY", ConfigType.STRING, required=True, min_length=32)

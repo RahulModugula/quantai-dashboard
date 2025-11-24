@@ -1,4 +1,5 @@
 """Service discovery and registration."""
+
 import logging
 from typing import Dict, List, Optional
 from datetime import datetime
@@ -87,9 +88,7 @@ class ServiceRegistry:
             self.services[instance.name] = []
 
         self.services[instance.name].append(instance)
-        logger.info(
-            f"Service registered: {instance.name} at {instance.get_url()}"
-        )
+        logger.info(f"Service registered: {instance.name} at {instance.get_url()}")
 
     def deregister(self, name: str, host: str, port: int):
         """Deregister a service instance."""
@@ -97,8 +96,7 @@ class ServiceRegistry:
             return
 
         self.services[name] = [
-            s for s in self.services[name]
-            if not (s.host == host and s.port == port)
+            s for s in self.services[name] if not (s.host == host and s.port == port)
         ]
 
         if not self.services[name]:
@@ -191,12 +189,9 @@ class ServiceRegistry:
 
     def get_health_summary(self) -> dict:
         """Get health summary."""
-        total_instances = sum(
-            len(instances) for instances in self.services.values()
-        )
+        total_instances = sum(len(instances) for instances in self.services.values())
         healthy_instances = sum(
-            len([s for s in instances if s.is_healthy()])
-            for instances in self.services.values()
+            len([s for s in instances if s.is_healthy()]) for instances in self.services.values()
         )
 
         return {
@@ -204,8 +199,7 @@ class ServiceRegistry:
             "total_instances": total_instances,
             "healthy_instances": healthy_instances,
             "health_percent": round(
-                (healthy_instances / total_instances * 100) if total_instances > 0 else 0,
-                2
+                (healthy_instances / total_instances * 100) if total_instances > 0 else 0, 2
             ),
         }
 

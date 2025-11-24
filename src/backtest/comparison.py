@@ -1,4 +1,5 @@
 """Tools for comparing multiple backtest results and analyzing differences."""
+
 import logging
 from dataclasses import dataclass
 
@@ -40,7 +41,9 @@ class BacktestDiff:
         }
 
 
-def compare_backtests(result_a: dict, result_b: dict, name_a: str = "A", name_b: str = "B") -> BacktestDiff:
+def compare_backtests(
+    result_a: dict, result_b: dict, name_a: str = "A", name_b: str = "B"
+) -> BacktestDiff:
     """Compare two backtest results and return key differences.
 
     Args:

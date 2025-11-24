@@ -1,4 +1,5 @@
 """Database connection pooling configuration."""
+
 import logging
 from typing import Optional
 from sqlalchemy import create_engine, event
@@ -93,10 +94,7 @@ _pool: Optional[DatabaseConnectionPool] = None
 
 
 def init_pool(
-    database_url: str,
-    pool_size: int = 20,
-    max_overflow: int = 10,
-    **kwargs
+    database_url: str, pool_size: int = 20, max_overflow: int = 10, **kwargs
 ) -> DatabaseConnectionPool:
     """Initialize global connection pool."""
     global _pool

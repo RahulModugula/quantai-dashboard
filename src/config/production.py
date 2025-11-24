@@ -1,4 +1,5 @@
 """Production environment configuration."""
+
 from pydantic_settings import BaseSettings
 
 
@@ -25,7 +26,7 @@ class ProductionSettings(BaseSettings):
     cors_origins: list[str] = ["https://yourdomain.com"]
     api_key_required: bool = True
     rate_limit: int = 1000  # per hour
-    burst_size: int = 50    # per minute
+    burst_size: int = 50  # per minute
 
     # Caching
     cache_ttl: int = 300

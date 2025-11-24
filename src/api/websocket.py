@@ -71,6 +71,7 @@ async def price_feed_endpoint(websocket: WebSocket):
                 price = None
                 try:
                     import redis
+
                     r = redis.from_url(settings.redis_url, decode_responses=True)
                     price_str = r.get(f"price:{ticker}")
                     if price_str:

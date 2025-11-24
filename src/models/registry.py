@@ -25,11 +25,13 @@ def save_model(
 
     joblib.dump(model, model_path)
 
-    metadata.update({
-        "version_id": version_id,
-        "saved_at": datetime.now().isoformat(),
-        "model_path": str(model_path),
-    })
+    metadata.update(
+        {
+            "version_id": version_id,
+            "saved_at": datetime.now().isoformat(),
+            "model_path": str(model_path),
+        }
+    )
 
     with open(meta_path, "w") as f:
         json.dump(metadata, f, indent=2, default=str)

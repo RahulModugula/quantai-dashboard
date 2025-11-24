@@ -27,15 +27,17 @@ def price_series():
 @pytest.fixture
 def ohlcv_df(price_series):
     n = len(price_series)
-    return pd.DataFrame({
-        "date": pd.date_range("2023-01-01", periods=n, freq="B"),
-        "ticker": "TEST",
-        "open": price_series * 0.999,
-        "high": price_series * 1.005,
-        "low": price_series * 0.995,
-        "close": price_series,
-        "volume": np.random.randint(1_000_000, 5_000_000, n),
-    })
+    return pd.DataFrame(
+        {
+            "date": pd.date_range("2023-01-01", periods=n, freq="B"),
+            "ticker": "TEST",
+            "open": price_series * 0.999,
+            "high": price_series * 1.005,
+            "low": price_series * 0.995,
+            "close": price_series,
+            "volume": np.random.randint(1_000_000, 5_000_000, n),
+        }
+    )
 
 
 def test_rsi_bounds(price_series):

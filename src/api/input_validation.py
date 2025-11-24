@@ -1,4 +1,5 @@
 """Input validation and sanitization for API requests."""
+
 import logging
 import re
 from typing import Any, List

@@ -1,4 +1,5 @@
 """Tests verifying API endpoints reject malformed input with 400/422, not 500."""
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -46,16 +47,22 @@ class TestPortfolioValidation:
 
 class TestBacktestValidation:
     def test_missing_ticker_rejected(self, client):
-        response = client.post("/api/backtest/run", json={
-            "initial_capital": 100000,
-        })
+        response = client.post(
+            "/api/backtest/run",
+            json={
+                "initial_capital": 100000,
+            },
+        )
         assert response.status_code == 422
 
     def test_negative_capital_handled(self, client):
-        response = client.post("/api/backtest/run", json={
-            "ticker": "AAPL",
-            "initial_capital": -1000,
-        })
+        response = client.post(
+            "/api/backtest/run",
+            json={
+                "ticker": "AAPL",
+                "initial_capital": -1000,
+            },
+        )
         # Should be 400 or 422, not 500
         assert response.status_code in (200, 400, 422)
 

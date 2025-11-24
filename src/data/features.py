@@ -30,11 +30,13 @@ def compute_macd(
     signal_line = macd_line.ewm(span=signal, adjust=False).mean()
     histogram = macd_line - signal_line
 
-    return pd.DataFrame({
-        "macd": macd_line,
-        "macd_signal": signal_line,
-        "macd_hist": histogram,
-    })
+    return pd.DataFrame(
+        {
+            "macd": macd_line,
+            "macd_signal": signal_line,
+            "macd_hist": histogram,
+        }
+    )
 
 
 def compute_bollinger_bands(
@@ -52,13 +54,15 @@ def compute_bollinger_bands(
     pct_b = (series - lower) / (upper - lower).replace(0, np.nan)
     bandwidth = (upper - lower) / middle.replace(0, np.nan)
 
-    return pd.DataFrame({
-        "bb_upper": upper,
-        "bb_middle": middle,
-        "bb_lower": lower,
-        "bb_pct_b": pct_b,
-        "bb_bandwidth": bandwidth,
-    })
+    return pd.DataFrame(
+        {
+            "bb_upper": upper,
+            "bb_middle": middle,
+            "bb_lower": lower,
+            "bb_pct_b": pct_b,
+            "bb_bandwidth": bandwidth,
+        }
+    )
 
 
 def compute_stochastic(
@@ -116,8 +120,12 @@ def compute_adx(
     minus_dm = pd.Series(minus_dm, index=high.index)
 
     atr = tr.ewm(alpha=1 / period, min_periods=period).mean()
-    plus_di = 100 * plus_dm.ewm(alpha=1 / period, min_periods=period).mean() / atr.replace(0, np.nan)
-    minus_di = 100 * minus_dm.ewm(alpha=1 / period, min_periods=period).mean() / atr.replace(0, np.nan)
+    plus_di = (
+        100 * plus_dm.ewm(alpha=1 / period, min_periods=period).mean() / atr.replace(0, np.nan)
+    )
+    minus_di = (
+        100 * minus_dm.ewm(alpha=1 / period, min_periods=period).mean() / atr.replace(0, np.nan)
+    )
 
     dx = 100 * (plus_di - minus_di).abs() / (plus_di + minus_di).replace(0, np.nan)
     adx = dx.ewm(alpha=1 / period, min_periods=period).mean()
@@ -139,8 +147,8 @@ def compute_rolling_stats(df: pd.DataFrame, windows: list[int] = None) -> pd.Dat
         # Mean reversion z-score
         rolling_mean = df["close"].rolling(window=w).mean()
         rolling_std = df["close"].rolling(window=w).std()
-        result[f"mean_reversion_{w}"] = (
-            (df["close"] - rolling_mean) / rolling_std.replace(0, np.nan)
+        result[f"mean_reversion_{w}"] = (df["close"] - rolling_mean) / rolling_std.replace(
+            0, np.nan
         )
 
     return result
@@ -201,9 +209,7 @@ def build_feature_matrix(df: pd.DataFrame, min_rows: int = 60) -> pd.DataFrame:
         min_rows: Minimum rows required after warmup; raises if data is too short
     """
     if len(df) < min_rows:
-        raise ValueError(
-            f"Insufficient history: need at least {min_rows} rows, got {len(df)}"
-        )
+        raise ValueError(f"Insufficient history: need at least {min_rows} rows, got {len(df)}")
 
     features = df[["date", "ticker", "open", "high", "low", "close", "volume"]].copy()
 

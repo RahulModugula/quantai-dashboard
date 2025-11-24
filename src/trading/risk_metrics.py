@@ -1,4 +1,5 @@
 """Advanced risk metrics and exposure analysis."""
+
 import numpy as np
 
 
@@ -83,6 +84,6 @@ class RiskMetrics:
         losses = sum([abs(r) for r in excess if r < 0])
 
         if losses == 0:
-            return float('inf') if gains > 0 else 0.0
+            return float("inf") if gains > 0 else 0.0
 
         return gains / losses

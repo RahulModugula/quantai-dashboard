@@ -56,19 +56,23 @@ def calculate_sip(
         inflation_factor = (1 + inflation_rate) ** year
         real_value = post_tax / inflation_factor
 
-        year_breakdown.append({
-            "year": year,
-            "monthly_sip": round(current_monthly, 2),
-            "total_invested": round(total_invested, 2),
-            "pre_tax_corpus": round(pre_tax, 2),
-            "post_tax_corpus": round(post_tax, 2),
-            "inflation_adjusted": round(real_value, 2),
-            "wealth_gain_pct": round((pre_tax / total_invested - 1) * 100, 2) if total_invested > 0 else 0,
-        })
+        year_breakdown.append(
+            {
+                "year": year,
+                "monthly_sip": round(current_monthly, 2),
+                "total_invested": round(total_invested, 2),
+                "pre_tax_corpus": round(pre_tax, 2),
+                "post_tax_corpus": round(post_tax, 2),
+                "inflation_adjusted": round(real_value, 2),
+                "wealth_gain_pct": round((pre_tax / total_invested - 1) * 100, 2)
+                if total_invested > 0
+                else 0,
+            }
+        )
 
         # Step-up SIP at start of each new year
         if step_up_pct > 0:
-            current_monthly *= (1 + step_up_pct)
+            current_monthly *= 1 + step_up_pct
 
     pre_tax_corpus = corpus
     gains = max(0, pre_tax_corpus - total_invested)
@@ -90,10 +94,14 @@ def calculate_sip(
         "post_tax_corpus": round(post_tax_corpus, 2),
         "inflation_adjusted_value": round(inflation_adjusted, 2),
         "wealth_gain": round(pre_tax_corpus - total_invested, 2),
-        "wealth_gain_pct": round((pre_tax_corpus / total_invested - 1) * 100, 2) if total_invested > 0 else 0,
+        "wealth_gain_pct": round((pre_tax_corpus / total_invested - 1) * 100, 2)
+        if total_invested > 0
+        else 0,
         "effective_return_post_tax": round(
             ((post_tax_corpus / total_invested) ** (1 / duration_years) - 1) * 100, 2
-        ) if total_invested > 0 else 0,
+        )
+        if total_invested > 0
+        else 0,
         "year_breakdown": year_breakdown,
         "disclaimer": "For educational/illustrative purposes only. Returns are not guaranteed.",
     }
@@ -120,7 +128,9 @@ def lumpsum_vs_sip(
     lump_real = lump_post_tax / (1 + inflation_rate) ** duration_years
 
     # SIP calculation
-    sip_result = calculate_sip(monthly_amount, duration_years, expected_return, inflation_rate, tax_rate)
+    sip_result = calculate_sip(
+        monthly_amount, duration_years, expected_return, inflation_rate, tax_rate
+    )
 
     return {
         "total_capital": round(total_capital, 2),
@@ -156,14 +166,18 @@ def reverse_sip(
     lo, hi = 100.0, target_corpus / duration_years
     for _ in range(100):
         mid = (lo + hi) / 2
-        result = calculate_sip(mid, duration_years, expected_return, inflation_rate, tax_rate, step_up_pct)
+        result = calculate_sip(
+            mid, duration_years, expected_return, inflation_rate, tax_rate, step_up_pct
+        )
         if result["post_tax_corpus"] < target_corpus:
             lo = mid
         else:
             hi = mid
 
     required_monthly = round((lo + hi) / 2, 2)
-    final = calculate_sip(required_monthly, duration_years, expected_return, inflation_rate, tax_rate, step_up_pct)
+    final = calculate_sip(
+        required_monthly, duration_years, expected_return, inflation_rate, tax_rate, step_up_pct
+    )
 
     return {
         "target_corpus": target_corpus,

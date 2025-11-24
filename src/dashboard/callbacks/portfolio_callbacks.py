@@ -46,10 +46,20 @@ def register_portfolio_callbacks(app):
                 if snaps:
                     dates = [s["timestamp"] for s in snaps]
                     values = [s["total_value"] for s in snaps]
-                    fig.add_trace(go.Scatter(x=dates, y=values, mode="lines", name="Portfolio Value",
-                                            line=dict(color="#4A90D9", width=2)))
-                    fig.update_layout(template="plotly_white", margin=dict(l=40, r=20, t=20, b=40),
-                                      yaxis_title="Value ($)")
+                    fig.add_trace(
+                        go.Scatter(
+                            x=dates,
+                            y=values,
+                            mode="lines",
+                            name="Portfolio Value",
+                            line=dict(color="#4A90D9", width=2),
+                        )
+                    )
+                    fig.update_layout(
+                        template="plotly_white",
+                        margin=dict(l=40, r=20, t=20, b=40),
+                        yaxis_title="Value ($)",
+                    )
 
             # Holdings table
             holdings = data.get("holdings", [])
@@ -62,9 +72,15 @@ def register_portfolio_callbacks(app):
                         {"name": "Current Value", "id": "current_value"},
                         {"name": "Unrealized P&L", "id": "unrealized_pnl"},
                     ],
-                    data=[{**h, "avg_price": f"${h['avg_price']:.2f}",
+                    data=[
+                        {
+                            **h,
+                            "avg_price": f"${h['avg_price']:.2f}",
                             "current_value": f"${h['current_value']:.2f}",
-                            "unrealized_pnl": f"${h['unrealized_pnl']:.2f}"} for h in holdings],
+                            "unrealized_pnl": f"${h['unrealized_pnl']:.2f}",
+                        }
+                        for h in holdings
+                    ],
                     style_cell={"textAlign": "left"},
                 )
             else:

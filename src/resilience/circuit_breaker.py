@@ -1,4 +1,5 @@
 """Circuit breaker pattern for fault tolerance."""
+
 import asyncio
 import logging
 from typing import Callable, Any

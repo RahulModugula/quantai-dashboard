@@ -15,7 +15,9 @@ from src.data.storage import load_ohlcv
 logger = logging.getLogger(__name__)
 
 
-def _build_price_df(tickers: list[str], period: int = 252, db_path: str | None = None) -> pd.DataFrame:
+def _build_price_df(
+    tickers: list[str], period: int = 252, db_path: str | None = None
+) -> pd.DataFrame:
     """Load closing prices for all tickers into a single DataFrame.
 
     Returns a DataFrame indexed by date with one column per ticker.
@@ -88,11 +90,13 @@ def compute_efficient_frontier(
             ef_point = EfficientFrontier(mu, cov)
             ef_point.efficient_return(target)
             perf = ef_point.portfolio_performance(risk_free_rate=0.04)
-            frontier.append({
-                "return": round(perf[0], 4),
-                "risk": round(perf[1], 4),
-                "sharpe": round(perf[2], 4),
-            })
+            frontier.append(
+                {
+                    "return": round(perf[0], 4),
+                    "risk": round(perf[1], 4),
+                    "sharpe": round(perf[2], 4),
+                }
+            )
         except Exception:
             continue
 

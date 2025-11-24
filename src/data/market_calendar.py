@@ -1,4 +1,5 @@
 """Market calendar and trading day utilities."""
+
 from datetime import datetime, timedelta
 
 

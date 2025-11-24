@@ -1,4 +1,5 @@
 """Performance attribution and analysis tools."""
+
 import logging
 
 logger = logging.getLogger(__name__)
@@ -78,5 +79,7 @@ class PerformanceAttribution:
             "portfolio_return": portfolio_return,
             "benchmark_return": benchmark_return,
             "outperformance": outperformance,
-            "outperformance_pct": (outperformance / abs(benchmark_return * 100)) if benchmark_return != 0 else 0,
+            "outperformance_pct": (outperformance / abs(benchmark_return * 100))
+            if benchmark_return != 0
+            else 0,
         }

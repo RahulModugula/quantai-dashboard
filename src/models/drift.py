@@ -35,7 +35,7 @@ def detect_drift(
     correct = (predictions["prediction"] == predictions["actual"]).astype(int)
 
     recent = correct.tail(lookback_window)
-    baseline = correct.iloc[-(lookback_window + baseline_window):-lookback_window]
+    baseline = correct.iloc[-(lookback_window + baseline_window) : -lookback_window]
 
     recent_acc = float(recent.mean())
     baseline_acc = float(baseline.mean())

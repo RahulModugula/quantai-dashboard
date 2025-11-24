@@ -1,4 +1,5 @@
 """Database schema migrations."""
+
 import logging
 
 logger = logging.getLogger(__name__)
@@ -22,11 +23,13 @@ class MigrationManager:
 
         with self.engine.connect() as conn:
             # Create migrations table
-            conn.execute(text("""
+            conn.execute(
+                text("""
                 CREATE TABLE IF NOT EXISTS schema_migrations (
                     version VARCHAR(50) PRIMARY KEY
                 )
-            """))
+            """)
+            )
             conn.commit()
 
             # Get applied migrations
@@ -38,7 +41,9 @@ class MigrationManager:
                 if version not in applied:
                     logger.info(f"Running migration: {version}")
                     self.migrations[version](conn)
-                    conn.execute(text(f"INSERT INTO schema_migrations (version) VALUES ('{version}')"))
+                    conn.execute(
+                        text(f"INSERT INTO schema_migrations (version) VALUES ('{version}')")
+                    )
                     conn.commit()
                     logger.info(f"Completed migration: {version}")
 

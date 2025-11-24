@@ -53,7 +53,3 @@ def test_backtest_request_schema_invalid_capital():
             buy_threshold=0.6,
             sell_threshold=0.4,
         )
-
-
-
-

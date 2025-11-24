@@ -1,4 +1,5 @@
 """Tests for retry mechanism with exponential backoff."""
+
 import pytest
 
 from src.resilience.retry import RetryPolicy, Retry, RetryException, retry
