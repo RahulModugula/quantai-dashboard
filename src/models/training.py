@@ -125,9 +125,9 @@ def walk_forward_train(
         model = EnsembleModel(sequence_length=settings.sequence_length)
         model.fit(X_train_scaled, y_train, feature_names=feature_names)
 
-        train_acc = float(
-            np.mean(model.predict(X_train_scaled) == y_train[-len(model.predict(X_train_scaled)) :])
-        )
+        train_preds = model.predict(X_train_scaled)
+        n_train_preds = len(train_preds)
+        train_acc = float(np.mean(train_preds == y_train[-n_train_preds:]))
 
         oos_proba = model.predict_proba(X_test_scaled)
         oos_pred = (oos_proba >= 0.5).astype(int)
