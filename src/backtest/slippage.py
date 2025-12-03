@@ -1,105 +1,98 @@
-"""Slippage modeling for more realistic backtests."""
+"""Volume-weighted slippage model for realistic fill simulation.
 
-import logging
+Two models are supported:
+- ParticipationRate: fill price moves against you proportional to order_size / avg_volume
+- SquareRootImpact: Kyle's square-root market impact model
+"""
 
-logger = logging.getLogger(__name__)
+import math
+from abc import ABC, abstractmethod
 
 
-class SlippageModel:
-    """Model execution slippage for trades."""
+class SlippageModel(ABC):
+    """Base class for slippage models."""
 
-    @staticmethod
-    def fixed_slippage(price: float, slippage_bps: int = 5) -> float:
-        """Apply fixed basis points slippage.
-
-        Args:
-            price: Execution price
-            slippage_bps: Slippage in basis points (default 5 = 0.05%)
-
-        Returns:
-            Adjusted price with slippage
-        """
-        slippage_pct = slippage_bps / 10000
-        return price * (1 + slippage_pct)
-
-    @staticmethod
-    def volume_dependent_slippage(
-        price: float,
-        order_size: int,
-        daily_volume: int,
-        base_slippage_bps: int = 2,
-    ) -> float:
-        """Calculate slippage based on order size vs daily volume.
-
-        Larger orders relative to volume get worse slippage.
+    @abstractmethod
+    def apply(self, price: float, order_value: float, avg_daily_volume: float, side: str) -> float:
+        """Return adjusted fill price (higher for buys, lower for sells).
 
         Args:
-            price: Execution price
-            order_size: Number of shares ordered
-            daily_volume: Daily trading volume
-            base_slippage_bps: Base slippage in basis points
+            price: Market price at time of fill.
+            order_value: Notional value of the order in dollars.
+            avg_daily_volume: Average daily traded volume in shares.
+            side: "buy" or "sell".
 
         Returns:
-            Adjusted price with slippage
+            Adjusted fill price after slippage.
         """
-        if daily_volume == 0:
+
+
+class NoSlippage(SlippageModel):
+    """Passthrough model — returns price unchanged. Useful for testing."""
+
+    def apply(self, price: float, order_value: float, avg_daily_volume: float, side: str) -> float:
+        return price
+
+
+class ParticipationRateSlippage(SlippageModel):
+    """Fill price moves against you proportional to order_size / avg_daily_volume.
+
+    slippage_pct = participation_rate * (order_value / (avg_daily_volume * price)) * impact_per_pct
+    Clamped to max_slippage_bps basis points.
+    """
+
+    def __init__(
+        self,
+        participation_rate: float = 0.1,
+        impact_per_pct: float = 0.002,
+        max_slippage_bps: float = 50.0,
+    ):
+        self.participation_rate = participation_rate
+        self.impact_per_pct = impact_per_pct
+        self.max_slippage_pct = max_slippage_bps / 10_000.0
+
+    def apply(self, price: float, order_value: float, avg_daily_volume: float, side: str) -> float:
+        adv_value = avg_daily_volume * price
+        if adv_value <= 0:
             return price
 
-        # Order size as % of daily volume
-        volume_ratio = order_size / daily_volume
+        participation = order_value / adv_value
+        slippage_pct = self.participation_rate * participation * self.impact_per_pct
+        slippage_pct = min(slippage_pct, self.max_slippage_pct)
 
-        # Slippage increases with order size
-        slippage_bps = base_slippage_bps + (volume_ratio * 50)  # +50bps per % of volume
-
-        return SlippageModel.fixed_slippage(price, min(int(slippage_bps), 100))
-
-    @staticmethod
-    def bid_ask_slippage(
-        price: float,
-        bid_ask_spread_pct: float = 0.01,
-        buy_side: bool = True,
-    ) -> float:
-        """Model bid-ask spread slippage.
-
-        Args:
-            price: Mid price
-            bid_ask_spread_pct: Spread as % (default 0.01% = 1 bp)
-            buy_side: True for buy orders (pay ask), False for sell (get bid)
-
-        Returns:
-            Adjusted price
-        """
-        half_spread = (price * bid_ask_spread_pct) / 2
-
-        if buy_side:
-            return price + half_spread  # Pay ask
+        if side == "buy":
+            return price * (1.0 + slippage_pct)
         else:
-            return price - half_spread  # Get bid
+            return price * (1.0 - slippage_pct)
 
-    @staticmethod
-    def market_impact_slippage(
-        price: float,
-        order_value: float,
-        market_cap: float,
-        impact_elasticity: float = 0.5,
-    ) -> float:
-        """Model market impact slippage.
 
-        Larger orders move the market.
+class SquareRootImpact(SlippageModel):
+    """Kyle's square-root market impact model.
 
-        Args:
-            price: Current price
-            order_value: Dollar value of order
-            market_cap: Market cap of stock
-            impact_elasticity: How much price moves with order size
+    slippage_pct = impact_coeff * volatility * sqrt(order_value / (avg_daily_volume * price))
+    Clamped to max_slippage_bps basis points.
+    """
 
-        Returns:
-            Adjusted price
-        """
-        if market_cap == 0:
+    def __init__(
+        self,
+        volatility: float = 0.02,
+        impact_coeff: float = 0.1,
+        max_slippage_bps: float = 50.0,
+    ):
+        self.volatility = volatility
+        self.impact_coeff = impact_coeff
+        self.max_slippage_pct = max_slippage_bps / 10_000.0
+
+    def apply(self, price: float, order_value: float, avg_daily_volume: float, side: str) -> float:
+        adv_value = avg_daily_volume * price
+        if adv_value <= 0:
             return price
 
-        order_ratio = order_value / market_cap
-        impact = (order_ratio**impact_elasticity) * 0.01  # Up to 1% impact
+        participation = order_value / adv_value
+        slippage_pct = self.impact_coeff * self.volatility * math.sqrt(participation)
+        slippage_pct = min(slippage_pct, self.max_slippage_pct)
 
-        return price * (1 + impact)
+        if side == "buy":
+            return price * (1.0 + slippage_pct)
+        else:
+            return price * (1.0 - slippage_pct)
