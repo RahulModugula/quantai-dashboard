@@ -1,5 +1,9 @@
 # QuantAI — ML Trading Dashboard
 
+[![CI/CD Pipeline](https://github.com/RahulModugula/quantai-dashboard/actions/workflows/ci.yml/badge.svg)](https://github.com/RahulModugula/quantai-dashboard/actions/workflows/ci.yml)
+[![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/downloads/release/python-3110/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
 > **DISCLAIMER**: This project is for **educational purposes only**. All predictions, signals, and portfolio data are simulated. Nothing here constitutes financial advice.
 
 An ML-powered trading dashboard that combines walk-forward backtesting, ensemble models, paper trading simulation, and portfolio optimization — built with FastAPI, Plotly Dash, and PyTorch.
