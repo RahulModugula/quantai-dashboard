@@ -8,10 +8,12 @@ strictly on matching dates, with no lookahead.
 
 import logging
 from dataclasses import dataclass, field
+from typing import Optional
 
 import pandas as pd
 
 from src.backtest.metrics import compute_all_metrics
+from src.backtest.slippage import SlippageModel
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +27,7 @@ class BacktestRun:
     trades: pd.DataFrame
     metrics: dict
     oos_predictions: pd.DataFrame = field(default_factory=pd.DataFrame)
+    total_slippage_cost: float = 0.0
 
 
 class WalkForwardBacktester:
@@ -35,12 +38,14 @@ class WalkForwardBacktester:
         buy_threshold: float = 0.6,
         sell_threshold: float = 0.4,
         max_position_pct: float = 0.10,
+        slippage_model: Optional[SlippageModel] = None,
     ):
         self.initial_capital = initial_capital
         self.commission_pct = commission_pct
         self.buy_threshold = buy_threshold
         self.sell_threshold = sell_threshold
         self.max_position_pct = max_position_pct
+        self.slippage_model = slippage_model
 
     def run(
         self,
@@ -67,8 +72,27 @@ class WalkForwardBacktester:
         # Shift prices by 1 so we execute at next-day open (approximated as close)
         px["next_close"] = px["close"].shift(-1)
 
-        merged = pd.merge(pred, px, on="date", how="inner").dropna(subset=["next_close"])
+        # Include volume if present, for slippage calculation
+        price_cols = ["date", "close", "next_close"]
+        if "volume" in prices.columns:
+            vol_series = prices[prices["ticker"] == ticker][["date", "volume"]].copy()
+            vol_series["date"] = pd.to_datetime(vol_series["date"])
+            px = pd.merge(px, vol_series, on="date", how="left")
+            price_cols.append("volume")
+
+        merged = pd.merge(pred, px[price_cols], on="date", how="inner").dropna(
+            subset=["next_close"]
+        )
         merged = merged.sort_values("date").reset_index(drop=True)
+
+        # Compute rolling 20-day average volume if available
+        _fallback_volume = 1_000_000.0
+        if "volume" in merged.columns:
+            merged["avg_volume"] = (
+                merged["volume"].rolling(20, min_periods=1).mean().fillna(_fallback_volume)
+            )
+        else:
+            merged["avg_volume"] = _fallback_volume
 
         if merged.empty:
             raise ValueError(
@@ -80,18 +104,30 @@ class WalkForwardBacktester:
         shares = 0.0
         equity_values = []
         trades_log = []
+        total_slippage_cost = 0.0
 
         for _, row in merged.iterrows():
             price = float(row["next_close"])
             prob_up = float(row["probability_up"])
             date = row["date"]
+            avg_vol = float(row["avg_volume"])
             portfolio_value = cash + shares * price
 
             if prob_up >= self.buy_threshold and shares == 0:
                 # Buy — size to max_position_pct of portfolio
                 target_value = portfolio_value * self.max_position_pct
                 shares_to_buy = target_value / price
-                cost = shares_to_buy * price
+                order_value = shares_to_buy * price
+
+                # Apply slippage to fill price
+                if self.slippage_model is not None:
+                    fill_price = self.slippage_model.apply(price, order_value, avg_vol, "buy")
+                else:
+                    fill_price = price
+                slippage_cost = (fill_price - price) * shares_to_buy
+                total_slippage_cost += slippage_cost
+
+                cost = shares_to_buy * fill_price
                 commission = cost * self.commission_pct
 
                 if cash >= cost + commission:
@@ -103,7 +139,7 @@ class WalkForwardBacktester:
                             "ticker": ticker,
                             "side": "buy",
                             "shares": shares_to_buy,
-                            "price": price,
+                            "price": fill_price,
                             "commission": commission,
                             "pnl": None,
                         }
@@ -111,12 +147,24 @@ class WalkForwardBacktester:
 
             elif prob_up <= self.sell_threshold and shares > 0:
                 # Sell all
-                proceeds = shares * price
+                order_value = shares * price
+
+                # Apply slippage to fill price
+                if self.slippage_model is not None:
+                    fill_price = self.slippage_model.apply(price, order_value, avg_vol, "sell")
+                else:
+                    fill_price = price
+                slippage_cost = (price - fill_price) * shares
+                total_slippage_cost += slippage_cost
+
+                proceeds = shares * fill_price
                 commission = proceeds * self.commission_pct
 
                 # Find last buy to compute realized PnL
                 last_buy = next((t for t in reversed(trades_log) if t["side"] == "buy"), None)
-                realized_pnl = (price - last_buy["price"]) * shares - commission if last_buy else 0
+                realized_pnl = (
+                    (fill_price - last_buy["price"]) * shares - commission if last_buy else 0
+                )
 
                 cash += proceeds - commission
                 trades_log.append(
@@ -125,7 +173,7 @@ class WalkForwardBacktester:
                         "ticker": ticker,
                         "side": "sell",
                         "shares": shares,
-                        "price": price,
+                        "price": fill_price,
                         "commission": commission,
                         "pnl": realized_pnl,
                     }
@@ -179,4 +227,5 @@ class WalkForwardBacktester:
             trades=trades_df,
             metrics=metrics,
             oos_predictions=oos_predictions,
+            total_slippage_cost=total_slippage_cost,
         )
