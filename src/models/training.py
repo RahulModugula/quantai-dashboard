@@ -13,35 +13,16 @@ from src.models.registry import save_model
 
 logger = logging.getLogger(__name__)
 
-FEATURE_COLS = [
-    "rsi_14",
-    "macd",
-    "macd_signal",
-    "macd_hist",
-    "bb_upper",
-    "bb_middle",
-    "bb_lower",
-    "bb_pct_b",
-    "bb_bandwidth",
-    "atr_14",
-    "stoch_k",
-    "stoch_d",
-    "adx_14",
-    "close_to_sma50",
-    "close_to_sma200",
-    "sma50_to_sma200",
-    "return_lag_1",
-    "return_lag_2",
-    "return_lag_3",
-    "return_lag_5",
-    "volatility_5",
-    "volatility_20",
-    "momentum_5",
-    "momentum_20",
-    "mean_reversion_20",
-    "volume_ratio",
-    "obv",
-]
+EXCLUDED_COLS = {"id", "date", "ticker", "open", "high", "low", "close", "volume", "target"}
+
+
+def get_feature_cols(df: pd.DataFrame) -> list[str]:
+    """Extract feature column names dynamically from a features DataFrame.
+
+    Returns all columns except metadata and raw price columns, so new
+    features added to build_feature_matrix() are picked up automatically.
+    """
+    return sorted(c for c in df.columns if c not in EXCLUDED_COLS)
 
 
 @dataclass
@@ -92,9 +73,8 @@ def walk_forward_train(
     if df.empty:
         raise ValueError(f"No feature data found for {ticker}")
 
-    df = df.dropna(subset=FEATURE_COLS + ["target"]).reset_index(drop=True)
-
-    feature_names = [c for c in FEATURE_COLS if c in df.columns]
+    feature_names = get_feature_cols(df)
+    df = df.dropna(subset=feature_names + ["target"]).reset_index(drop=True)
     X = df[feature_names].values
     y = df["target"].values
     dates = pd.to_datetime(df["date"])
