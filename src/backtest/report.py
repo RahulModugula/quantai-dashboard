@@ -171,13 +171,16 @@ def generate_report(run: BacktestRun) -> dict:
     total_return = (run.final_value / run.initial_capital) - 1.0
     annualized_return = (1 + total_return) ** (1 / n_years) - 1.0 if n_years > 0 else 0.0
 
+    metrics = dict(run.metrics)
+    metrics["total_slippage_cost"] = round(float(run.total_slippage_cost), 6)
+
     return {
         "ticker": run.ticker,
         "initial_capital": run.initial_capital,
         "final_value": run.final_value,
         "total_return": total_return,
         "annualized_return": round(annualized_return, 6),
-        "metrics": run.metrics,
+        "metrics": metrics,
         "equity_curve": equity_data,
         "drawdown_series": drawdown_data,
         "drawdown_periods": dd_periods,
