@@ -34,6 +34,9 @@ class EnsembleModel:
             sequence_length: LSTM look-back window (days).
         """
         self.weights = weights or settings.ensemble_weights
+        weight_sum = sum(self.weights.values())
+        if abs(weight_sum - 1.0) > 0.01:
+            raise ValueError(f"Ensemble weights must sum to 1.0, got {weight_sum:.3f}")
         self.sequence_length = sequence_length
 
         self.rf = RandomForestClassifier(
