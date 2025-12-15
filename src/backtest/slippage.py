@@ -1,8 +1,13 @@
 """Volume-weighted slippage model for realistic fill simulation.
 
-Two models are supported:
-- ParticipationRate: fill price moves against you proportional to order_size / avg_volume
-- SquareRootImpact: Kyle's square-root market impact model
+Three models are provided:
+- NoSlippage: passthrough; useful for baseline/testing comparisons.
+- ParticipationRate: fill price moves against you proportional to order_size / avg_volume.
+- SquareRootImpact: Kyle's square-root market impact (more conservative for large orders).
+
+All models clamp slippage at max_slippage_bps (default 50bps = 0.5%) to prevent
+unrealistic fills on illiquid names.  50bps is intentionally conservative — real
+impact on liquid large-caps is typically <5bps for the order sizes this system uses.
 """
 
 import math
