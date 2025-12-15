@@ -13,27 +13,23 @@ This guide covers deploying QuantAI to production and scaling considerations.
 
 ```bash
 # Clone and setup
-git clone <repo>
-cd profile-max
-python -m venv venv
-source venv/bin/activate  # or `venv\Scripts\activate` on Windows
-pip install -r requirements.txt
+git clone https://github.com/RahulModugula/quantai-dashboard.git
+cd quantai-dashboard
+make setup    # installs deps + pre-commit hooks
 
 # Configure
 cp .env.example .env
 # Edit .env with your settings
 
-# Initialize database
-python -m scripts.init_db
+# Run database migrations
+make migrate
 
-# Seed initial data
-python -m scripts.seed_data
-
-# Train model (optional, background)
-python -m scripts.train_model &
+# Seed initial data and train model
+make seed
+make train
 
 # Start API
-uvicorn src.api.main:app --reload --port 8000
+make run
 ```
 
 Then open http://localhost:8000/dashboard
@@ -140,6 +136,28 @@ QUANTAI_LOG_FORMAT=json
 QUANTAI_LOG_DESTINATION=cloudwatch  # or file, syslog
 ```
 
+## Database Migrations
+
+Schema changes are tracked with Alembic. Never modify tables directly in production.
+
+```bash
+# Create a new migration after changing src/data/storage.py
+alembic revision --autogenerate -m "Add column to trades table"
+
+# Review the generated migration
+cat alembic/versions/<hash>_add_column_to_trades_table.py
+
+# Apply in staging first
+QUANTAI_DB_PATH=staging.db alembic upgrade head
+
+# Then production (backup first)
+cp data/trading.db data/trading.db.bak
+alembic upgrade head
+
+# Verify current version
+alembic current
+```
+
 ## Monitoring & Alerts
 
 ### Health Checks
@@ -165,10 +183,9 @@ curl http://localhost:8000/api/status/ready
 
 ### Suggested Tools
 
-- **Prometheus** - Metrics collection
-- **Grafana** - Visualization
-- **DataDog** - APM
-- **CloudWatch** - AWS native monitoring
+- **Prometheus** — Scrape `/api/metrics/prometheus` for request latency, model inference time, prediction distribution
+- **Grafana** — Dashboard visualization
+- **structlog** — JSON-formatted logs in production (set `QUANTAI_ENV=production`)
 
 ## Performance Tuning
 
