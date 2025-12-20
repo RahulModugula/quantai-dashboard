@@ -24,7 +24,11 @@ def seed():
     macro_df = None
     try:
         macro_df = download_macro_features(period=f"{settings.lookback_years}y")
-        logger.info(f"Downloaded macro features: {len(macro_df)} rows")
+        if macro_df is not None and len(macro_df) < 100:
+            logger.warning(f"Macro features too sparse ({len(macro_df)} rows), skipping merge")
+            macro_df = None
+        else:
+            logger.info(f"Downloaded macro features: {len(macro_df)} rows")
     except Exception as e:
         logger.warning(f"Macro features unavailable: {e}")
 
