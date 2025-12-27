@@ -142,6 +142,8 @@ class RegimeDetector:
                 "count": count,
                 "pct_time": round(count / total, 4) if total > 0 else 0.0,
                 "avg_duration_days": round(float(np.mean(run_lengths)), 1),
+                "min_duration_days": int(np.min(run_lengths)),
+                "max_duration_days": int(np.max(run_lengths)),
             }
 
         return stats
