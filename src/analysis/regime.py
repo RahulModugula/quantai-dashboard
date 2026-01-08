@@ -38,7 +38,8 @@ class RegimeDetector:
         """
         if len(df) < MIN_BARS:
             raise ValueError(
-                f"Insufficient history: {len(df)} rows (need >= {MIN_BARS} for 200-day MA)"
+                f"Insufficient history: {len(df)} rows (need >= {MIN_BARS} for 200-day MA). "
+                "Fetch more data with seed_data.py before running regime detection."
             )
 
         result = df.copy()
