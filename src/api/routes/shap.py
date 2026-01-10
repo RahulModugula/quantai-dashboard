@@ -13,8 +13,14 @@ logger = logging.getLogger(__name__)
 
 
 @router.get("/importance/{ticker}")
-def get_shap_importance(ticker: str) -> dict:
-    """Get SHAP feature importance for current model on ticker's feature data."""
+def get_shap_importance(ticker: str, normalize: bool = True) -> dict:
+    """Get SHAP feature importance for current model on ticker's feature data.
+
+    Args:
+        ticker: Stock ticker symbol.
+        normalize: When True (default), SHAP values are normalized to sum to 1.0
+            across features, enabling cross-ticker comparison on the same scale.
+    """
     bundle, meta = get_model_bundle()
     if bundle is None:
         raise HTTPException(status_code=503, detail="No trained model available")
@@ -47,9 +53,14 @@ def get_shap_importance(ticker: str) -> dict:
     mean_abs = result["mean_abs_shap"]
     per_model = result["per_model"]
 
+    sorted_items = sorted(mean_abs.items(), key=lambda x: x[1], reverse=True)
+
+    if normalize:
+        total = sum(v for _, v in sorted_items)
+        sorted_items = [(k, v / total if total > 0 else 0.0) for k, v in sorted_items]
+
     feature_importance = [
-        {"feature": feat, "shap_value": round(val, 8)}
-        for feat, val in sorted(mean_abs.items(), key=lambda x: x[1], reverse=True)
+        {"feature": feat, "shap_value": round(val, 8)} for feat, val in sorted_items
     ]
 
     top_features = [item["feature"] for item in feature_importance[:10]]
@@ -59,5 +70,6 @@ def get_shap_importance(ticker: str) -> dict:
         "feature_importance": feature_importance,
         "per_model": per_model,
         "top_features": top_features,
+        "normalized": normalize,
         "disclaimer": "SHAP values reflect model behavior, not fundamental causality",
     }
