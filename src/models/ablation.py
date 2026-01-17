@@ -13,7 +13,7 @@ import pandas as pd
 
 from src.backtest.engine import WalkForwardBacktester
 from src.config import settings
-from src.data.storage import load_ohlcv
+from src.data.storage import load_features, load_ohlcv
 from src.models.training import walk_forward_train
 
 logger = logging.getLogger(__name__)
@@ -134,3 +134,119 @@ def run_model_ablation(ticker: str) -> dict:
     }
 
 
+def run_feature_ablation(
+    ticker: str,
+    feature_groups: dict[str, list[str]] | None = None,
+    fast_mode: bool = True,
+) -> dict:
+    """Measure the marginal contribution of each feature group to portfolio Sharpe ratio.
+
+    In fast_mode (default), the existing trained model is loaded from disk and
+    inference is re-run with the target feature group zeroed out — no retraining.
+    With fast_mode=False, the model is fully retrained for each ablation run.
+
+    Args:
+        ticker: Stock ticker symbol (e.g. "AAPL").
+        feature_groups: Dict mapping group name -> list of feature column names.
+            Defaults to DEFAULT_FEATURE_GROUPS.
+        fast_mode: When True, zero features post-hoc instead of retraining.
+
+    Returns:
+        Dict with keys:
+            baseline_sharpe (float), groups (dict), ticker (str), conclusion (str).
+    """
+    groups = feature_groups or DEFAULT_FEATURE_GROUPS
+
+    logger.info(f"[ablation] feature ablation for {ticker}, fast_mode={fast_mode}")
+    baseline_result = walk_forward_train(ticker)
+    baseline_sharpe = _backtest_predictions(baseline_result.oos_predictions, ticker)
+    logger.info(f"[ablation] baseline Sharpe={baseline_sharpe:.4f}")
+
+    groups_data: dict[str, dict] = {}
+
+    for group_name, feature_cols in groups.items():
+        logger.info(f"[ablation] zeroing feature group '{group_name}': {feature_cols}")
+
+        if fast_mode:
+            try:
+                from src.api.dependencies import get_model_bundle
+
+                bundle, meta = get_model_bundle()
+                if bundle is None:
+                    raise RuntimeError("No trained model available for fast_mode ablation")
+
+                model = bundle["model"]
+                scaler = bundle["scaler"]
+                feature_names: list[str] = meta.get("feature_names", [])
+
+                df = load_features(ticker)
+                if df.empty:
+                    raise RuntimeError(f"No feature data for {ticker}")
+
+                cols = (
+                    feature_names
+                    if feature_names
+                    else [c for c in df.columns if c not in ("date", "ticker", "target")]
+                )
+                X = df[cols].values.copy()
+
+                # Zero out the ablated feature group columns
+                zero_indices = [i for i, c in enumerate(cols) if c in feature_cols]
+                if zero_indices:
+                    X[:, zero_indices] = 0.0
+
+                X_scaled = scaler.transform(X)
+                proba = model.predict_proba(X_scaled)
+                prob_up = (
+                    proba[:, 1] if hasattr(proba, "__len__") and len(proba.shape) == 2 else proba
+                )
+
+                # Re-build OOS predictions with ablated probabilities
+                oos = baseline_result.oos_predictions.copy()
+                if len(prob_up) >= len(oos):
+                    oos = oos.copy()
+                    oos["probability_up"] = prob_up[-len(oos) :]
+                else:
+                    # Fall back to slow ablation if shapes mismatch
+                    raise RuntimeError("Shape mismatch — falling back to slow ablation")
+
+            except Exception as exc:
+                logger.warning(f"Fast ablation failed for '{group_name}': {exc}. Falling back.")
+                ablated_result = walk_forward_train(ticker)
+                oos = ablated_result.oos_predictions
+        else:
+            ablated_result = walk_forward_train(ticker)
+            oos = ablated_result.oos_predictions
+
+        sharpe_without = _backtest_predictions(oos, ticker)
+        sharpe_delta = baseline_sharpe - sharpe_without
+        groups_data[group_name] = {
+            "sharpe_without": round(sharpe_without, 4),
+            "sharpe_delta": round(sharpe_delta, 4),
+            "marginal_contribution": round(sharpe_delta, 4),
+            "features": feature_cols,
+        }
+        logger.info(
+            f"[ablation] group '{group_name}': sharpe_without={sharpe_without:.4f}, "
+            f"delta={sharpe_delta:.4f}"
+        )
+
+    by_contribution = sorted(
+        groups_data.items(), key=lambda kv: kv[1]["marginal_contribution"], reverse=True
+    )
+    most = by_contribution[0][0]
+    least = by_contribution[-1][0]
+    conclusion = (
+        f"'{most}' features contribute most "
+        f"(marginal Sharpe +{by_contribution[0][1]['marginal_contribution']:.3f}); "
+        f"'{least}' contributes least "
+        f"(+{by_contribution[-1][1]['marginal_contribution']:.3f})"
+    )
+
+    return {
+        "baseline_sharpe": round(baseline_sharpe, 4),
+        "groups": groups_data,
+        "ticker": ticker,
+        "fast_mode": fast_mode,
+        "conclusion": conclusion,
+    }
