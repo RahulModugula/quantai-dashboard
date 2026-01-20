@@ -16,6 +16,10 @@ backtest:
 	$(PYTHON) scripts/run_backtest.py --output backtest_report.json
 	@echo "Report saved to backtest_report.json"
 
+ablation:
+	$(PYTHON) scripts/run_ablation.py --ticker AAPL --type both --output ablation_report.json
+	@echo "Ablation report saved to ablation_report.json"
+
 analyze:
 	$(PYTHON) -m notebooks.backtest_analysis
 
