@@ -102,6 +102,15 @@ def create_app() -> FastAPI:
     except ImportError:
         logger.warning("Some optional routes not yet available")
 
+    try:
+        from src.api.routes import shap, regime
+
+        app.include_router(shap.router, prefix="/api")
+        app.include_router(regime.router, prefix="/api")
+        logger.info("SHAP and regime routes registered")
+    except ImportError:
+        logger.warning("SHAP/regime routes not available")
+
     # WebSocket
     @app.websocket("/ws/prices")
     async def ws_prices(websocket: WebSocket):

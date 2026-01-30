@@ -14,6 +14,7 @@ from src.dashboard.layouts.equity_curve import equity_curve_layout
 from src.dashboard.layouts.optimizer_panel import optimizer_panel_layout
 from src.dashboard.layouts.price_chart import price_chart_layout
 from src.dashboard.layouts.risk_panel import risk_panel_layout
+from src.dashboard.layouts.shap_panel import shap_panel_layout
 from src.dashboard.layouts.sip_panel import sip_panel_layout
 from src.dashboard.layouts.trade_log import trade_log_layout
 
@@ -124,6 +125,13 @@ def create_dash_app() -> dash.Dash:
                             html.Div(className="mt-3", children=optimizer_panel_layout()),
                         ],
                     ),
+                    dbc.Tab(
+                        label="Explainability",
+                        tab_id="tab-shap",
+                        children=[
+                            html.Div(className="mt-3", children=shap_panel_layout()),
+                        ],
+                    ),
                 ],
                 id="main-tabs",
                 active_tab="tab-live",
@@ -148,8 +156,10 @@ def create_dash_app() -> dash.Dash:
     register_advisor_callbacks(app)
 
     from src.dashboard.callbacks.optimizer_callbacks import register_optimizer_callbacks
+    from src.dashboard.callbacks.shap_callbacks import register_shap_callbacks
 
     register_optimizer_callbacks(app)
+    register_shap_callbacks(app)
 
     from dash import Input, Output, State
     import httpx
