@@ -17,10 +17,14 @@ The system downloads daily OHLCV data via yfinance, engineers 27+ technical feat
 ### Key Components
 
 - **Ensemble model** — RF + XGBoost + LightGBM + LSTM with dynamic weighting (0.3/0.3/0.25/0.15). Walk-forward training ensures predictions at time `t` use only data before `t`.
-- **Backtesting engine** — Walk-forward validation with risk metrics (Sharpe, Sortino, Calmar, max drawdown), benchmark comparison vs SPY, Monte Carlo confidence intervals, and CSV export.
+- **Backtesting engine** — Walk-forward validation with risk metrics (Sharpe, Sortino, Calmar, max drawdown), benchmark comparison vs SPY, Monte Carlo confidence intervals, and CSV export. Includes volume-weighted slippage (participation-rate and square-root impact models) for realistic fill simulation.
 - **Paper trading** — Async trading loop with Half-Kelly position sizing, max drawdown constraints, and Redis-cached price distribution.
 - **Portfolio optimization** — Max Sharpe, min volatility, and HRP allocation via PyPortfolioOpt with efficient frontier visualization.
-- **Dashboard** — Plotly Dash frontend with candlestick charts, signal display, equity curves, backtest runner, SIP calculator, and portfolio optimizer tabs.
+- **Dashboard** — Plotly Dash frontend with candlestick charts, signal display, equity curves, backtest runner, SIP calculator, portfolio optimizer, and SHAP explainability tabs.
+- **SHAP explainability** — TreeExplainer-based feature importance averaged across RF/XGB/LGB ensemble members. Dashboard tab shows top-15 feature bar chart and per-model breakdown. Normalize endpoint enables cross-ticker comparison.
+- **Market regime detection** — Volatility-regime (low/normal/high) and trend-regime (trending up/down/sideways) classification. API exposes current regime, 252-day history, and performance-by-regime breakdown. `make ablation` quantifies marginal Sharpe contribution per ensemble member and per feature group.
+- **Portfolio stress testing** — Monte Carlo simulation using block bootstrap (preserves autocorrelation) over configurable horizon. Historical scenario replay for COVID crash, 2022 rate hike, GFC, dotcom bust, and flash crash.
+- **Live data feed** — Alpaca WebSocket integration with exponential-backoff reconnection and queue-based backpressure. Falls back to yfinance polling when API credentials are not configured.
 
 ---
 
@@ -103,7 +107,7 @@ RF and XGBoost capture different interaction patterns. LightGBM trains faster an
 make test
 ```
 
-68 tests covering feature engineering, backtest metrics, SIP calculator, portfolio operations, signal generation, model drift detection, storage, and portfolio optimization.
+95+ tests covering feature engineering, backtest metrics, SIP calculator, portfolio operations, signal generation, model drift detection, storage, portfolio optimization, slippage models, SHAP explainability, regime detection, ablation study, live feed, and stress testing.
 
 ---
 
@@ -129,10 +133,9 @@ This section documents known limitations honestly — understanding where a syst
 
 ### What Would Make This Better
 - **Alternative data integration** — earnings call sentiment (via NLP on SEC filings), options flow from CBOE, or social media sentiment would test whether non-price data adds signal.
-- **Event-driven backtester** — replacing the vectorized backtest with tick-by-tick event processing would enable realistic fill simulation (slippage, partial fills, queue position).
-- **Proper ablation studies** — systematically removing features and ensemble members to measure marginal contribution. SHAP values help but aren't a substitute for out-of-sample ablation.
-- **Live data via WebSocket** — connecting to Alpaca or Polygon.io instead of polling yfinance would enable real-time signal generation.
-- **Regime analysis** — measuring model performance separately in trending vs. mean-reverting vs. high-volatility regimes. Most ML models work well in trends and fail in chop.
+- **Event-driven backtester** — replacing the vectorized backtest with tick-by-tick event processing would enable realistic fill simulation (partial fills, queue position). The current slippage model is a step in this direction but still fills at a single price.
+- **Live trading with Alpaca** — the WebSocket feed module is built; wiring it to the paper trader loop and replacing yfinance polling would close the gap to real-time operation.
+- **Survivorship bias correction** — adding delisted tickers to the backtest universe using a point-in-time database (CRSP, Norgate) would produce more credible historical results.
 
 ---
 
@@ -140,17 +143,18 @@ This section documents known limitations honestly — understanding where a syst
 
 ```
 src/
-├── config.py              # Pydantic Settings with validators
-├── data/                  # Ingestion, features, storage, schemas
-├── models/                # Ensemble, LSTM, training, drift detection
-├── backtest/              # Walk-forward engine, metrics, reports
-├── trading/               # Portfolio, signals, paper trader
+├── config/                # Pydantic Settings, feature flags, production config
+├── data/                  # yfinance ingestion, 27 technical features, SQLite storage
+├── models/                # Ensemble (RF+XGB+LGB+LSTM), training, SHAP, drift detection
+├── backtest/              # Walk-forward engine, risk metrics, Monte Carlo, reports
+├── trading/               # Paper trader, portfolio, Half-Kelly signals
 ├── advisor/               # Risk profiling, allocation, SIP calculator
-├── api/                   # FastAPI routes, middleware, auth
-├── dashboard/             # Plotly Dash layouts and callbacks
-├── monitoring/            # Prometheus metrics, observability
-├── health/                # Dependency health checks
-└── resilience/            # Circuit breaker, retry with backoff
+├── api/                   # FastAPI routes, middleware, structured logging
+│   └── routes/            # predictions, portfolio, backtest, advisor, diagnostics
+├── dashboard/             # Plotly Dash (6 tabs), layouts, callbacks
+├── monitoring/            # Prometheus metrics (request latency, model inference)
+├── health/                # Dependency health checks (DB, Redis, model, data)
+└── resilience/            # Retry with exponential backoff
 ```
 
 ---

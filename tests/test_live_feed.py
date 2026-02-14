@@ -117,7 +117,6 @@ def test_feed_output_has_required_keys():
         }
     ]
 
-
     async def _inject():
         # Simulate what _pump does with a list of bar messages
         import json as _json
