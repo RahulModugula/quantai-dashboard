@@ -1,8 +1,6 @@
 """Tests for the walk-forward training pipeline."""
 
-import numpy as np
 import pandas as pd
-import pytest
 
 from src.models.training import get_feature_cols, EXCLUDED_COLS
 
