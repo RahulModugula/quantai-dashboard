@@ -180,7 +180,8 @@ def test_get_feed_returns_fallback_without_creds():
         mock_settings.alpaca_api_key = ""
         mock_settings.alpaca_secret_key = ""
 
-        with patch("src.data.live_feed.live_feed_settings", mock_settings):
+        # live_feed_settings is imported inside get_feed; patch at its source module
+        with patch("src.config.live_feed_config.live_feed_settings", mock_settings):
             from src.data.live_feed import get_feed
 
             async with get_feed(["AAPL"]) as feed:

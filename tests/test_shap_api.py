@@ -38,7 +38,8 @@ def _make_mock_ensemble(n_features: int = 10):
 
 def _make_test_app():
     app = FastAPI()
-    app.include_router(router, prefix="/shap")
+    # router already carries its own /shap prefix — include without additional prefix
+    app.include_router(router)
     return app
 
 
@@ -91,6 +92,10 @@ def test_compute_shap_importance_shape():
     from src.models.shap_analysis import compute_shap_importance
 
     ensemble, feature_names = _make_mock_ensemble(n_features=8)
+    # Give ensemble a real feature_importances() fallback for when shap isn't installed
+    ensemble.feature_importances = MagicMock(
+        return_value={name: float(i + 1) for i, name in enumerate(feature_names)}
+    )
     rng = np.random.default_rng(1)
     X = rng.standard_normal((50, 8))
 
@@ -112,6 +117,9 @@ def test_shap_importance_sorted_descending():
     from src.models.shap_analysis import compute_shap_importance
 
     ensemble, feature_names = _make_mock_ensemble(n_features=10)
+    ensemble.feature_importances = MagicMock(
+        return_value={name: float(10 - i) for i, name in enumerate(feature_names)}
+    )
     rng = np.random.default_rng(2)
     X = rng.standard_normal((80, 10))
 
