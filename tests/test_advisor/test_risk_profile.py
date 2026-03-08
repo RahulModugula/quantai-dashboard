@@ -7,52 +7,80 @@ from src.advisor.allocation import get_allocation, AllocationSuggestion
 class TestRiskScoring:
     def test_young_aggressive_profile(self):
         result = score_risk_profile(
-            age=25, income_stability=5, investment_horizon_years=20,
-            loss_tolerance=5, existing_savings_months=12, debt_to_income_pct=0.05,
+            age=25,
+            income_stability=5,
+            investment_horizon_years=20,
+            loss_tolerance=5,
+            existing_savings_months=12,
+            debt_to_income_pct=0.05,
         )
         assert result.category == "Very Aggressive"
         assert result.score >= 75
 
     def test_old_conservative_profile(self):
         result = score_risk_profile(
-            age=65, income_stability=2, investment_horizon_years=2,
-            loss_tolerance=1, existing_savings_months=2, debt_to_income_pct=0.6,
+            age=65,
+            income_stability=2,
+            investment_horizon_years=2,
+            loss_tolerance=1,
+            existing_savings_months=2,
+            debt_to_income_pct=0.6,
         )
         assert result.category == "Conservative"
         assert result.score < 35
 
     def test_moderate_profile(self):
         result = score_risk_profile(
-            age=40, income_stability=3, investment_horizon_years=7,
-            loss_tolerance=3, existing_savings_months=6, debt_to_income_pct=0.2,
+            age=40,
+            income_stability=3,
+            investment_horizon_years=7,
+            loss_tolerance=3,
+            existing_savings_months=6,
+            debt_to_income_pct=0.2,
         )
         assert result.category in ("Moderate", "Aggressive")
 
     def test_score_clamped_to_100(self):
         result = score_risk_profile(
-            age=20, income_stability=5, investment_horizon_years=30,
-            loss_tolerance=5, existing_savings_months=24, debt_to_income_pct=0.0,
+            age=20,
+            income_stability=5,
+            investment_horizon_years=30,
+            loss_tolerance=5,
+            existing_savings_months=24,
+            debt_to_income_pct=0.0,
         )
         assert result.score <= 100
 
     def test_score_never_negative(self):
         result = score_risk_profile(
-            age=100, income_stability=1, investment_horizon_years=0,
-            loss_tolerance=1, existing_savings_months=0, debt_to_income_pct=1.0,
+            age=100,
+            income_stability=1,
+            investment_horizon_years=0,
+            loss_tolerance=1,
+            existing_savings_months=0,
+            debt_to_income_pct=1.0,
         )
         assert result.score >= 0
 
     def test_result_has_description(self):
         result = score_risk_profile(
-            age=30, income_stability=3, investment_horizon_years=10,
-            loss_tolerance=3, existing_savings_months=6, debt_to_income_pct=0.15,
+            age=30,
+            income_stability=3,
+            investment_horizon_years=10,
+            loss_tolerance=3,
+            existing_savings_months=6,
+            debt_to_income_pct=0.15,
         )
         assert len(result.description) > 0
 
     def test_dict_method(self):
         result = score_risk_profile(
-            age=30, income_stability=3, investment_horizon_years=10,
-            loss_tolerance=3, existing_savings_months=6, debt_to_income_pct=0.15,
+            age=30,
+            income_stability=3,
+            investment_horizon_years=10,
+            loss_tolerance=3,
+            existing_savings_months=6,
+            debt_to_income_pct=0.15,
         )
         d = result.dict()
         assert "score" in d
