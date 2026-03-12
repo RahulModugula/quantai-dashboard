@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 def seed():
-    engine = init_db()
+    init_db()
     logger.info(f"Seeding data for tickers: {settings.tickers}")
 
     # Download macro features (VIX, Treasury yield) for regime context
@@ -41,6 +41,7 @@ def seed():
             # Merge macro features if available
             if macro_df is not None:
                 import pandas as pd
+
                 df["date"] = pd.to_datetime(df["date"])
                 macro_df["date"] = pd.to_datetime(macro_df["date"])
                 df = df.merge(macro_df, on="date", how="left")
