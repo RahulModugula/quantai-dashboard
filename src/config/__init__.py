@@ -81,6 +81,13 @@ class Settings(BaseSettings):
             raise ValueError("lookback_years must be at least 1")
         return v
 
+    # Agent Intelligence Layer
+    agent_model: str = "anthropic/claude-sonnet-4-20250514"
+    agent_timeout_seconds: int = 30
+    agent_max_retries: int = 2
+    agent_news_max_items: int = 10
+    agent_sec_max_filings: int = 5
+
     # Pydantic-settings config
     model_config = {"env_prefix": "QUANTAI_", "env_file": ".env", "extra": "ignore"}
 

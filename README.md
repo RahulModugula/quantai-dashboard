@@ -20,7 +20,8 @@ The system downloads daily OHLCV data via yfinance, engineers 27+ technical feat
 - **Backtesting engine** — Walk-forward validation with risk metrics (Sharpe, Sortino, Calmar, max drawdown), benchmark comparison vs SPY, Monte Carlo confidence intervals, and CSV export. Includes volume-weighted slippage (participation-rate and square-root impact models) for realistic fill simulation.
 - **Paper trading** — Async trading loop with Half-Kelly position sizing, max drawdown constraints, and Redis-cached price distribution.
 - **Portfolio optimization** — Max Sharpe, min volatility, and HRP allocation via PyPortfolioOpt with efficient frontier visualization.
-- **Dashboard** — Plotly Dash frontend with candlestick charts, signal display, equity curves, backtest runner, SIP calculator, portfolio optimizer, and SHAP explainability tabs.
+- **AI Reasoning Layer (QuantAI Intel)** — Multi-agent LLM system that deliberates on every trade. Four specialized agents — QuantAgent, NewsAgent, RiskAgent, and PortfolioManagerAgent — debate each decision using real ML predictions, live news, and SEC EDGAR filings. Model-agnostic via LiteLLM (works with Claude, GPT-4, Ollama). Full reasoning traces stored to DB and visualized in the "AI Reasoning" dashboard tab. See [AI Reasoning](#ai-reasoning-quantai-intel) below.
+- **Dashboard** — Plotly Dash frontend with candlestick charts, signal display, equity curves, backtest runner, SIP calculator, portfolio optimizer, SHAP explainability, and AI Reasoning tabs.
 - **SHAP explainability** — TreeExplainer-based feature importance averaged across RF/XGB/LGB ensemble members. Dashboard tab shows top-15 feature bar chart and per-model breakdown. Normalize endpoint enables cross-ticker comparison.
 - **Market regime detection** — Volatility-regime (low/normal/high) and trend-regime (trending up/down/sideways) classification. API exposes current regime, 252-day history, and performance-by-regime breakdown. `make ablation` quantifies marginal Sharpe contribution per ensemble member and per feature group.
 - **Portfolio stress testing** — Monte Carlo simulation using block bootstrap (preserves autocorrelation) over configurable horizon. Historical scenario replay for COVID crash, 2022 rate hike, GFC, dotcom bust, and flash crash.
@@ -52,6 +53,7 @@ Optimizer tab → PyPortfolioOpt (EF, HRP, MinVol)
 |-------|-----------|
 | Data | yfinance, pandas, SQLite (SQLAlchemy + Alembic) |
 | ML | scikit-learn, XGBoost, LightGBM, PyTorch (LSTM), Optuna, SHAP |
+| AI Agents | LiteLLM (model-agnostic), multi-agent debate, SEC EDGAR + news tools |
 | Portfolio | PyPortfolioOpt (efficient frontier, HRP) |
 | API | FastAPI, WebSocket, Prometheus metrics |
 | Dashboard | Plotly Dash (mounted via WSGIMiddleware) |
@@ -108,6 +110,59 @@ make test
 ```
 
 95+ tests covering feature engineering, backtest metrics, SIP calculator, portfolio operations, signal generation, model drift detection, storage, portfolio optimization, slippage models, SHAP explainability, regime detection, ablation study, live feed, and stress testing.
+
+---
+
+## AI Reasoning — QuantAI Intel
+
+QuantAI Intel is a multi-agent LLM system that answers the question every quant asks: **"Why did the model do that?"**
+
+Four specialized agents deliberate on every trade decision using a mix of quantitative signals and real-world data:
+
+| Agent | Role | Data Sources |
+|-------|------|--------------|
+| **QuantAgent** | Reads ML predictions, SHAP importance, technical indicators | Internal model APIs |
+| **NewsAgent** | Reads recent news and SEC EDGAR filings via tool use | yfinance news (free), SEC EDGAR (free) |
+| **RiskAgent** | Devil's advocate — challenges every trade idea | Both agent briefs above |
+| **PortfolioManagerAgent** | Synthesizes all three briefs, issues Buy/Sell/Hold + full reasoning | All three briefs |
+
+### Setup
+
+Set your LLM API key in `.env`:
+
+```bash
+ANTHROPIC_API_KEY=sk-ant-...      # For Claude (default model)
+# Or use any LiteLLM-supported model:
+QUANTAI_AGENT_MODEL=openai/gpt-4o
+QUANTAI_AGENT_MODEL=ollama/llama3  # Local model, no API key needed
+```
+
+### Usage
+
+```bash
+# Trigger analysis via API
+curl -X POST http://localhost:8000/api/agents/analyze/AAPL
+
+# Poll for completion
+curl http://localhost:8000/api/agents/status/{analysis_id}
+
+# Read the full debate
+curl http://localhost:8000/api/agents/debate/AAPL
+
+# Check historical accuracy
+curl http://localhost:8000/api/agents/accuracy
+```
+
+Or use the **"AI Reasoning" tab** in the dashboard — select a ticker, click "Analyze Now", and watch the agents deliberate in real time.
+
+### Why This Is Novel
+
+No existing open-source tool combines:
+1. Walk-forward ML backtesting with LLM reasoning traces
+2. Multi-agent debate with a devil's advocate risk agent
+3. Free alternative data (news + SEC EDGAR, no API key needed)
+4. Full audit trail stored in SQLite (decision, confidence, all briefs, accuracy outcome)
+5. Model-agnostic LLM backend (Claude, GPT-4, or any local model via Ollama)
 
 ---
 

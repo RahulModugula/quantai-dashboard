@@ -112,6 +112,14 @@ def create_app() -> FastAPI:
     except ImportError:
         logger.warning("SHAP/regime/stress-test routes not available")
 
+    try:
+        from src.api.routes import agents
+
+        app.include_router(agents.router, prefix="/api")
+        logger.info("Multi-agent Intel routes registered")
+    except ImportError:
+        logger.warning("Agent Intel routes not available")
+
     # WebSocket
     @app.websocket("/ws/prices")
     async def ws_prices(websocket: WebSocket):

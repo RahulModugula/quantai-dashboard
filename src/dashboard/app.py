@@ -10,6 +10,7 @@ import dash_bootstrap_components as dbc
 from dash import dcc, html
 
 from src.dashboard.layouts.advisor_panel import advisor_panel_layout
+from src.dashboard.layouts.agent_panel import agent_panel_layout
 from src.dashboard.layouts.equity_curve import equity_curve_layout
 from src.dashboard.layouts.optimizer_panel import optimizer_panel_layout
 from src.dashboard.layouts.price_chart import price_chart_layout
@@ -132,6 +133,13 @@ def create_dash_app() -> dash.Dash:
                             html.Div(className="mt-3", children=shap_panel_layout()),
                         ],
                     ),
+                    dbc.Tab(
+                        label="AI Reasoning",
+                        tab_id="tab-agents",
+                        children=[
+                            html.Div(className="mt-3", children=agent_panel_layout()),
+                        ],
+                    ),
                 ],
                 id="main-tabs",
                 active_tab="tab-live",
@@ -157,9 +165,11 @@ def create_dash_app() -> dash.Dash:
 
     from src.dashboard.callbacks.optimizer_callbacks import register_optimizer_callbacks
     from src.dashboard.callbacks.shap_callbacks import register_shap_callbacks
+    from src.dashboard.callbacks.agent_callbacks import register_agent_callbacks
 
     register_optimizer_callbacks(app)
     register_shap_callbacks(app)
+    register_agent_callbacks(app)
 
     from dash import Input, Output, State
     import httpx
