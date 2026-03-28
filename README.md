@@ -1,65 +1,80 @@
-# QuantAI — ML Trading Dashboard
+# QuantAI — ML Trading Dashboard with Multi-Agent AI Reasoning
 
 [![CI/CD Pipeline](https://github.com/RahulModugula/quantai-dashboard/actions/workflows/ci.yml/badge.svg)](https://github.com/RahulModugula/quantai-dashboard/actions/workflows/ci.yml)
 [![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/downloads/release/python-3110/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![LiteLLM](https://img.shields.io/badge/LLM-LiteLLM%20%7C%20Claude%20%7C%20GPT--4%20%7C%20Ollama-blueviolet)](https://github.com/BerriAI/litellm)
 
-> **DISCLAIMER**: This project is for **educational purposes only**. All predictions, signals, and portfolio data are simulated. Nothing here constitutes financial advice.
-
-An ML-powered trading dashboard that combines walk-forward backtesting, ensemble models, paper trading simulation, and portfolio optimization — built with FastAPI, Plotly Dash, and PyTorch.
-
----
-
-## What It Does
-
-The system downloads daily OHLCV data via yfinance, engineers 27+ technical features, trains a 4-model ensemble (Random Forest, XGBoost, LightGBM, LSTM) using walk-forward expanding windows, and generates next-day direction predictions. A paper trading loop executes simulated trades with Half-Kelly position sizing, and a dashboard visualizes everything in real time.
-
-### Key Components
-
-- **Ensemble model** — RF + XGBoost + LightGBM + LSTM with dynamic weighting (0.3/0.3/0.25/0.15). Walk-forward training ensures predictions at time `t` use only data before `t`.
-- **Backtesting engine** — Walk-forward validation with risk metrics (Sharpe, Sortino, Calmar, max drawdown), benchmark comparison vs SPY, Monte Carlo confidence intervals, and CSV export. Includes volume-weighted slippage (participation-rate and square-root impact models) for realistic fill simulation.
-- **Paper trading** — Async trading loop with Half-Kelly position sizing, max drawdown constraints, and Redis-cached price distribution.
-- **Portfolio optimization** — Max Sharpe, min volatility, and HRP allocation via PyPortfolioOpt with efficient frontier visualization.
-- **AI Reasoning Layer (QuantAI Intel)** — Multi-agent LLM system that deliberates on every trade. Four specialized agents — QuantAgent, NewsAgent, RiskAgent, and PortfolioManagerAgent — debate each decision using real ML predictions, live news, and SEC EDGAR filings. Model-agnostic via LiteLLM (works with Claude, GPT-4, Ollama). Full reasoning traces stored to DB and visualized in the "AI Reasoning" dashboard tab. See [AI Reasoning](#ai-reasoning-quantai-intel) below.
-- **Dashboard** — Plotly Dash frontend with candlestick charts, signal display, equity curves, backtest runner, SIP calculator, portfolio optimizer, SHAP explainability, and AI Reasoning tabs.
-- **SHAP explainability** — TreeExplainer-based feature importance averaged across RF/XGB/LGB ensemble members. Dashboard tab shows top-15 feature bar chart and per-model breakdown. Normalize endpoint enables cross-ticker comparison.
-- **Market regime detection** — Volatility-regime (low/normal/high) and trend-regime (trending up/down/sideways) classification. API exposes current regime, 252-day history, and performance-by-regime breakdown. `make ablation` quantifies marginal Sharpe contribution per ensemble member and per feature group.
-- **Portfolio stress testing** — Monte Carlo simulation using block bootstrap (preserves autocorrelation) over configurable horizon. Historical scenario replay for COVID crash, 2022 rate hike, GFC, dotcom bust, and flash crash.
-- **Live data feed** — Alpaca WebSocket integration with exponential-backoff reconnection and queue-based backpressure. Falls back to yfinance polling when API credentials are not configured.
+> **DISCLAIMER**: Educational purposes only. All predictions, signals, and portfolio data are simulated. Not financial advice.
 
 ---
 
-## Architecture
+## What Makes This Different
+
+Most quant dashboards show you **what** the model decided. QuantAI shows you **why** — through a live debate between four specialized AI agents that reason over your ML signals, real news, and SEC filings before every trade.
+
+**No existing open-source tool combines:**
+- Walk-forward ML backtesting (no lookahead bias) with LLM reasoning traces
+- Multi-agent debate — a devil's advocate risk agent challenges every trade
+- Free alternative data — live news + SEC EDGAR filings, zero API keys needed
+- Full audit trail — every agent brief, decision, and accuracy outcome in SQLite
+- Model-agnostic via [LiteLLM](https://github.com/BerriAI/litellm) — Claude, GPT-4, or local Ollama models
+
+---
+
+## System Overview
 
 ```
-yfinance + VIX/TNX → ingestion.py → features.py → SQLite
-                                          ↓
-                             walk_forward_train() + Optuna
-                                   ↓         ↓
-                             EnsembleModel   OOS predictions
-                          (RF+XGB+LGB+LSTM)      ↓
-                                          BacktestEngine
-                                                ↓
-                             BacktestReport + Monte Carlo
-                                                ↓
-FastAPI (/api/*) ← Redis cache ← PaperTrader loop
-     ↓
-Dash (/dashboard) — polling via dcc.Interval
-     ↓
-Optimizer tab → PyPortfolioOpt (EF, HRP, MinVol)
+                        ┌─────────────────────────────────────┐
+                        │         QuantAI Intel Layer          │
+                        │                                      │
+  yfinance news ──────► │  QuantAgent   NewsAgent              │
+  SEC EDGAR ──────────► │       │           │                  │
+  ML Predictions ─────► │       └─────┬─────┘                 │
+                        │         RiskAgent                    │
+                        │             │                        │
+                        │     PortfolioManagerAgent            │
+                        │     BUY / SELL / HOLD + reasoning    │
+                        └──────────────┬──────────────────────┘
+                                       │
+yfinance + VIX/TNX                     ▼
+     │              ┌──────────────────────────────────┐
+     ▼              │  FastAPI  /api/*                  │
+ingestion.py        │  • /agents/analyze/{ticker}       │
+     │              │  • /agents/debate/{ticker}        │
+     ▼              │  • /predictions, /portfolio       │
+features.py ──────► │  • /backtest, /optimizer         │
+     │              │  • /regime, /stress-test, /shap  │
+     ▼              └──────────────┬───────────────────┘
+walk_forward_train()               │
+     │                             ▼
+EnsembleModel              Plotly Dash /dashboard
+RF+XGB+LGB+LSTM            ┌─────────────────────┐
+     │                     │ Live Trading         │
+     ▼                     │ Portfolio            │
+BacktestEngine             │ Backtesting          │
+Monte Carlo CI             │ AI Reasoning  ◄──────┼── NEW
+     │                     │ Explainability (SHAP)│
+     ▼                     │ Optimizer            │
+PaperTrader loop           │ Advisor + SIP        │
+Half-Kelly sizing          └─────────────────────┘
 ```
+
+---
+
+## Stack
 
 | Layer | Technology |
 |-------|-----------|
 | Data | yfinance, pandas, SQLite (SQLAlchemy + Alembic) |
 | ML | scikit-learn, XGBoost, LightGBM, PyTorch (LSTM), Optuna, SHAP |
-| AI Agents | LiteLLM (model-agnostic), multi-agent debate, SEC EDGAR + news tools |
-| Portfolio | PyPortfolioOpt (efficient frontier, HRP) |
+| **AI Agents** | **LiteLLM, multi-agent debate, SEC EDGAR + news tool use** |
+| Portfolio | PyPortfolioOpt (efficient frontier, HRP, min-vol) |
 | API | FastAPI, WebSocket, Prometheus metrics |
-| Dashboard | Plotly Dash (mounted via WSGIMiddleware) |
+| Dashboard | Plotly Dash (8 tabs, mounted via WSGIMiddleware) |
 | Cache | Redis |
 | Observability | structlog, Prometheus, health checks |
-| CI/CD | GitHub Actions (lint + test), pre-commit hooks |
+| CI/CD | GitHub Actions, pre-commit hooks |
 | Infra | Docker Compose |
 
 ---
@@ -67,130 +82,248 @@ Optimizer tab → PyPortfolioOpt (EF, HRP, MinVol)
 ## Quick Start
 
 ```bash
-# Docker (recommended)
+# Docker (recommended — no setup required)
 docker compose up --build
+```
 
-# Or local development
+```bash
+# Local development
 uv venv .venv --python 3.11
 source .venv/bin/activate
 make setup      # install dependencies
-make seed       # download market data + build features
-make train      # walk-forward ensemble training
-make backtest   # run backtest and save report
-make run        # start server at localhost:8000
+make seed       # download 5y of OHLCV + build features
+make train      # walk-forward ensemble training (~5 min)
+make backtest   # run backtest, save report
+make run        # start at http://localhost:8000
 ```
 
-Dashboard: http://localhost:8000/dashboard
-API docs: http://localhost:8000/api/docs
-Health check: http://localhost:8000/api/health
-Metrics: http://localhost:8000/api/metrics
+| Endpoint | URL |
+|----------|-----|
+| Dashboard | http://localhost:8000/dashboard |
+| API docs | http://localhost:8000/api/docs |
+| Health | http://localhost:8000/api/health |
+| Metrics | http://localhost:8000/api/metrics/prometheus |
+
+---
+
+## QuantAI Intel — Multi-Agent AI Reasoning
+
+Every trade decision goes through a structured debate between four LLM agents before execution. The full reasoning trail is stored in SQLite and surfaced in the **"AI Reasoning"** dashboard tab.
+
+### The Four Agents
+
+| Agent | Role | Tools |
+|-------|------|-------|
+| **QuantAgent** | Reads the ML ensemble prediction, top SHAP features, and technical indicator snapshot | `get_ml_prediction`, `get_shap_importance`, `get_technical_signals` |
+| **NewsAgent** | Fetches recent headlines and SEC EDGAR 8-K/10-Q filings via tool use | `get_recent_news` (yfinance), `get_sec_filings` (EDGAR free API) |
+| **RiskAgent** | Devil's advocate — challenges both analysts, raises tail risks, issues AGREE/CAUTION/DISAGREE verdict | *(reads prior briefs)* |
+| **PortfolioManagerAgent** | Weighs all three briefs against current position, issues final BUY/SELL/HOLD with confidence score and reasoning bullets | *(reads all briefs)* |
+
+### How the Debate Works
+
+```
+Step 1  QuantAgent + NewsAgent run in parallel
+           ↓                  ↓
+        Quant Brief       Research Brief
+           └──────────┬──────────┘
+Step 2            RiskAgent
+              challenges both
+                    ↓
+                Risk Brief
+           ┌────────┴──────────────┐
+Step 3  PortfolioManagerAgent
+        final BUY / SELL / HOLD
+        + confidence + reasoning
+                    ↓
+          Stored in SQLite
+          Shown in dashboard
+```
+
+### Setup
+
+```bash
+# .env — set one of these:
+ANTHROPIC_API_KEY=sk-ant-...            # Claude (default)
+# OPENAI_API_KEY=sk-...                 # GPT-4
+# QUANTAI_AGENT_MODEL=ollama/llama3     # Local, no key needed
+```
+
+### API
+
+```bash
+# Trigger analysis (returns immediately with analysis_id)
+curl -X POST http://localhost:8000/api/agents/analyze/AAPL
+
+# Poll status
+curl http://localhost:8000/api/agents/status/{analysis_id}
+
+# Read full debate transcript
+curl http://localhost:8000/api/agents/debate/AAPL
+
+# Latest decision
+curl http://localhost:8000/api/agents/decision/AAPL
+
+# Historical decisions + accuracy
+curl http://localhost:8000/api/agents/history/AAPL
+curl http://localhost:8000/api/agents/accuracy
+```
+
+---
+
+## ML Pipeline
+
+### Ensemble Model
+
+Four models with intentional diversity — each captures different signal types:
+
+| Model | Weight | Contribution |
+|-------|--------|-------------|
+| Random Forest | 0.30 | Bootstrap diversity, handles nonlinear interactions |
+| XGBoost | 0.30 | Gradient boosting, strong on tabular patterns |
+| LightGBM | 0.25 | Leaf-wise splits, fast retraining |
+| LSTM | 0.15 | Temporal sequence context (lower weight — harder to calibrate on daily data) |
+
+### Walk-Forward Training
+
+Predictions at time `t` use only data before `t`. No lookahead bias.
+
+```
+┌────────────────────────────────────────────────────────────┐
+│  Fold 1: Train [0, 252) → Predict [252, 315)               │
+│  Fold 2: Train [0, 315) → Predict [315, 378)               │
+│  Fold 3: Train [0, 378) → Predict [378, 441)               │
+│  ...                                                        │
+└────────────────────────────────────────────────────────────┘
+```
+
+### Features (27+)
+
+RSI-14, MACD, MACD signal, Bollinger Bands (%, bandwidth), ATR-14, Stochastic (K, D), ADX-14, SMA50/SMA200 ratios, return lags (1/2/3/5d), volatility (5/20d), momentum (5/20d), mean reversion (20d), volume ratio, OBV, VIX, Treasury yield.
+
+---
+
+## Backtesting
+
+- **Walk-forward validation** — realistic OOS performance, no in-sample bias
+- **Slippage models** — participation-rate and square-root market impact
+- **Monte Carlo confidence intervals** — block bootstrap (preserves autocorrelation)
+- **Benchmark comparison** — all metrics reported vs SPY
+- **Risk metrics** — Sharpe, Sortino, Calmar, max drawdown, win rate, profit factor
+- **Scenario stress tests** — GFC, dotcom, COVID crash, 2022 rate hikes, flash crash
+- **CSV export** — full trade log downloadable
+
+---
+
+## Dashboard Tabs
+
+| Tab | What You Get |
+|-----|-------------|
+| **Live Trading** | Real-time candlestick, ML signal overlay, live trade log |
+| **Portfolio** | Equity curve, drawdown chart, cumulative returns |
+| **Backtesting** | Run backtest, view metrics, export trades |
+| **AI Reasoning** | Multi-agent debate, final decision, historical accuracy |
+| **Explainability** | SHAP feature importance (top-15 bar + per-model breakdown) |
+| **Optimizer** | Efficient frontier, HRP, min-vol weights |
+| **Advisor** | Risk profiling questionnaire + allocation recommendation |
+| **SIP Calculator** | Forward projection + reverse (goal → monthly amount) |
+
+---
+
+## API Reference
+
+<details>
+<summary>All endpoints</summary>
+
+**Agent Intel**
+```
+POST /api/agents/analyze/{ticker}     trigger async analysis
+GET  /api/agents/status/{id}          poll progress
+GET  /api/agents/debate/{ticker}      full 4-agent transcript
+GET  /api/agents/decision/{ticker}    latest decision
+GET  /api/agents/history/{ticker}     decision history
+GET  /api/agents/accuracy             win rate across all decisions
+```
+
+**Predictions & Signals**
+```
+GET /api/predictions/{ticker}         next-day ML probability + signal
+GET /api/signals/latest/{ticker}      signal with strength
+GET /api/signals/consensus            cross-ticker consensus
+```
+
+**Portfolio**
+```
+GET /api/portfolio                    positions, cash, total value
+GET /api/portfolio/history            equity curve
+GET /api/portfolio/trades             trade log
+GET /api/portfolio/correlation        correlation matrix
+```
+
+**Backtesting**
+```
+POST /api/backtest/run                async trigger
+GET  /api/backtest/result/{key}       retrieve cached result
+GET  /api/backtest/export/{key}/trades  CSV download
+```
+
+**Analysis**
+```
+GET /api/shap/importance/{ticker}     SHAP feature importance
+GET /api/regime/{ticker}              current market regime
+GET /api/regime/{ticker}/history      252-day regime history
+GET /api/stress-test/monte-carlo/{ticker}
+GET /api/stress-test/scenarios/{ticker}
+GET /api/analysis/sector-composition
+GET /api/analysis/performance-summary
+```
+
+**Optimizer & Advisor**
+```
+POST /api/optimizer/portfolio         max-Sharpe / min-vol / HRP weights
+POST /api/optimizer/frontier          efficient frontier
+POST /api/advisor/risk-profile        score risk questionnaire
+GET  /api/advisor/allocation/{category}
+POST /api/sip/calculate               forward SIP projection
+POST /api/sip/reverse                 goal-based SIP
+```
+
+**Meta**
+```
+GET /api/health
+GET /api/metrics/prometheus
+GET /api/diagnostics/validate-config
+GET /api/diagnostics/data-freshness
+```
+</details>
 
 ---
 
 ## Design Decisions
 
-**Why walk-forward expanding windows?**
-Expanding windows use all available history for each training fold, which is more stable for tree-based models. The critical constraint: predictions at time `t` use only data before `t` — enforced by date-aligned joins with no lookahead.
+**Walk-forward expanding windows over rolling windows**
+Expanding windows use all available history per fold — more stable for tree-based models. The hard constraint: features are joined strictly by date so predictions at `t` never touch data from `t` onwards.
 
-**Why classification over regression?**
-Direction prediction (up/down) maps cleanly to trading signals and produces calibrated probabilities for position sizing. Return magnitude prediction adds noise without actionable benefit at this frequency.
+**Classification over regression**
+Direction prediction (up/down) maps cleanly to trading signals and produces calibrated probabilities for Half-Kelly sizing. Return magnitude prediction adds noise without actionable benefit at daily frequency.
 
-**Why Half-Kelly position sizing?**
-Full Kelly is optimal but volatile. Half-Kelly provides ~75% of the growth rate with significantly lower drawdowns — a better risk/reward tradeoff, especially for a system where model calibration is imperfect.
+**Half-Kelly position sizing**
+Full Kelly maximizes expected log growth but creates drawdowns that are hard to stomach in practice. Half-Kelly gives ~75% of the growth rate at materially lower volatility — a better tradeoff given imperfect model calibration.
 
-**Why four ensemble members?**
-RF and XGBoost capture different interaction patterns. LightGBM trains faster and handles categorical splits natively. LSTM adds temporal sequence signal that tree models miss. The weighting intentionally gives LSTM less weight since it's harder to calibrate on small financial datasets.
+**LiteLLM as the agent backbone**
+Model-agnostic by design. Swap `QUANTAI_AGENT_MODEL=ollama/llama3` for fully local, offline inference with no API costs. The same agent code runs against Claude, GPT-4, Mistral, or any 100+ supported models.
+
+**Free alternative data only**
+`yfinance.Ticker.news` and the SEC EDGAR full-text search API both require zero authentication. This keeps the project genuinely reproducible — no paid data subscriptions, no rate-limited keys to manage.
 
 ---
 
-## Running Tests
+## Tests
 
 ```bash
 make test
 ```
 
-95+ tests covering feature engineering, backtest metrics, SIP calculator, portfolio operations, signal generation, model drift detection, storage, portfolio optimization, slippage models, SHAP explainability, regime detection, ablation study, live feed, and stress testing.
-
----
-
-## AI Reasoning — QuantAI Intel
-
-QuantAI Intel is a multi-agent LLM system that answers the question every quant asks: **"Why did the model do that?"**
-
-Four specialized agents deliberate on every trade decision using a mix of quantitative signals and real-world data:
-
-| Agent | Role | Data Sources |
-|-------|------|--------------|
-| **QuantAgent** | Reads ML predictions, SHAP importance, technical indicators | Internal model APIs |
-| **NewsAgent** | Reads recent news and SEC EDGAR filings via tool use | yfinance news (free), SEC EDGAR (free) |
-| **RiskAgent** | Devil's advocate — challenges every trade idea | Both agent briefs above |
-| **PortfolioManagerAgent** | Synthesizes all three briefs, issues Buy/Sell/Hold + full reasoning | All three briefs |
-
-### Setup
-
-Set your LLM API key in `.env`:
-
-```bash
-ANTHROPIC_API_KEY=sk-ant-...      # For Claude (default model)
-# Or use any LiteLLM-supported model:
-QUANTAI_AGENT_MODEL=openai/gpt-4o
-QUANTAI_AGENT_MODEL=ollama/llama3  # Local model, no API key needed
-```
-
-### Usage
-
-```bash
-# Trigger analysis via API
-curl -X POST http://localhost:8000/api/agents/analyze/AAPL
-
-# Poll for completion
-curl http://localhost:8000/api/agents/status/{analysis_id}
-
-# Read the full debate
-curl http://localhost:8000/api/agents/debate/AAPL
-
-# Check historical accuracy
-curl http://localhost:8000/api/agents/accuracy
-```
-
-Or use the **"AI Reasoning" tab** in the dashboard — select a ticker, click "Analyze Now", and watch the agents deliberate in real time.
-
-### Why This Is Novel
-
-No existing open-source tool combines:
-1. Walk-forward ML backtesting with LLM reasoning traces
-2. Multi-agent debate with a devil's advocate risk agent
-3. Free alternative data (news + SEC EDGAR, no API key needed)
-4. Full audit trail stored in SQLite (decision, confidence, all briefs, accuracy outcome)
-5. Model-agnostic LLM backend (Claude, GPT-4, or any local model via Ollama)
-
----
-
-## Limitations and Future Work
-
-This section documents known limitations honestly — understanding where a system falls short matters more than the feature list.
-
-### Model Performance
-- **The ensemble likely does not beat buy-and-hold** on a risk-adjusted basis after transaction costs. This is consistent with the efficient market hypothesis for liquid US equities using publicly available technical features. The backtester's Sharpe ratio should be compared against SPY's, not against zero.
-- **All 27 features are well-known technical indicators** already priced into markets by institutional quant desks. For genuine alpha, you'd need alternative data (sentiment, options flow, earnings transcripts) or higher-frequency signals.
-- **The LSTM component may not add value** over tree models alone for daily bars. Sequence models shine with higher-frequency data where temporal patterns are stronger. I haven't run a rigorous ablation study to confirm this.
-
-### Backtesting Realism
-- **Survivorship bias** — the system only downloads data for tickers in the config. A proper backtest would include delisted companies and use a point-in-time universe.
-- **Transaction costs are understated** — the 0.1% commission model doesn't capture spread costs, market impact, or the fact that small-cap fills are worse than modeled.
-- **yfinance data quality** — adjusted close prices are retroactively modified for splits and dividends. This is fine for rough analysis but not research-grade. Professional backtesting uses point-in-time databases (e.g., CRSP, Norgate).
-- **No slippage on volume** — the backtester assumes all orders fill at close price regardless of volume. For small-cap or volatile names, this is unrealistic.
-
-### Infrastructure Gaps
-- **No database migrations in production** — Alembic is set up but migrations should be validated in a staging environment before any real deployment.
-- **Redis is optional but assumed** — the paper trader falls back gracefully, but some cache-dependent features will silently degrade.
-- **No authentication in development** — API keys and RBAC exist but aren't enforced by default. Don't expose this to the internet without enabling them.
-
-### What Would Make This Better
-- **Alternative data integration** — earnings call sentiment (via NLP on SEC filings), options flow from CBOE, or social media sentiment would test whether non-price data adds signal.
-- **Event-driven backtester** — replacing the vectorized backtest with tick-by-tick event processing would enable realistic fill simulation (partial fills, queue position). The current slippage model is a step in this direction but still fills at a single price.
-- **Live trading with Alpaca** — the WebSocket feed module is built; wiring it to the paper trader loop and replacing yfinance polling would close the gap to real-time operation.
-- **Survivorship bias correction** — adding delisted tickers to the backtest universe using a point-in-time database (CRSP, Norgate) would produce more credible historical results.
+110+ tests across: feature engineering, backtest engine, risk metrics, SIP calculator, portfolio operations, signal generation, model drift detection, storage, portfolio optimization, slippage models, SHAP explainability, regime detection, ablation study, live feed, stress testing, multi-agent loop, tool dispatch, agent prompts, orchestrator, and agent storage.
 
 ---
 
@@ -198,19 +331,40 @@ This section documents known limitations honestly — understanding where a syst
 
 ```
 src/
-├── config/                # Pydantic Settings, feature flags, production config
-├── data/                  # yfinance ingestion, 27 technical features, SQLite storage
-├── models/                # Ensemble (RF+XGB+LGB+LSTM), training, SHAP, drift detection
-├── backtest/              # Walk-forward engine, risk metrics, Monte Carlo, reports
-├── trading/               # Paper trader, portfolio, Half-Kelly signals
-├── advisor/               # Risk profiling, allocation, SIP calculator
-├── api/                   # FastAPI routes, middleware, structured logging
-│   └── routes/            # predictions, portfolio, backtest, advisor, diagnostics
-├── dashboard/             # Plotly Dash (6 tabs), layouts, callbacks
-├── monitoring/            # Prometheus metrics (request latency, model inference)
-├── health/                # Dependency health checks (DB, Redis, model, data)
+├── agents/                # QuantAI Intel — multi-agent LLM layer
+│   ├── base_agent.py      # LiteLLM agentic tool-call loop
+│   ├── quant_agent.py     # ML signals + SHAP + technicals
+│   ├── news_agent.py      # yfinance news + SEC EDGAR via tool use
+│   ├── risk_agent.py      # devil's advocate risk analysis
+│   ├── orchestrator.py    # 4-agent pipeline + DB persistence
+│   └── tools/             # quant_tools, news_tools, sec_tools
+├── config/                # Pydantic settings, feature flags
+├── data/                  # yfinance ingestion, 27 features, SQLite storage
+├── models/                # Ensemble, walk-forward training, SHAP, drift detection
+├── backtest/              # Engine, risk metrics, Monte Carlo, report generation
+├── trading/               # Paper trader, portfolio, Half-Kelly signals, stress tests
+├── advisor/               # Risk profiling, allocation, rebalancing, SIP calculator
+├── api/                   # FastAPI routes, middleware, WebSocket
+│   └── routes/            # agents, predictions, portfolio, backtest, shap, regime, …
+├── dashboard/             # Plotly Dash (8 tabs), layouts, callbacks
+├── monitoring/            # Prometheus metrics
+├── health/                # DB / Redis / model / data freshness checks
 └── resilience/            # Retry with exponential backoff
 ```
+
+---
+
+## Limitations
+
+Documented honestly — this matters more than any feature list.
+
+**Model performance** — The ensemble likely does not beat buy-and-hold after costs. Public technical indicators are already priced in by institutional desks. This is expected and consistent with the efficient market hypothesis for liquid US equities.
+
+**Backtesting realism** — No survivorship bias correction (delisted tickers excluded). Commission model understates spread and impact costs. yfinance adjusted prices are retroactively modified, which is fine for exploration but not research-grade.
+
+**LLM agents** — Agent decisions are constrained by LLM knowledge cutoffs and available free data. Agents can hallucinate or miss context not present in recent news. Treat agent reasoning as a structured prompt-to-think framework, not an oracle.
+
+**Infrastructure** — Redis is optional but some features degrade gracefully without it. No authentication enforced by default — don't expose publicly without enabling API keys.
 
 ---
 
