@@ -89,21 +89,23 @@ def get_ml_prediction(ticker: str) -> dict[str, Any]:
         scaler = bundle["scaler"]
         feature_names = meta.get("feature_names", [])
 
-        cols = feature_names if feature_names else [
-            c for c in df.columns if c not in ("id", "date", "ticker", "target")
-        ]
+        cols = (
+            feature_names
+            if feature_names
+            else [c for c in df.columns if c not in ("id", "date", "ticker", "target")]
+        )
         X = df[cols].dropna().tail(1)
         if X.empty:
             return {"error": "Insufficient feature data", "ticker": ticker}
-
-        import numpy as np
 
         X_scaled = scaler.transform(X.values)
         prob = float(model.predict_proba(X_scaled)[0][1])
         from src.config import settings
 
-        signal = "BUY" if prob >= settings.buy_threshold else (
-            "SELL" if prob <= settings.sell_threshold else "HOLD"
+        signal = (
+            "BUY"
+            if prob >= settings.buy_threshold
+            else ("SELL" if prob <= settings.sell_threshold else "HOLD")
         )
         return {
             "ticker": ticker,
@@ -136,9 +138,11 @@ def get_shap_importance(ticker: str) -> dict[str, Any]:
         model = bundle["model"]
         scaler = bundle["scaler"]
         feature_names = meta.get("feature_names", [])
-        cols = feature_names if feature_names else [
-            c for c in df.columns if c not in ("id", "date", "ticker", "target")
-        ]
+        cols = (
+            feature_names
+            if feature_names
+            else [c for c in df.columns if c not in ("id", "date", "ticker", "target")]
+        )
         X = df[cols].dropna().tail(200)
         X_scaled = scaler.transform(X.values)
 
@@ -146,10 +150,7 @@ def get_shap_importance(ticker: str) -> dict[str, Any]:
         mean_abs = result.get("mean_abs_shap", {})
         sorted_features = sorted(mean_abs.items(), key=lambda x: x[1], reverse=True)
         total = sum(v for _, v in sorted_features) or 1.0
-        top10 = [
-            {"feature": k, "importance": round(v / total, 4)}
-            for k, v in sorted_features[:10]
-        ]
+        top10 = [{"feature": k, "importance": round(v / total, 4)} for k, v in sorted_features[:10]]
         return {"ticker": ticker, "top_features": top10}
     except Exception as exc:
         logger.warning(f"SHAP importance failed for {ticker}: {exc}")

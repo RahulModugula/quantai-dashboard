@@ -53,21 +53,6 @@ async def get_sec_filings_async(
 ) -> dict[str, Any]:
     """Async fetch of SEC EDGAR filings."""
     since = (datetime.utcnow() - timedelta(days=90)).strftime("%Y-%m-%d")
-    params = {
-        "q": f'"{company_name}"',
-        "dateRange": "custom",
-        "startdt": since,
-        "forms": form_types,
-        "_source": "hits",
-        "hits.hits.total.value": 1,
-        "hits.hits._source.period_of_report": 1,
-        "hits.hits._source.file_date": 1,
-        "hits.hits._source.form_type": 1,
-        "hits.hits._source.display_names": 1,
-        "hits.hits._source.file_description": 1,
-    }
-    # Use EDGAR full-text search API
-    url = "https://efts.sec.gov/LATEST/search-index"
     headers = {"User-Agent": "QuantAI Research research@quantai.example.com"}
 
     try:
@@ -91,16 +76,18 @@ async def get_sec_filings_async(
         filings = []
         for hit in hits[:max_results]:
             src = hit.get("_source", {})
-            filings.append({
-                "form_type": src.get("form_type", ""),
-                "filed_at": src.get("file_date", ""),
-                "period": src.get("period_of_report", ""),
-                "company": src.get("display_names", [company_name])[0]
-                if src.get("display_names")
-                else company_name,
-                "description": src.get("file_description", "")[:300],
-                "url": f"https://www.sec.gov/Archives/edgar/data/{src.get('entity_id', '')}/{src.get('file_name', '')}",
-            })
+            filings.append(
+                {
+                    "form_type": src.get("form_type", ""),
+                    "filed_at": src.get("file_date", ""),
+                    "period": src.get("period_of_report", ""),
+                    "company": src.get("display_names", [company_name])[0]
+                    if src.get("display_names")
+                    else company_name,
+                    "description": src.get("file_description", "")[:300],
+                    "url": f"https://www.sec.gov/Archives/edgar/data/{src.get('entity_id', '')}/{src.get('file_name', '')}",
+                }
+            )
 
         if not filings:
             return await _edgar_company_search(company_name, form_types, max_results)
@@ -142,13 +129,15 @@ async def _edgar_company_search(
         filings = []
         for hit in hits[:max_results]:
             src = hit.get("_source", {})
-            filings.append({
-                "form_type": src.get("form_type", ""),
-                "filed_at": src.get("file_date", ""),
-                "period": src.get("period_of_report", ""),
-                "company": company_name,
-                "description": src.get("file_description", "")[:300],
-            })
+            filings.append(
+                {
+                    "form_type": src.get("form_type", ""),
+                    "filed_at": src.get("file_date", ""),
+                    "period": src.get("period_of_report", ""),
+                    "company": company_name,
+                    "description": src.get("file_description", "")[:300],
+                }
+            )
         return {"company": company_name, "filings": filings, "count": len(filings), "since": since}
     except Exception as exc:
         return {"company": company_name, "filings": [], "error": str(exc)}

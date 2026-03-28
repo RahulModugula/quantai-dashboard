@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import json
-from typing import Any, List, Optional
+from typing import List, Optional
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -97,7 +97,9 @@ class TestBaseAgentLoop:
         """Agent should call the tool and continue until final text response."""
 
         class _ToolAgent(self._make_agent().__class__):
-            tool_schemas = [{"type": "function", "function": {"name": "dummy_tool", "parameters": {}}}]
+            tool_schemas = [
+                {"type": "function", "function": {"name": "dummy_tool", "parameters": {}}}
+            ]
 
             async def _dispatch_tool(self, tool_name, args):
                 return {"result": "tool_output"}
@@ -217,11 +219,13 @@ class TestAgentPrompts:
         from src.agents.risk_agent import RiskAgent
 
         agent = RiskAgent()
-        msg = agent._build_user_message({
-            "ticker": "AAPL",
-            "quant_brief": "SIGNAL: BUY",
-            "news_brief": "SENTIMENT: BULLISH",
-        })
+        msg = agent._build_user_message(
+            {
+                "ticker": "AAPL",
+                "quant_brief": "SIGNAL: BUY",
+                "news_brief": "SENTIMENT: BULLISH",
+            }
+        )
         assert "SIGNAL: BUY" in msg
         assert "SENTIMENT: BULLISH" in msg
         assert "AAPL" in msg
@@ -230,13 +234,15 @@ class TestAgentPrompts:
         from src.agents.orchestrator import PortfolioManagerAgent
 
         agent = PortfolioManagerAgent()
-        msg = agent._build_user_message({
-            "ticker": "GOOGL",
-            "quant_brief": "Q brief",
-            "news_brief": "N brief",
-            "risk_brief": "R brief",
-            "current_position": "No position",
-        })
+        msg = agent._build_user_message(
+            {
+                "ticker": "GOOGL",
+                "quant_brief": "Q brief",
+                "news_brief": "N brief",
+                "risk_brief": "R brief",
+                "current_position": "No position",
+            }
+        )
         assert "Q brief" in msg
         assert "N brief" in msg
         assert "R brief" in msg
@@ -315,7 +321,7 @@ class TestOrchestrator:
     @pytest.mark.asyncio
     async def test_run_full_analysis_success(self, tmp_path):
         """Full orchestration should save a complete record to DB."""
-        from src.data.storage import init_db, load_agent_decision, get_engine as real_get_engine
+        from src.data.storage import init_db, get_engine as real_get_engine
 
         db = str(tmp_path / "test.db")
         init_db(db)

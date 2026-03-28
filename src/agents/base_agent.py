@@ -98,17 +98,22 @@ class BaseAgent(ABC):
                         )
 
                     # Execute tool calls and feed results back
-                    loop_messages.append({"role": "assistant", "tool_calls": [
+                    loop_messages.append(
                         {
-                            "id": tc.id,
-                            "type": "function",
-                            "function": {
-                                "name": tc.function.name,
-                                "arguments": tc.function.arguments,
-                            },
+                            "role": "assistant",
+                            "tool_calls": [
+                                {
+                                    "id": tc.id,
+                                    "type": "function",
+                                    "function": {
+                                        "name": tc.function.name,
+                                        "arguments": tc.function.arguments,
+                                    },
+                                }
+                                for tc in tool_calls
+                            ],
                         }
-                        for tc in tool_calls
-                    ]})
+                    )
 
                     for tc in tool_calls:
                         tool_calls_made.append(tc.function.name)
@@ -117,11 +122,13 @@ class BaseAgent(ABC):
                         except json.JSONDecodeError:
                             args = {}
                         result = await self._dispatch_tool(tc.function.name, args)
-                        loop_messages.append({
-                            "role": "tool",
-                            "tool_call_id": tc.id,
-                            "content": json.dumps(result),
-                        })
+                        loop_messages.append(
+                            {
+                                "role": "tool",
+                                "tool_call_id": tc.id,
+                                "content": json.dumps(result),
+                            }
+                        )
 
                 # Exceeded tool-call rounds
                 return AgentBrief(

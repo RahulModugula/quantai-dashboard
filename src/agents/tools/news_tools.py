@@ -1,7 +1,7 @@
 """News tools — fetches recent news via yfinance (free, no auth required)."""
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -48,31 +48,25 @@ def get_recent_news(ticker: str, max_items: int = 10) -> dict[str, Any]:
         for item in raw_news[:max_items]:
             content = item.get("content", {})
             # yfinance news structure varies by version
-            title = (
-                content.get("title")
-                or item.get("title", "")
-            )
+            title = content.get("title") or item.get("title", "")
             summary = (
-                content.get("summary")
-                or content.get("description")
-                or item.get("summary", "")
+                content.get("summary") or content.get("description") or item.get("summary", "")
             )
-            provider = (
-                content.get("provider", {}).get("displayName")
-                or item.get("publisher", "")
-            )
+            provider = content.get("provider", {}).get("displayName") or item.get("publisher", "")
             pub_time = content.get("pubDate") or item.get("providerPublishTime")
             if isinstance(pub_time, (int, float)):
                 pub_str = datetime.utcfromtimestamp(pub_time).strftime("%Y-%m-%d %H:%M UTC")
             else:
                 pub_str = str(pub_time) if pub_time else ""
 
-            articles.append({
-                "title": title,
-                "summary": summary[:500] if summary else "",
-                "publisher": provider,
-                "published": pub_str,
-            })
+            articles.append(
+                {
+                    "title": title,
+                    "summary": summary[:500] if summary else "",
+                    "publisher": provider,
+                    "published": pub_str,
+                }
+            )
 
         if not articles:
             return {

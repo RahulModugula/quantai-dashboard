@@ -2,7 +2,7 @@
 
 import httpx
 import plotly.graph_objects as go
-from dash import Input, Output, State, callback_context, no_update
+from dash import Input, Output, State, no_update
 
 BASE_URL = "http://localhost:8000"
 
@@ -93,9 +93,17 @@ def register_agent_callbacks(app):
     )
     def poll_status(n_intervals, analysis_id, ticker):
         _no_change = (
-            no_update, no_update, no_update, no_update,
-            no_update, no_update, no_update, no_update,
-            no_update, no_update, no_update,
+            no_update,
+            no_update,
+            no_update,
+            no_update,
+            no_update,
+            no_update,
+            no_update,
+            no_update,
+            no_update,
+            no_update,
+            no_update,
         )
         if not analysis_id:
             return _no_change
@@ -114,26 +122,40 @@ def register_agent_callbacks(app):
         if status == "running" or status == "pending":
             msg = html.Span("Agents deliberating...", className="text-primary")
             return (
-                no_update, no_update, no_update, no_update,
-                no_update, no_update, no_update, no_update,
-                no_update, msg, False,
+                no_update,
+                no_update,
+                no_update,
+                no_update,
+                no_update,
+                no_update,
+                no_update,
+                no_update,
+                no_update,
+                msg,
+                False,
             )
 
         if status == "error":
             error = status_data.get("error", "Unknown error")
             msg = html.Span(f"Analysis failed: {error}", className="text-danger")
             return (
-                no_update, no_update, no_update, no_update,
-                no_update, no_update, no_update, no_update,
-                no_update, msg, True,
+                no_update,
+                no_update,
+                no_update,
+                no_update,
+                no_update,
+                no_update,
+                no_update,
+                no_update,
+                no_update,
+                msg,
+                True,
             )
 
         if status == "complete":
             # Fetch full debate
             try:
-                debate_resp = httpx.get(
-                    f"{BASE_URL}/api/agents/debate/{ticker}", timeout=5
-                )
+                debate_resp = httpx.get(f"{BASE_URL}/api/agents/debate/{ticker}", timeout=5)
                 debate = debate_resp.json() if debate_resp.status_code == 200 else {}
             except Exception:
                 debate = {}
@@ -173,9 +195,17 @@ def register_agent_callbacks(app):
             )
 
             return (
-                quant_div, news_div, risk_div, pm_div,
-                decision_badge, conf_pct, f"{conf_pct}%", bar_color,
-                summary, msg, True,  # disable polling
+                quant_div,
+                news_div,
+                risk_div,
+                pm_div,
+                decision_badge,
+                conf_pct,
+                f"{conf_pct}%",
+                bar_color,
+                summary,
+                msg,
+                True,  # disable polling
             )
 
         return _no_change

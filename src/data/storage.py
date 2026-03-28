@@ -185,9 +185,7 @@ def init_db(db_path: str | None = None):
         )
 
         # Agent decisions indexes
-        conn.execute(
-            text("CREATE INDEX IF NOT EXISTS idx_agent_ticker ON agent_decisions(ticker)")
-        )
+        conn.execute(text("CREATE INDEX IF NOT EXISTS idx_agent_ticker ON agent_decisions(ticker)"))
         conn.execute(
             text(
                 "CREATE INDEX IF NOT EXISTS idx_agent_triggered_at ON agent_decisions(triggered_at)"
@@ -368,9 +366,7 @@ def load_agent_decision(analysis_id: str, db_path: str | None = None) -> dict | 
     engine = get_engine(db_path)
     with engine.connect() as conn:
         row = conn.execute(
-            agent_decisions_table.select().where(
-                agent_decisions_table.c.analysis_id == analysis_id
-            )
+            agent_decisions_table.select().where(agent_decisions_table.c.analysis_id == analysis_id)
         ).fetchone()
     if row is None:
         return None

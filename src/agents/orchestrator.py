@@ -5,7 +5,7 @@ import logging
 from datetime import date, datetime
 from uuid import uuid4
 
-from src.agents.base_agent import AgentBrief, BaseAgent
+from src.agents.base_agent import BaseAgent
 from src.agents.news_agent import NewsAgent
 from src.agents.quant_agent import QuantAgent
 from src.agents.risk_agent import RiskAgent
@@ -86,13 +86,15 @@ async def run_full_analysis(ticker: str, analysis_id: str | None = None) -> dict
     current_position = _get_current_position(ticker)
 
     # Persist initial pending record
-    save_agent_decision({
-        "ticker": ticker,
-        "analysis_id": analysis_id,
-        "triggered_at": datetime.utcnow(),
-        "status": "running",
-        "model_used": settings.agent_model,
-    })
+    save_agent_decision(
+        {
+            "ticker": ticker,
+            "analysis_id": analysis_id,
+            "triggered_at": datetime.utcnow(),
+            "status": "running",
+            "model_used": settings.agent_model,
+        }
+    )
 
     try:
         base_context = {
@@ -140,26 +142,40 @@ async def run_full_analysis(ticker: str, analysis_id: str | None = None) -> dict
         except (ValueError, AttributeError):
             confidence = 0.5
 
-        total_tokens = sum([
-            quant_brief.tokens_used,
-            news_brief.tokens_used,
-            risk_brief.tokens_used,
-            pm_brief.tokens_used,
-        ])
+        total_tokens = sum(
+            [
+                quant_brief.tokens_used,
+                news_brief.tokens_used,
+                risk_brief.tokens_used,
+                pm_brief.tokens_used,
+            ]
+        )
 
         # Persist completed result
-        update_agent_decision(analysis_id, {
-            "status": "complete",
-            "completed_at": datetime.utcnow(),
-            "decision": decision,
-            "confidence": confidence,
-            "reasoning_summary": _extract_summary(pm_brief.content),
-            "quant_brief": {"content": quant_brief.content, "structured": quant_brief.structured_data},
-            "news_brief": {"content": news_brief.content, "structured": news_brief.structured_data},
-            "risk_brief": {"content": risk_brief.content, "structured": risk_brief.structured_data},
-            "pm_brief": {"content": pm_brief.content, "structured": pm_brief.structured_data},
-            "total_tokens": total_tokens,
-        })
+        update_agent_decision(
+            analysis_id,
+            {
+                "status": "complete",
+                "completed_at": datetime.utcnow(),
+                "decision": decision,
+                "confidence": confidence,
+                "reasoning_summary": _extract_summary(pm_brief.content),
+                "quant_brief": {
+                    "content": quant_brief.content,
+                    "structured": quant_brief.structured_data,
+                },
+                "news_brief": {
+                    "content": news_brief.content,
+                    "structured": news_brief.structured_data,
+                },
+                "risk_brief": {
+                    "content": risk_brief.content,
+                    "structured": risk_brief.structured_data,
+                },
+                "pm_brief": {"content": pm_brief.content, "structured": pm_brief.structured_data},
+                "total_tokens": total_tokens,
+            },
+        )
 
         result = {
             "analysis_id": analysis_id,
@@ -169,10 +185,16 @@ async def run_full_analysis(ticker: str, analysis_id: str | None = None) -> dict
             "confidence": confidence,
             "reasoning_summary": _extract_summary(pm_brief.content),
             "agents": {
-                "quant": {"content": quant_brief.content, "structured": quant_brief.structured_data},
+                "quant": {
+                    "content": quant_brief.content,
+                    "structured": quant_brief.structured_data,
+                },
                 "news": {"content": news_brief.content, "structured": news_brief.structured_data},
                 "risk": {"content": risk_brief.content, "structured": risk_brief.structured_data},
-                "portfolio_manager": {"content": pm_brief.content, "structured": pm_brief.structured_data},
+                "portfolio_manager": {
+                    "content": pm_brief.content,
+                    "structured": pm_brief.structured_data,
+                },
             },
             "total_tokens": total_tokens,
             "model_used": settings.agent_model,
@@ -188,11 +210,14 @@ async def run_full_analysis(ticker: str, analysis_id: str | None = None) -> dict
     except Exception as exc:
         error_msg = str(exc)
         logger.error(f"[{analysis_id}] Analysis failed for {ticker}: {exc}", exc_info=True)
-        update_agent_decision(analysis_id, {
-            "status": "error",
-            "completed_at": datetime.utcnow(),
-            "error_message": error_msg,
-        })
+        update_agent_decision(
+            analysis_id,
+            {
+                "status": "error",
+                "completed_at": datetime.utcnow(),
+                "error_message": error_msg,
+            },
+        )
         return {
             "analysis_id": analysis_id,
             "ticker": ticker,
@@ -224,5 +249,5 @@ def _extract_summary(content: str) -> str:
         if line.upper().startswith("SUMMARY:"):
             return line.split(":", 1)[1].strip()
     # Fallback: last non-empty line
-    lines = [l.strip() for l in content.splitlines() if l.strip()]
+    lines = [line.strip() for line in content.splitlines() if line.strip()]
     return lines[-1] if lines else ""
