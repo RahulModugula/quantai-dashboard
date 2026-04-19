@@ -1,16 +1,30 @@
-"""SEC EDGAR tools — fetches recent filings via the free EDGAR full-text search API."""
+"""SEC EDGAR tools — fetches recent filings via the free EDGAR full-text search API.
+
+Notes on reliability
+--------------------
+EDGAR full-text search is best-effort. Queries match against the filing text
+corpus, not a structured company master. Consequences:
+  * small / private / recently renamed companies return zero hits
+  * ambiguous names (e.g. "Apple") match unrelated filers
+  * the SEC does not publish uptime guarantees for this endpoint
+
+We try a quoted exact-phrase query first, then fall back to an unquoted broad
+query if the exact phrase returned nothing. Callers should treat empty results
+as "no signal", not "no filings exist".
+"""
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 import aiohttp
 
 logger = logging.getLogger(__name__)
 
-_EDGAR_SEARCH = "https://efts.sec.gov/LATEST/search-index"
-_EDGAR_SEARCH_UI = "https://efts.sec.gov/LATEST/search-index"
-_COMPANY_SEARCH = "https://efts.sec.gov/LATEST/search-index"
+_EDGAR_SEARCH_URL = "https://efts.sec.gov/LATEST/search-index"
+_USER_AGENT = "QuantAI Research research@quantai.example.com"
+_DEFAULT_LOOKBACK_DAYS = 90
+_REQUEST_TIMEOUT_S = 15
 
 TOOL_SCHEMAS = [
     {
@@ -46,101 +60,83 @@ TOOL_SCHEMAS = [
 ]
 
 
+async def _edgar_query(
+    session: aiohttp.ClientSession,
+    q: str,
+    form_types: str,
+    since: str,
+) -> list[dict[str, Any]]:
+    """Run one EDGAR full-text search request and return the raw hits list.
+
+    Raises aiohttp / asyncio exceptions; callers handle them.
+    """
+    async with session.get(
+        _EDGAR_SEARCH_URL,
+        params={
+            "q": q,
+            "dateRange": "custom",
+            "startdt": since,
+            "forms": form_types,
+        },
+        timeout=aiohttp.ClientTimeout(total=_REQUEST_TIMEOUT_S),
+    ) as resp:
+        if resp.status != 200:
+            logger.info(f"EDGAR returned HTTP {resp.status} for q={q!r}")
+            return []
+        data = await resp.json(content_type=None)
+        return data.get("hits", {}).get("hits", []) or []
+
+
+def _format_hit(hit: dict, fallback_company: str) -> dict[str, Any]:
+    src = hit.get("_source", {}) or {}
+    display_names = src.get("display_names") or [fallback_company]
+    entity_id = src.get("entity_id", "")
+    file_name = src.get("file_name", "")
+    return {
+        "form_type": src.get("form_type", ""),
+        "filed_at": src.get("file_date", ""),
+        "period": src.get("period_of_report", ""),
+        "company": display_names[0] if display_names else fallback_company,
+        "description": (src.get("file_description") or "")[:300],
+        "url": (
+            f"https://www.sec.gov/Archives/edgar/data/{entity_id}/{file_name}"
+            if entity_id and file_name
+            else ""
+        ),
+    }
+
+
 async def get_sec_filings_async(
     company_name: str,
     form_types: str = "8-K,10-Q",
     max_results: int = 5,
 ) -> dict[str, Any]:
-    """Async fetch of SEC EDGAR filings."""
-    since = (datetime.utcnow() - timedelta(days=90)).strftime("%Y-%m-%d")
-    headers = {"User-Agent": "QuantAI Research research@quantai.example.com"}
+    """Async fetch of SEC EDGAR filings.
+
+    Strategy: exact-phrase match first; if empty, retry broad (unquoted) match.
+    """
+    since = (datetime.now(timezone.utc) - timedelta(days=_DEFAULT_LOOKBACK_DAYS)).strftime(
+        "%Y-%m-%d"
+    )
+    headers = {"User-Agent": _USER_AGENT}
 
     try:
         async with aiohttp.ClientSession(headers=headers) as session:
-            async with session.get(
-                "https://efts.sec.gov/LATEST/search-index",
-                params={
-                    "q": f'"{company_name}"',
-                    "dateRange": "custom",
-                    "startdt": since,
-                    "forms": form_types,
-                },
-                timeout=aiohttp.ClientTimeout(total=15),
-            ) as resp:
-                if resp.status != 200:
-                    # Fallback: try the EDGAR company search
-                    return await _edgar_company_search(company_name, form_types, max_results)
-                data = await resp.json(content_type=None)
-
-        hits = data.get("hits", {}).get("hits", [])
-        filings = []
-        for hit in hits[:max_results]:
-            src = hit.get("_source", {})
-            filings.append(
-                {
-                    "form_type": src.get("form_type", ""),
-                    "filed_at": src.get("file_date", ""),
-                    "period": src.get("period_of_report", ""),
-                    "company": src.get("display_names", [company_name])[0]
-                    if src.get("display_names")
-                    else company_name,
-                    "description": src.get("file_description", "")[:300],
-                    "url": f"https://www.sec.gov/Archives/edgar/data/{src.get('entity_id', '')}/{src.get('file_name', '')}",
-                }
-            )
-
-        if not filings:
-            return await _edgar_company_search(company_name, form_types, max_results)
-
-        return {
-            "company": company_name,
-            "filings": filings,
-            "count": len(filings),
-            "since": since,
-        }
+            hits = await _edgar_query(session, f'"{company_name}"', form_types, since)
+            if not hits:
+                # Broaden the query — drop quotes to allow loose matching.
+                hits = await _edgar_query(session, company_name, form_types, since)
     except Exception as exc:
         logger.warning(f"SEC EDGAR search failed for {company_name}: {exc}")
         return {"error": str(exc), "company": company_name, "filings": []}
 
-
-async def _edgar_company_search(
-    company_name: str, form_types: str, max_results: int
-) -> dict[str, Any]:
-    """Fallback: use EDGAR company search endpoint."""
-    since = (datetime.utcnow() - timedelta(days=90)).strftime("%Y-%m-%d")
-    headers = {"User-Agent": "QuantAI Research research@quantai.example.com"}
-    try:
-        async with aiohttp.ClientSession(headers=headers) as session:
-            async with session.get(
-                "https://efts.sec.gov/LATEST/search-index",
-                params={
-                    "q": company_name,
-                    "dateRange": "custom",
-                    "startdt": since,
-                    "forms": form_types,
-                },
-                timeout=aiohttp.ClientTimeout(total=10),
-            ) as resp:
-                if resp.status != 200:
-                    return {"company": company_name, "filings": [], "error": f"HTTP {resp.status}"}
-                data = await resp.json(content_type=None)
-
-        hits = data.get("hits", {}).get("hits", [])
-        filings = []
-        for hit in hits[:max_results]:
-            src = hit.get("_source", {})
-            filings.append(
-                {
-                    "form_type": src.get("form_type", ""),
-                    "filed_at": src.get("file_date", ""),
-                    "period": src.get("period_of_report", ""),
-                    "company": company_name,
-                    "description": src.get("file_description", "")[:300],
-                }
-            )
-        return {"company": company_name, "filings": filings, "count": len(filings), "since": since}
-    except Exception as exc:
-        return {"company": company_name, "filings": [], "error": str(exc)}
+    filings = [_format_hit(hit, company_name) for hit in hits[:max_results]]
+    return {
+        "company": company_name,
+        "filings": filings,
+        "count": len(filings),
+        "since": since,
+    }
 
 
 def get_sec_filings(
@@ -154,7 +150,7 @@ def get_sec_filings(
     try:
         loop = asyncio.get_event_loop()
         if loop.is_running():
-            # We're inside an async context — caller must await the async version
+            # We're inside an async context — run in a worker thread to avoid nesting loops.
             import concurrent.futures
 
             with concurrent.futures.ThreadPoolExecutor() as pool:
@@ -162,11 +158,8 @@ def get_sec_filings(
                     asyncio.run,
                     get_sec_filings_async(company_name, form_types, max_results),
                 )
-                return future.result(timeout=20)
-        else:
-            return loop.run_until_complete(
-                get_sec_filings_async(company_name, form_types, max_results)
-            )
+                return future.result(timeout=_REQUEST_TIMEOUT_S + 5)
+        return loop.run_until_complete(get_sec_filings_async(company_name, form_types, max_results))
     except Exception as exc:
         logger.warning(f"SEC filings sync wrapper failed: {exc}")
         return {"company": company_name, "filings": [], "error": str(exc)}
