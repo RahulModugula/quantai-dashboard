@@ -232,9 +232,7 @@ class TestAnalyzeRecoveryScenarios:
 class TestCheckCovenantHeadroom:
     def test_ati_leverage_breached(self):
         # ATI: 82.1x leverage vs typical 5.0x covenant → breached
-        covenants = check_covenant_headroom(
-            ebitda_mm=6.7, total_debt_mm=550.0, max_leverage_x=5.0
-        )
+        covenants = check_covenant_headroom(ebitda_mm=6.7, total_debt_mm=550.0, max_leverage_x=5.0)
         lev_covenant = next(c for c in covenants if "Leverage" in c.covenant_name)
         assert lev_covenant.is_breached is True
         assert lev_covenant.headroom_pct == 0.0
@@ -306,9 +304,7 @@ class TestCalculateFulcrumSecurity:
 
     def test_no_fulcrum_at_very_high_ev(self, ati_capital_structure):
         # At $1B EV, all debt fully covered (no partial recovery tranche)
-        name, recovery = calculate_fulcrum_security(
-            ati_capital_structure, 1000.0
-        )
+        name, recovery = calculate_fulcrum_security(ati_capital_structure, 1000.0)
         # Preferred ($165) at seniority 4: 1000 - 50 - 500 - 125 = 325 > 165 → full
         # No fulcrum (all fully recovered)
         # Note: PIK accrual may affect this — test with PIK disabled conceptually
