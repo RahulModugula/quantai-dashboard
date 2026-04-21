@@ -35,6 +35,8 @@ models/registry/*.json
 INTERVIEW_PREP.md
 INTERVIEW_IMPROVEMENT_PLAN.md
 AGENT_PROMPTS.md
+SCREENING_CALL_GUIDE.md
+OUTREACH_GUIDE.md
 examples/distressed/ati_2023_live_memo.md
 
 # Jupyter
