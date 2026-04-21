@@ -12,11 +12,8 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    # Type-only import to avoid circular dependency with agents.py.
-    from examples.distressed.agents import CapitalStructureTranche
+from examples.distressed.models import CapitalStructureTranche
 
 logger = logging.getLogger(__name__)
 

@@ -1,25 +1,87 @@
-# QuantAI — ML Trading Dashboard with Multi-Agent AI Reasoning
+# QuantAI — AI Credit Committee & ML Trading Platform
 
 [![CI/CD Pipeline](https://github.com/RahulModugula/quantai-dashboard/actions/workflows/ci.yml/badge.svg)](https://github.com/RahulModugula/quantai-dashboard/actions/workflows/ci.yml)
 [![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/downloads/release/python-3110/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![LiteLLM](https://img.shields.io/badge/LLM-LiteLLM%20%7C%20Claude%20%7C%20GPT--4%20%7C%20Ollama-blueviolet)](https://github.com/BerriAI/litellm)
+[![Demo Ready](https://img.shields.io/badge/demo-no%20API%20key%20required-brightgreen.svg)](examples/distressed/demo.py)
 
-> **DISCLAIMER**: Educational purposes only. All predictions, signals, and portfolio data are simulated. Not financial advice.
+> A 4-agent AI investment committee that debates every trade — then writes the memo.
+> Built to show that the same agentic architecture works across equities **and** distressed credit.
 
 ---
 
-## What Makes This Different
+## 🚀 Quick Demo (no API key required)
 
-Most quant dashboards show you **what** the model decided. QuantAI shows you **why** — through a structured debate between four specialized AI agents that reason over ML signals, real news, and SEC filings, then write a human-readable memo with the full audit trail.
+> **See the 4-agent credit committee in action — pre-rendered output, zero dependencies**
 
-**No existing open-source tool combines:**
-- Walk-forward ML backtesting (no lookahead bias) with LLM reasoning traces
-- Multi-agent debate — a devil's advocate risk agent challenges every recommendation
-- Free alternative data — live news + SEC EDGAR filings, zero API keys needed
-- Full audit trail — every agent brief, decision, and accuracy outcome persisted in SQLite
-- Model-agnostic via [LiteLLM](https://github.com/BerriAI/litellm) — Claude, GPT-4, or local Ollama models
-- **Retargetable to distressed credit** — swap the agent prompts and point the same orchestrator at bankruptcy dockets, capital structures, and recovery analysis. See [`examples/distressed/`](examples/distressed/) for a worked example on the April 2023 ATI Physical Therapy TSA (loan-to-own via 2L PIK convertibles — the entry for the trade that closed as the Knighthead/Marathon $523M take-private in August 2025)
+```bash
+git clone https://github.com/RahulModugula/quantai-dashboard.git
+cd profile-max
+python -m examples.distressed.demo
+```
+
+**What you'll see:**
+- 📊 **QUICK SUMMARY** — Trade entry, thesis, and realized outcome
+- 🤖 **Agent Pipeline** — Visual architecture of the 4-agent system
+- 📝 **Full IC Memo** — Complete committee output with colored sections:
+  - **CapStructureAgent brief** — leverage, coverage, fulcrum security, recovery analysis
+  - **SituationAgent brief** — timeline, catalysts, structural vs. noise events
+  - **CreditRiskAgent brief** — devil's advocate: tail risks, challenges to recovery math
+  - **Committee memo** — RECOMMENDATION: BUY, with instrument, sizing, catalyst
+- ✅ **KEY TAKEAWAYS** — 6 bullet points summarizing the analysis
+- 🎯 **Outcome** — Knighthead/Marathon $523.3M take-private confirmed the thesis
+
+This demo shows the **pre-rendered output** of a 4-agent credit committee debate on ATI Physical Therapy's April 2023 Transaction Support Agreement — the loan-to-own entry that Knighthead Capital and Marathon Asset Management used to build the equity position that closed as a **$523.3M take-private in August 2025 (~11.2x LTM Adj EBITDA)**. The committee's base/bull thesis was confirmed.
+
+**To run the live version** (generates fresh output via LLM):
+```bash
+export ANTHROPIC_API_KEY=sk-ant-...        # or OPENAI_API_KEY, or use Ollama
+python -m examples.distressed.ati_2023
+```
+
+---
+
+## What This Is
+
+Two systems sharing one agentic architecture:
+
+**1. Distressed Credit Committee** (`examples/distressed/`) — 4 agents debate a restructuring situation and write an IC-style memo:
+- **CapStructureAgent** — leverage, coverage, fulcrum security, waterfall recovery (base/bear/bull)
+- **SituationAgent** — docket timeline, upcoming catalysts, structural vs. noise events
+- **CreditRiskAgent** — devil's advocate: stresses every assumption, enumerates tail risks
+- **CreditCommitteeAgent** — writes the vote memo: instrument, sizing, thesis, downside, conditions
+
+**2. Equity Trading System** (`src/`) — live signals, walk-forward ML backtesting, paper trading:
+- Ensemble model (RF + XGB + LightGBM + LSTM) with no lookahead bias
+- SHAP explainability on every prediction
+- 296 tests, production Docker stack, Prometheus metrics, FastAPI + Dash
+
+---
+
+## 💡 Why This Matters
+
+The ATI Physical Therapy demo isn't just a sample — it's a **real-world validation** of the agentic approach:
+
+| Aspect | Detail |
+|---------|---------|
+| **Real Trade** | Knighthead Capital & Marathon Asset Management actually executed this trade |
+| **Entry Point** | April 2023 TSA (2L PIK convertible, loan-to-own structure) |
+| **Exit** | August 2025 take-private at $523.3M (~11.2x LTM Adj EBITDA) |
+| **Thesis** | PT wage normalization → EBITDA recovery |
+| **Outcome** | Base thesis **CONFIRMED** | Bull thesis **CONFIRMED** |
+
+The 4-agent committee correctly identified the fulcrum security, quantified asymmetric upside (250-320c par bull case), bounded downside (55-70c par bear case), and recommended BUY with conditions. The same agentic architecture that analyzed this distressed credit situation can analyze equities, restructurings, or any other investment thesis — just swap the system prompts and tools.
+
+| Feature | Distressed Credit | Equity Trading |
+|---------|------------------|----------------|
+| **Agents** | 4 (CapStructure, Situation, CreditRisk, CreditCommittee) | 4 (Quant, News, Risk, PortfolioManager) |
+| **Output** | IC-style memo with vote | BUY/SELL/HOLD signals with reasoning |
+| **Data** | Capital structures, dockets, recovery analysis | OHLCV, news, SEC filings, ML predictions |
+| **Use Case** | Restructuring, loan-to-own, fulcrum securities | Daily trading, portfolio optimization |
+| **Shared** | `BaseAgent` class, LiteLLM integration, tool framework | `BaseAgent` class, LiteLLM integration, tool framework |
+
+The two systems share one 50-line `BaseAgent` class. Swapping system prompts and tools is all it takes to go from equity analysis to credit committee.
 
 ---
 

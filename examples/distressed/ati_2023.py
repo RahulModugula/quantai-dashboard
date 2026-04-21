@@ -33,11 +33,8 @@ import asyncio
 import logging
 from pathlib import Path
 
-from examples.distressed.agents import (
-    CapitalStructureTranche,
-    Situation,
-    run_credit_committee,
-)
+from examples.distressed.agents import run_credit_committee
+from examples.distressed.models import CapitalStructureTranche, Situation
 
 logger = logging.getLogger(__name__)
 
