@@ -11,14 +11,15 @@
 
 ## What Makes This Different
 
-Most quant dashboards show you **what** the model decided. QuantAI shows you **why** — through a live debate between four specialized AI agents that reason over your ML signals, real news, and SEC filings before every trade.
+Most quant dashboards show you **what** the model decided. QuantAI shows you **why** — through a structured debate between four specialized AI agents that reason over ML signals, real news, and SEC filings, then write a human-readable memo with the full audit trail.
 
 **No existing open-source tool combines:**
 - Walk-forward ML backtesting (no lookahead bias) with LLM reasoning traces
-- Multi-agent debate — a devil's advocate risk agent challenges every trade
+- Multi-agent debate — a devil's advocate risk agent challenges every recommendation
 - Free alternative data — live news + SEC EDGAR filings, zero API keys needed
-- Full audit trail — every agent brief, decision, and accuracy outcome in SQLite
+- Full audit trail — every agent brief, decision, and accuracy outcome persisted in SQLite
 - Model-agnostic via [LiteLLM](https://github.com/BerriAI/litellm) — Claude, GPT-4, or local Ollama models
+- **Retargetable to distressed credit** — swap the agent prompts and point the same orchestrator at bankruptcy dockets, capital structures, and recovery analysis. See [`examples/distressed/`](examples/distressed/) for a worked example on the April 2023 ATI Physical Therapy TSA (loan-to-own via 2L PIK convertibles — the entry for the trade that closed as the Knighthead/Marathon $523M take-private in August 2025)
 
 ---
 
@@ -108,7 +109,7 @@ make run        # start at http://localhost:8000
 
 ## QuantAI Intel — Multi-Agent AI Reasoning
 
-Every trade decision goes through a structured debate between four LLM agents before execution. The full reasoning trail is stored in SQLite and surfaced in the **"AI Reasoning"** dashboard tab.
+Each analysis run goes through a structured debate between four LLM agents. The agents produce a human-readable memo — BUY / SELL / HOLD with confidence and reasoning — which is stored in SQLite and surfaced in the **"AI Reasoning"** dashboard tab. The live paper-trading loop runs independently off the ML ensemble; the agent layer is an **advisory memo generator**, not an autonomous execution agent.
 
 ### The Four Agents
 
@@ -167,6 +168,25 @@ curl http://localhost:8000/api/agents/decision/AAPL
 curl http://localhost:8000/api/agents/history/AAPL
 curl http://localhost:8000/api/agents/accuracy
 ```
+
+---
+
+---
+
+## Retargeting to Distressed Credit
+
+The four agents are orchestrated over a data-agnostic context dict — the pattern has nothing hard-coded to equities. Swap the system prompts, swap the tool bindings, and the same loop becomes a credit committee.
+
+`examples/distressed/` contains a worked example on **ATI Physical Therapy** — Knighthead Capital and Marathon Asset Management took the company private on August 1, 2025 at $2.85/share after a 2023 Chapter 11 restructuring in which they converted debt to equity. The four equity-analyst agents are re-subclassed as a credit committee:
+
+| Equity agent | → | Credit agent |
+|--------------|---|--------------|
+| QuantAgent | → | CapStructureAgent — leverage, coverage, recovery per tranche |
+| NewsAgent | → | SituationAgent — docket events, 8-K cadence, management changes |
+| RiskAgent | → | CreditRiskAgent — covenant headroom, liquidation value, catalyst delay |
+| PortfolioManagerAgent | → | CreditCommitteeAgent — IC-style memo: thesis, sizing, catalysts, exit |
+
+Run it: `python -m examples.distressed.ati_2023` (requires an LLM API key). A pre-rendered sample memo is checked in at [`examples/distressed/ati_2023_memo.md`](examples/distressed/ati_2023_memo.md) for readers without a key. The decision point analyzed is the **April 11, 2023 TSA** — the loan-to-own entry via 2L PIK convertibles — not the August 2025 take-private, which is the *outcome* of the 2023 decision (TEV $523M, ~11.2x LTM EBITDA).
 
 ---
 
@@ -323,7 +343,7 @@ Model-agnostic by design. Swap `QUANTAI_AGENT_MODEL=ollama/llama3` for fully loc
 make test
 ```
 
-110+ tests across: feature engineering, backtest engine, risk metrics, SIP calculator, portfolio operations, signal generation, model drift detection, storage, portfolio optimization, slippage models, SHAP explainability, regime detection, ablation study, live feed, stress testing, multi-agent loop, tool dispatch, agent prompts, orchestrator, and agent storage.
+296 tests across: feature engineering, backtest engine, risk metrics, SIP calculator, portfolio operations, signal generation, model drift detection, storage, portfolio optimization, slippage models, SHAP explainability, regime detection, ablation study, live feed, stress testing, multi-agent loop, tool dispatch, agent prompts, orchestrator, and agent storage.
 
 ---
 

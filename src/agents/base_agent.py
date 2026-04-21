@@ -177,12 +177,37 @@ class BaseAgent(ABC):
         """Route tool calls to the right implementation. Override in subclasses."""
         return {"error": f"Tool not implemented: {tool_name}"}
 
+    _STRUCTURED_KEYS = (
+        # Equity / general
+        "SIGNAL",
+        "DECISION",
+        "CONFIDENCE",
+        "RISK RATING",
+        "VERDICT",
+        "SENTIMENT",
+        # Distressed credit
+        "RECOMMENDATION",
+        "INSTRUMENT",
+        "SIZING",
+        "RECOVERY",
+        "TARGET PRICE",
+        "CATALYST",
+    )
+
     def _parse_structured(self, content: str) -> dict:
-        """Try to extract key-value pairs from the agent's markdown output."""
-        result = {}
-        for line in content.splitlines():
-            for key in ("SIGNAL", "DECISION", "CONFIDENCE", "RISK RATING", "VERDICT", "SENTIMENT"):
-                if line.upper().startswith(key + ":"):
-                    value = line.split(":", 1)[1].strip()
+        """Extract top-level KEY: value fields from the agent's markdown output.
+
+        Only scans non-indented lines so sub-bullets under a section heading
+        (e.g. '- confidence: high' inside REASONING) don't clobber the
+        top-level field. Later occurrences overwrite earlier ones.
+        """
+        result: dict = {}
+        for raw in content.splitlines():
+            if raw != raw.lstrip():
+                continue  # skip indented sub-bullets
+            for key in self._STRUCTURED_KEYS:
+                if raw.upper().startswith(key + ":"):
+                    value = raw.split(":", 1)[1].strip()
                     result[key.lower().replace(" ", "_")] = value
+                    break
         return result
