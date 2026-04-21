@@ -8,8 +8,6 @@ from __future__ import annotations
 import pytest
 
 from examples.distressed.credit_tools import (
-    CovenantStatus,
-    RecoveryScenario,
     analyze_recovery_scenarios,
     calculate_coverage,
     calculate_fulcrum_security,
