@@ -33,7 +33,7 @@ def test_yfinance_fallback_yields_price_dict():
                 results.append(item)
                 break  # one item is enough
 
-    asyncio.get_event_loop().run_until_complete(_collect())
+    asyncio.run(_collect())
 
     assert len(results) == 1
     item = results[0]
@@ -56,7 +56,7 @@ def test_alpaca_feed_requires_credentials_for_ws():
     feed = AlpacaFeed(api_key="", secret_key="")
 
     with pytest.raises(RuntimeError, match="credentials are required"):
-        asyncio.get_event_loop().run_until_complete(feed.subscribe(["AAPL"]))
+        asyncio.run(feed.subscribe(["AAPL"]))
 
 
 # ---------------------------------------------------------------------------
@@ -135,7 +135,7 @@ def test_feed_output_has_required_keys():
                 feed._stats["messages_received"] += 1
                 feed._enqueue(item)
 
-    asyncio.get_event_loop().run_until_complete(_inject())
+    asyncio.run(_inject())
 
     alpaca_item = feed._queue.get_nowait()
     assert required_keys.issubset(alpaca_item.keys()), (
@@ -161,7 +161,7 @@ def test_feed_output_has_required_keys():
                 yf_results.append(item)
                 break
 
-    asyncio.get_event_loop().run_until_complete(_collect_yf())
+    asyncio.run(_collect_yf())
     assert required_keys.issubset(yf_results[0].keys())
 
 
@@ -190,4 +190,4 @@ def test_get_feed_returns_fallback_without_creds():
                 )
 
     # Re-import to pick up the patch
-    asyncio.get_event_loop().run_until_complete(_check())
+    asyncio.run(_check())
