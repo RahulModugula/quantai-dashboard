@@ -1,0 +1,13 @@
+# Minimal dependencies for the AI distressed-credit committee only.
+# This skips the entire equity ML/dashboard stack (torch, pandas, scikit-learn,
+# xgboost, lightgbm, shap, fastapi, dash, ...) — install it when you just want
+# to run `quantai-credit` / `python -m examples.distressed.run`.
+#
+#   pip install -r requirements-credit.txt
+#   python -m examples.distressed.run run examples/distressed/situations/ati_2023.yaml
+#
+# (The full project — equity pipeline, API, dashboard — installs via
+#  `pip install -e .` or `make setup`.)
+
+litellm>=1.40.0   # model-agnostic LLM calls (Claude / GPT / Grok / Ollama / ...)
+pyyaml>=6.0       # parse situation .yaml files

@@ -1,0 +1,121 @@
+# ATI Physical Therapy (ATIP) — April 2023 Transaction Support Agreement
+#
+# The bundled worked example. Decision point: should a distressed-credit fund
+# participate in the April 2023 TSA, taking part of the $25M new-money 2L
+# PIK-convertible facility plus some of the $100M 1L-to-2L exchange?
+#
+# All figures sourced from public filings: ATI 10-K FY2022, 10-Q Q1 2023,
+# 8-K 04/21/2023, 8-K 06/15/2023, DEF 14A 05/01/2023.
+#
+# Run it:   quantai-credit run examples/distressed/situations/ati_2023.yaml
+# (Or copy this file and edit it for your own deal — see TEMPLATE.yaml.)
+
+company: ATI Physical Therapy
+ticker: ATIP
+sector: Outpatient physical therapy / healthcare services
+situation_type: Out-of-court restructuring (Transaction Support Agreement)
+
+thesis_one_liner: >-
+  Loan-to-own via 2L PIK convertible in a margin-compressed but recoverable
+  outpatient PT platform, entering at a structurally distressed moment with
+  asymmetric equity upside on PT wage normalization.
+
+current_position: No existing exposure — new underwrite
+
+# Capital structure at the decision point. seniority: 1 = most senior.
+# face_mm = outstanding principal in $MM. price_pct_par is the trade price as a
+# percent of par (omit if the tranche doesn't trade / isn't marked).
+capital_structure:
+  - name: Super-priority Revolver
+    face_mm: 50.0
+    coupon: SOFR + ~500 drawn
+    maturity: Feb 2027
+    seniority: 1
+    holder: HPS Investment Partners (Lender Rep)
+
+  - name: 1L Senior Secured Term Loan
+    face_mm: 500.0
+    coupon: SOFR + 725
+    maturity: Feb 2028
+    seniority: 2
+    holder: HPS Investment Partners (Lender Rep)
+
+  # The prospective instrument we would underwrite: $25M new money + $100M
+  # exchanged out of the 1L. Inserts above the Preferred, below the 1L TL.
+  - name: NEW — 2L PIK Convertible Notes (TSA)
+    face_mm: 125.0
+    coupon: 8% PIK
+    maturity: Aug 2028
+    seniority: 2
+    holder: TSA participants (prospective)
+
+  - name: Series A Senior Preferred Stock (2022)
+    face_mm: 165.0
+    coupon: 8% cash / 10% PIK at issuer option
+    maturity: Perpetual
+    seniority: 3
+    holder: Advent International + other SPAC-era investors
+
+# Chronological events. Each entry is a {date, event} pair. Mark the committee
+# meeting date with the event text — the agents key off "DECISION_POINT".
+timeline:
+  - date: "2021-06"
+    event: >-
+      FVAC II SPAC merger with ATI closes; $1.9B enterprise value at deal.
+      Over-leveraged for the PT macro that follows.
+  - date: "2022-02-24"
+    event: >-
+      Refinances into $550M credit facility led by HPS ($500M 1L TL + $50M SP
+      Revolver). Issues $165M Series A Senior Preferred concurrently.
+  - date: "2022-FY"
+    event: >-
+      Revenue $635.7M (+1% YoY). Adj EBITDA collapses to $6.7M (margin 1.1%)
+      from $39.8M / 6.3% in 2021. Driver: PT wage inflation and therapist
+      attrition — can't staff clinics to meet demand.
+  - date: "2023-Q1"
+    event: >-
+      Going-concern language in 10-Q. Stockholders' equity down to ~$20.5M at
+      3/31/2023. Covenants under the 2022 Credit Agreement under pressure.
+  - date: "2023-04-11"
+    event: >-
+      Transaction Support Agreement signed. $25M new-money 2L PIK convertible +
+      $100M of 1L exchanged into 2L PIK convertibles. 1-for-50 reverse split
+      proposed.
+  - date: "2023-04-21"
+    event: 8-K filed describing TSA mechanics.
+  - date: "2023-05-01"
+    event: DEF 14A proxy filed for shareholder vote on TSA and reverse split.
+  - date: DECISION_POINT
+    event: >-
+      THIS IS THE COMMITTEE MEETING — should we participate in the TSA as a 2L
+      PIK convertible holder?
+
+# Free-form operating metrics. Keys and values are passed verbatim to the
+# agents, so write them the way you'd put them in a memo.
+operating_metrics:
+  FY2022 Revenue: $635.7M (+1% YoY)
+  FY2022 Adj EBITDA: $6.7M (margin 1.1%; down from $39.8M / 6.3% in 2021)
+  Q1 2023 Stockholders' equity: ~$20.5M
+  Clinic count (end-2022): ~923
+  States covered: ~24
+  Payor mix (highlight): >-
+    Workers' comp franchise (legacy since 1996) — margin-accretive
+    differentiator vs pure-play PT peers
+  Market size (US outpatient PT): ~$53B fragmented; top 6 chains ~9.7% of clinics
+  Going-concern disclosure: YES — material doubt flagged by auditors
+  SPAC litigation: Pending (settled Sep 2024 for $31M — not known at TSA time)
+
+# Risks you already know about. The CreditRiskAgent stress-tests these and adds
+# its own.
+key_risks:
+  - PT wage inflation could persist or accelerate, keeping EBITDA sub-$15M
+  - >-
+    1L Term Loan remains ahead of us at $400M post-exchange; we are
+    structurally junior to $450M of secured debt + revolver
+  - >-
+    Workers' comp reimbursement is state-by-state — adverse change in IL/TX/PA
+    would hit disproportionately
+  - NYSE listing rules — a second compliance issue after the reverse split would delist
+  - SPAC-era securities class action unresolved; damages could impair junior capital
+  - Sector consolidation thesis requires capital we may not have after a second distress leg
+  - Cramdown / Chapter 11 re-engagement if Q2/Q3 2023 does not show EBITDA recovery

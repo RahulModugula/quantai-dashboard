@@ -1,13 +1,17 @@
-# QuantAI — AI Credit Committee & ML Trading Platform
+# QuantAI — An AI Distressed-Credit Committee
 
 [![CI/CD Pipeline](https://github.com/RahulModugula/quantai-dashboard/actions/workflows/ci.yml/badge.svg)](https://github.com/RahulModugula/quantai-dashboard/actions/workflows/ci.yml)
 [![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/downloads/release/python-3110/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![LiteLLM](https://img.shields.io/badge/LLM-LiteLLM%20%7C%20Claude%20%7C%20GPT--4%20%7C%20Ollama-blueviolet)](https://github.com/BerriAI/litellm)
-[![328 tests](https://img.shields.io/badge/tests-328%20passing-brightgreen.svg)](tests/)
+[![LiteLLM](https://img.shields.io/badge/LLM-LiteLLM%20%7C%20Claude%20%7C%20GPT%20%7C%20Grok%20%7C%20Ollama-blueviolet)](https://github.com/BerriAI/litellm)
+[![tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)](tests/)
 
-> A 4-agent AI investment committee that debates every trade — then writes the memo.
-> The same agentic architecture works across equities **and** distressed credit.
+> **Four AI agents debate a distressed-credit situation — leverage, recovery waterfall, fulcrum security, tail risks — and write the IC vote memo.**
+> Point it at any deal in a YAML file. The same agent architecture also drives an equity-research pipeline; credit is the wedge.
+
+<p align="center">
+  <img src="docs/assets/credit_committee_demo.svg" alt="quantai-credit running a credit committee on a distressed situation" width="820">
+</p>
 
 ---
 
@@ -19,34 +23,59 @@ cd quantai-dashboard
 python -m examples.distressed.demo
 ```
 
-This runs the pre-rendered output of a 4-agent credit committee debate on **ATI Physical Therapy's April 2023 Transaction Support Agreement** — the out-of-court loan-to-own entry that Knighthead Capital and Marathon Asset Management used to build the equity position that closed as a **$523.3M take-private in August 2025 (~11.2x LTM Adj EBITDA)**. The committee's base/bull thesis was confirmed.
+This prints a full 4-agent credit committee memo on **ATI Physical Therapy's April 2023 Transaction Support Agreement** — an out-of-court loan-to-own restructuring. It needs no API key, no install, and no data: just the Python standard library. It's the bundled worked example; the next section shows how to run the committee on *your own* situation.
 
-For technical evaluators: [TECHNICAL_PORTFOLIO.md](TECHNICAL_PORTFOLIO.md)
+> The ATI case is real and analyzed at the **April 2023 entry point**, not in hindsight. The position closed as a **$523.3M take-private in August 2025 (~11.2x LTM Adj EBITDA)** — the committee's base/bull thesis was confirmed. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full breakdown and design notes.
 
-To generate a live run (LLM required):
+---
+
+## Run it on your own deal
+
+The credit committee isn't hardcoded to ATI — point it at any distressed
+situation described in a YAML file and it writes the IC memo:
+
 ```bash
-export ANTHROPIC_API_KEY=sk-ant-...   # or OPENAI_API_KEY or OPENROUTER_API_KEY
-python -m examples.distressed.ati_2023
+quantai-credit new my_deal.yaml     # scaffold an annotated template
+# ...fill in the cap structure, timeline, metrics, and risks...
+quantai-credit run my_deal.yaml     # 4-agent committee → my_deal_memo.md
+quantai-credit list                 # show bundled example situations
 ```
+
+A situation file is just the cap stack, a timeline, operating metrics, and the
+risks you already see — no code. The committee computes leverage, coverage, the
+recovery waterfall, and the fulcrum security from the numbers you give it, then
+debates and votes. Start from [`TEMPLATE.yaml`](examples/distressed/situations/TEMPLATE.yaml)
+(annotated blank) or copy one of the bundled examples:
+
+| Situation | Structure it teaches |
+|-----------|---------------------|
+| [`ati_2023.yaml`](examples/distressed/situations/ati_2023.yaml) | Loan-to-own via a 2L PIK convertible fulcrum (out-of-court TSA) |
+| [`serta_2020.yaml`](examples/distressed/situations/serta_2020.yaml) | Non-pro-rata **uptier** / liability management — inside vs. outside the majority |
+| [`hertz_2020.yaml`](examples/distressed/situations/hertz_2020.yaml) | **Asset-coverage** with a bankruptcy-remote fleet-ABS silo (Chapter 11) |
+
+Each is sourced from public filings, with approximate figures marked inline. Adding another is pure YAML — a great [first contribution](CONTRIBUTING.md).
+
+> No LLM key? `python -m examples.distressed.demo` shows a complete sample memo
+> with zero setup. To run live on your own file, set any LiteLLM-supported key
+> (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `OPENROUTER_API_KEY`) or point
+> `QUANTAI_AGENT_MODEL=ollama/llama3` at a local model for zero cost.
 
 ---
 
 ## What This Is
 
-Two systems sharing one agentic architecture:
+**The core: an AI distressed-credit committee** (`examples/distressed/`). Four agents debate a restructuring situation and write an IC-style vote memo. They call deterministic Python tools — the math doesn't vary by temperature — and hand structured briefs to each other:
 
-**1. Distressed Credit Committee** (`examples/distressed/`) — 4 agents debate a restructuring situation and write an IC-style vote memo:
-- **CapStructureAgent** — leverage, coverage, fulcrum security, waterfall recovery (base/bear/bull)
-- **SituationAgent** — docket timeline, upcoming catalysts, structural vs. noise events
-- **CreditRiskAgent** — devil's advocate: stresses every assumption, enumerates tail risks
-- **CreditCommitteeAgent** — writes the vote memo: instrument, sizing, thesis, downside, conditions
+- **CapStructureAgent** — leverage, coverage, fulcrum security, recovery waterfall (base/bear/bull)
+- **SituationAgent** — docket/timeline events, upcoming catalysts, structural vs. noise, information gaps
+- **CreditRiskAgent** — devil's advocate: stresses every assumption, enumerates tail and process risks
+- **CreditCommitteeAgent** — writes the vote memo: instrument, sizing, target, catalyst, downside, conditions
 
-**2. Equity Trading System** (`src/`) — live signals, walk-forward ML backtesting, paper trading:
-- Ensemble model (RF + XGB + LightGBM + LSTM), retrained every 63 trading days, no lookahead bias
-- SHAP explainability on every prediction
-- 328 tests, production Docker stack, Prometheus metrics, async FastAPI + Plotly Dash
+You describe a situation in a YAML file — cap stack, timeline, operating metrics, known risks — and run `quantai-credit run`. No code. There is no comparable open-source tool for AI-assisted distressed-credit / restructuring analysis; everything else in this space targets equities.
 
-Both systems share a single `BaseAgent` class. Swap the system prompts and tool modules to move between asset classes.
+**The same architecture also drives an equity-research pipeline** (`src/`) — `QuantAgent → NewsAgent → RiskAgent → PortfolioManager`, backed by a walk-forward ML ensemble (RF + XGB + LightGBM + LSTM, no lookahead bias), SHAP explainability, backtesting, a FastAPI service, and a Plotly Dash dashboard. It's a second proof that the agent loop is asset-class-agnostic, and a fuller "batteries-included" trading playground if you want it.
+
+Both share a single `BaseAgent` class (`src/agents/base_agent.py`). Moving to a new asset class means writing a subclass and a tool module — not touching shared infrastructure. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ---
 
@@ -125,21 +154,40 @@ Half-Kelly sizing          └────────────────�
 
 ---
 
-## Quick Start
+## Install
+
+### Just the credit committee (lightweight)
+
+The committee runs on **two dependencies** — no ML stack, no torch, no dashboard:
 
 ```bash
-# Docker (recommended — no local setup)
+pip install -r requirements-credit.txt          # litellm + pyyaml only
+python -m examples.distressed.run list           # see bundled situations
+python -m examples.distressed.run run examples/distressed/situations/ati_2023.yaml
+```
+
+Install the package to get the `quantai-credit` command on your PATH:
+
+```bash
+pip install -e .          # adds the `quantai-credit` entry point
+quantai-credit new my_deal.yaml
+```
+
+### The full system (equity pipeline + API + dashboard)
+
+This pulls the ML/data stack (torch, scikit-learn, xgboost, ...) and is only needed for the equity trading playground:
+
+```bash
+# Docker (no local setup)
 docker compose up --build
 ```
 
 ```bash
-# Local development
-uv venv .venv --python 3.11
-source .venv/bin/activate
-make setup      # install dependencies
+# Local
+uv venv .venv --python 3.11 && source .venv/bin/activate
+make setup      # install all dependencies
 make seed       # download 5y of OHLCV + build features
 make train      # walk-forward ensemble training (~5 min)
-make backtest   # run backtest, save report
 make run        # start at http://localhost:8000
 ```
 
@@ -373,7 +421,7 @@ GET /api/diagnostics/data-freshness
 make test
 ```
 
-328 tests across: feature engineering, backtest engine, risk metrics, SIP calculator, portfolio operations, signal generation, model drift detection, storage, portfolio optimization, slippage models, SHAP explainability, regime detection, ablation study, live feed, stress testing, multi-agent loop, tool dispatch, agent prompts, orchestrator, agent storage, **and distressed credit tools** (leverage, coverage, recovery waterfall, covenant headroom, fulcrum detection — verified against ATI FY2022 numbers).
+340+ tests across: **distressed credit tools** (leverage, coverage, recovery waterfall, covenant headroom, fulcrum detection — verified against ATI FY2022 numbers), the **situation loader** (YAML/JSON round-trip, the bundled examples), feature engineering, backtest engine, risk metrics, SIP calculator, portfolio operations, signal generation, model drift detection, storage, portfolio optimization, slippage models, SHAP explainability, regime detection, ablation study, live feed, stress testing, multi-agent loop, tool dispatch, agent prompts, orchestrator, and agent storage.
 
 ---
 

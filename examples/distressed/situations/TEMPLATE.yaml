@@ -1,0 +1,70 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Credit committee situation file — fill this in for your own deal.
+#
+#   quantai-credit new my_deal.yaml      # copies this template
+#   quantai-credit run my_deal.yaml      # runs the 4-agent committee on it
+#
+# Only `company` is strictly required. Everything else is optional but the more
+# you provide, the sharper the memo. Numbers should be in $MM unless noted.
+# See ati_2023.yaml in this folder for a fully worked real example.
+# ─────────────────────────────────────────────────────────────────────────────
+
+company: ACME Corp                       # required
+ticker: ACME                             # optional — null if private
+sector: ""                               # e.g. "Retail / specialty"
+situation_type: ""                       # e.g. "Chapter 11", "Out-of-court exchange", "Liability management"
+
+# One sentence: what is the opportunity and why does it exist?
+thesis_one_liner: >-
+  e.g. Fulcrum 2L term loan trading at 45c; over-levered from a 2021 LBO but
+  free-cash-flow positive at trough — par recovery on a refinancing or amend-and-extend.
+
+current_position: No existing position   # or "Hold $20MM of the 1L at 78c", etc.
+
+# Capital structure, most senior first. seniority: 1 = most senior; ties are fine
+# (e.g. two pari passu tranches both seniority 2). Drop `price_pct_par`/`holder`
+# if unknown.
+capital_structure:
+  - name: Senior Secured Revolver
+    face_mm: 100.0
+    coupon: SOFR + 350
+    maturity: 2027
+    seniority: 1
+    price_pct_par: null                  # % of par, e.g. 98.5
+    holder: null                         # e.g. "Bank syndicate"
+
+  - name: 1L Term Loan B
+    face_mm: 600.0
+    coupon: SOFR + 450
+    maturity: 2028
+    seniority: 2
+    price_pct_par: 72
+
+  - name: Unsecured Notes
+    face_mm: 400.0
+    coupon: 6.5% cash
+    maturity: 2029
+    seniority: 3
+    price_pct_par: 38
+
+# Chronological events. {date, event} pairs. Use the DECISION_POINT marker for
+# the moment the committee is meeting.
+timeline:
+  - date: "2024-Q4"
+    event: Covenant amendment; revolver springing leverage test waived through 2025.
+  - date: "2025-03"
+    event: Hired restructuring advisors; explored liability-management transaction.
+  - date: DECISION_POINT
+    event: Committee meeting — do we underwrite the fulcrum?
+
+# Free-form metrics — keys/values go straight into the memo, so phrase them well.
+operating_metrics:
+  LTM Revenue: $900M
+  LTM EBITDA: $85M
+  Cash interest: ~$70M
+  Liquidity: $40M revolver availability + $25M cash
+
+# Risks you already see. The CreditRiskAgent will stress-test these and add more.
+key_risks:
+  - Trough EBITDA may not be the trough — secular demand question, not just cyclical.
+  - Unsecured notes could organize and litigate any non-pro-rata uptier.
