@@ -1,11 +1,33 @@
 # Contributing
 
+## Good first contribution: add a distressed-credit situation
+
+The fastest way to help is to add a real restructuring as a worked example — no
+infrastructure, just a YAML file:
+
+```bash
+pip install -r requirements-credit.txt
+python -m examples.distressed.run new examples/distressed/situations/my_company.yaml
+# fill in the cap structure, timeline, operating metrics, and risks
+python -m examples.distressed.run run examples/distressed/situations/my_company.yaml
+```
+
+Use [`examples/distressed/situations/`](examples/distressed/situations/) as your
+guide (`ati_2023.yaml`, `serta_2020.yaml`, `hertz_2020.yaml`). Ground every
+figure in a public filing or reputable source, mark approximations inline
+(`# ~approx`) and say "unknown" rather than guessing, and include a
+`DECISION_POINT` event. `tests/test_credit_situation_loader.py` validates every
+bundled file automatically.
+
 ## Development Setup
 
 ```bash
 git clone https://github.com/RahulModugula/quantai-dashboard.git
 cd quantai-dashboard
 make setup      # installs deps + pre-commit hooks
+
+# Working on just the credit committee? You don't need the full ML stack:
+pip install -r requirements-credit.txt
 ```
 
 ## Running Tests

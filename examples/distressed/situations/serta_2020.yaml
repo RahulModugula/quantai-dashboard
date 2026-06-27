@@ -1,0 +1,140 @@
+# Serta Simmons Bedding (private) — June 2020 Uptier ("Position Enhancement Transaction")
+#
+# A bundled worked example. Decision point: a ~51% majority lender group is
+# offering us a seat in a super-priority "uptier" that primes the rest of the
+# first lien. Do we join the majority and roll up — or stay out and risk being
+# subordinated below ~$1.05B of new super-priority debt?
+#
+# This is the canonical liability-management / "lender-on-lender violence" case.
+# It later went to Chapter 11 (Jan 2023, S.D. Tex.) and the Fifth Circuit
+# (Dec 31, 2024) ultimately held the uptier was NOT a permitted "open market
+# purchase" and violated the pro rata "sacred right."
+#
+# Figures grounded in: 5th Cir. opinion In re Serta Simmons Bedding (2024);
+# Moody's & S&P rating actions; Serta press release 06/22/2020 (PRNewswire);
+# Ch. 11 docket (S.D. Tex., filed 01/23/2023). Approximate figures marked
+# "~approx"; gaps marked "unknown" rather than guessed.
+#
+# Run it:   quantai-credit run examples/distressed/situations/serta_2020.yaml
+
+company: Serta Simmons Bedding
+ticker: private
+sector: Consumer durables / mattress manufacturing
+situation_type: Out-of-court liability management (non-pro-rata uptier exchange)
+
+thesis_one_liner: >-
+  Classic uptier "lender-on-lender violence" — a ~51% majority can prime the
+  minority via new super-priority debt, so the real question is not credit
+  quality but whether you are inside or outside the controlling group.
+
+current_position: Existing 1L term loan holder — must decide whether to join the uptier
+
+# Capital structure at the decision point (just BEFORE the June 2020 uptier).
+# seniority: 1 = most senior. face_mm = outstanding principal in $MM.
+capital_structure:
+  - name: ABL Revolving Credit Facility
+    face_mm: 225.0
+    coupon: Floating (ABL grid; spread unknown)
+    maturity: 2021 (unknown exact)
+    seniority: 1
+    holder: Bank group
+
+  - name: First-Lien Term Loan (2016)
+    face_mm: 1900.0   # ~$1.95B original face; ~$1.84-1.89B outstanding by 2020 ~approx
+    coupon: LIBOR + 350
+    maturity: Nov 2023
+    seniority: 2
+    holder: >-
+      Broadly syndicated across CLOs/credit funds — Eaton Vance, Invesco,
+      Credit Suisse AM, Barings, Boston Mgmt & Research (later "Prevailing"
+      group) vs. Apollo, Angelo Gordon, LCM, North Star (later excluded)
+
+  - name: Second-Lien Term Loan (2016)
+    face_mm: 450.0   # ~$428M outstanding by 2020 ~approx; traded ~30c in late 2019
+    coupon: LIBOR + spread (unknown; market reports materially wider than 1L)
+    maturity: Nov 2024
+    seniority: 3
+    holder: Same syndicated CLO/credit-fund universe
+
+  # The PROPOSED uptier instruments. If we join, ~$1.2B of old 1L/2L is
+  # exchanged into ~$850M FLSO at a discount; $200M new money sits on top.
+  - name: NEW — Super-Priority First-Out Term Loan (new money)
+    face_mm: 200.0
+    coupon: Floating (Moody's-rated B2)
+    maturity: Aug 2023
+    seniority: 1   # leapfrogs the entire pre-existing stack
+    holder: Participating ("Prevailing") majority group
+
+  - name: NEW — Super-Priority Second-Out Term Loan (FLSO roll-up)
+    face_mm: 850.0   # Moody's $851MM; built from ~$734M (ex-1L @ ~74c) + ~$116M (ex-2L @ ~39c)
+    coupon: Floating (Moody's-rated Caa2)
+    maturity: Aug 2023
+    seniority: 2
+    holder: Participating ("Prevailing") majority group
+
+# Chronological events. Mark the committee meeting with DECISION_POINT.
+timeline:
+  - date: "2016-11"
+    event: >-
+      Serta (Advent International-owned) raises $1.95B 1L TL (L+350, due 2023)
+      + $450M 2L TL (due 2024) + $225M ABL. Credit agreement allows buybacks
+      via "open market purchases" or pro-rata Dutch auctions — the language
+      later litigated.
+  - date: "2019-12-04"
+    event: >-
+      S&P downgrades 1L to CCC; 1L trading below 60, 2L around 30 cents.
+      Leverage building above 8x.
+  - date: "2020-03"
+    event: >-
+      COVID shutters mattress retail distribution; sharp budget shortfall and
+      going-concern pressure trigger a scramble for liquidity.
+  - date: "2020-Q2"
+    event: >-
+      Two competing rescue proposals emerge — an Apollo/Angelo Gordon "drop-down"
+      plan vs. the ~51% majority "uptier." Serta picks the uptier.
+  - date: DECISION_POINT
+    event: >-
+      THIS IS THE COMMITTEE MEETING — a ~51% majority group offers us a seat in
+      the super-priority uptier (join and roll up at ~74c, or stay out and be
+      primed below ~$1.05B of new super-priority debt). Decide.
+  - date: "2020-06-22"
+    event: >-
+      Uptier closes. $200M new-money first-out + ~$850M second-out (FLSO) prime
+      the non-participating lenders. Company claims >$400M debt reduction and
+      >$300M cash. Excluded lenders (LCM, North Star) sue in NY.
+  - date: "2023-01-23"
+    event: >-
+      Serta files prearranged Chapter 11 (S.D. Texas) with ~$1.9B funded debt;
+      plan equitizes ~$1.59B, leaving ~$315M.
+  - date: "2024-12-31"
+    event: >-
+      Fifth Circuit reverses — the uptier was NOT a permitted "open market
+      purchase," violated the pro rata sacred right, and the plan indemnity for
+      participants is excised; remanded for damages to excluded lenders.
+
+operating_metrics:
+  Revenue: ~$2.2B annually (Moody's, 2020) ~approx
+  EBITDA: Not cleanly disclosed publicly — unknown
+  Leverage: ">8x (Apr 2020); ~10.5x pro forma at uptier; projected ~13x within 12-18mo"
+  Liquidity post-uptier: ">$300M cash (company) ~approx"
+  Going-concern: YES — COVID demand/distribution shock drove the June 2020 deal
+  Market position: One of the largest mattress makers in North America; ~27 plants
+  Brands: Serta, Beautyrest, Simmons, Tuft & Needle, Tomorrow Sleep
+  PE owner: Advent International (lost equity in the 2023 reorganization)
+  Credit covenant at issue: pro rata "sacred right"; buyback carve-outs for "open market purchases" / Dutch auctions
+
+key_risks:
+  - >-
+    If we stay OUT, we are primed below ~$1.05B of new super-priority debt and
+    pushed to effective third/fourth lien — recovery could collapse.
+  - >-
+    If we join, we accept a ~74c exchange haircut and litigation exposure as a
+    "Prevailing Lender" (the indemnity later struck down by the 5th Circuit).
+  - >-
+    Legal risk both ways — "open market purchase" interpretation was unsettled
+    (Serta lost at the 5th Circuit in 2024; contrast Mitel in NY).
+  - >-
+    Pro forma leverage ~10.5x rising to ~13x — Moody's called the structure
+    "not sustainable"; a follow-on restructuring was likely (and came in 2023).
+  - COVID demand whipsaw — a 2020-21 stimulus rebound, then a 2022 downturn that precipitated Chapter 11.
+  - Reputational / relationship risk of participating in non-pro-rata "lender-on-lender violence."

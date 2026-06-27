@@ -1,7 +1,8 @@
 """Mock/cached mode for distressed credit agent demonstrations.
 
 This module provides pre-cached agent responses for instant demonstrations
-without requiring LLM API keys. This is essential for smooth interview demos.
+without requiring LLM API keys — useful for offline demos, reproducible
+output, and testing without token costs.
 
 Usage:
     from examples.distressed.mock_mode import MockCreditCommittee
@@ -39,7 +40,7 @@ class MockCreditCommittee:
     """Mock credit committee with pre-cached responses.
 
     This enables instant demonstrations without API calls, ideal for:
-    - Interview presentations
+    - Offline demos and walkthroughs
     - Code reviews
     - Testing without token costs
     - Reproducible outputs

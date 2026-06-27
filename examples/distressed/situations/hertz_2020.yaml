@@ -1,0 +1,168 @@
+# Hertz Global Holdings (HTZ) — May 2020 Chapter 11 (D. Delaware)
+#
+# A bundled worked example. Decision point: at/just after the May 22, 2020
+# filing, where is the fulcrum security, and is there value below the fleet ABS
+# for corporate creditors (and conceivably old equity), given a collapse — then
+# possible recovery — in used-car values?
+#
+# This is the canonical ASSET-COVERAGE case: a structurally separate, non-Debtor
+# fleet-ABS silo (HVF II) sits senior against the cars, while corporate
+# creditors lend to the opco. Used-car prices surged in 2021, the estate proved
+# SOLVENT, creditors were paid in full, and — rare in Chapter 11 — old equity
+# recovered >$1B of value.
+#
+# Figures grounded in: Hertz FY2019 & FY2020 10-Ks (Note 5 Debt); issuance
+# 8-Ks; plan/emergence 8-Ks (May-June 2021); 3d Cir. In re Hertz (2024).
+# Approximate figures marked "~approx"; gaps marked "unknown."
+#
+# Run it:   quantai-credit run examples/distressed/situations/hertz_2020.yaml
+
+company: Hertz Global Holdings
+ticker: HTZ
+sector: Vehicle rental (Hertz, Dollar, Thrifty)
+situation_type: Chapter 11 reorganization (asset-coverage / fleet-ABS structure)
+
+thesis_one_liner: >-
+  Asset-coverage case — the fleet is financed in a bankruptcy-remote ABS silo
+  (HVF II) senior against the cars, so the entire estate's value turns on
+  used-vehicle residuals, which collapsed in spring 2020 and then surged in 2021.
+
+current_position: No existing exposure — new underwrite at/after the filing
+
+# Capital structure at/around the May 22, 2020 filing.
+# Anchor = audited Dec 31, 2019 debt footnote (revolver ~undrawn at YE2019 but
+# ~$615M drawn just before filing). seniority: 1 = most senior. Two silos.
+capital_structure:
+  # --- Corporate (Non-Vehicle) debt, issued by The Hertz Corporation ---
+  - name: Senior Term Loan B
+    face_mm: 660.0
+    coupon: Floating (~3.5-4.45%)
+    maturity: Jun 2023
+    seniority: 1
+    holder: First-lien senior secured (bank/institutional)
+
+  - name: Senior Revolving Credit Facility
+    face_mm: 615.0   # ~undrawn at YE2019; ~$615M drawn just before filing ~approx
+    coupon: Floating (~3.41%)
+    maturity: Jun 2021
+    seniority: 1
+    holder: First-lien senior secured (pari with TLB)
+
+  - name: 7.625% Senior Second Priority Secured Notes due 2022
+    face_mm: 350.0
+    coupon: 7.625%
+    maturity: Jun 2022
+    seniority: 2
+    holder: Second-lien secured (trustee Wells Fargo)
+
+  - name: 6.250% Senior Notes due 2022
+    face_mm: 500.0   # ~approx — derived as residual of the audited $2,700M unsecured aggregate
+    coupon: 6.250%
+    maturity: Oct 2022
+    seniority: 3
+    holder: Senior unsecured
+
+  - name: 5.500% Senior Notes due 2024
+    face_mm: 800.0   # ~approx — derived as residual of the audited $2,700M unsecured aggregate
+    coupon: 5.500%
+    maturity: Oct 2024
+    seniority: 3
+    holder: Senior unsecured
+
+  - name: 7.125% Senior Notes due 2026
+    face_mm: 500.0   # confirmed in Aug 1, 2019 8-K
+    coupon: 7.125%
+    maturity: Aug 2026
+    seniority: 3
+    holder: Senior unsecured
+
+  - name: 6.000% Senior Notes due 2028
+    face_mm: 900.0   # confirmed in Nov 2019 pricing 8-K (upsized from $750M)
+    coupon: 6.000%
+    maturity: Jan 2028
+    seniority: 3
+    holder: Senior unsecured
+
+  # --- Fleet ABS silo: bankruptcy-remote, NON-Debtor; did NOT file Ch.11 ---
+  # Structurally senior against the VEHICLES only; non-recourse to the opco.
+  # Shown as a separate silo, not directly rankable against corporate debt.
+  - name: HVF II U.S. Fleet ABS (VFNs + medium-term notes)
+    face_mm: 9264.0   # ~approx, YE2019; ~$13.4B incl. Donlen HFLF + intl vehicle debt
+    coupon: Floating/fixed ~2.9-4.2%
+    maturity: 2020-2024 (rolling series)
+    seniority: 1   # senior against the fleet within the SPE; separate silo
+    holder: Hertz Vehicle Financing II LP (non-Debtor SPE); ABS investors
+
+# Chronological events. Mark the committee meeting with DECISION_POINT.
+timeline:
+  - date: "2019-FY"
+    event: >-
+      Revenue $9.78B; Adjusted Corporate EBITDA $649M. Total debt ~$17.1B
+      ($13.4B vehicle ABS / $3.7B corporate). Average U.S. RAC fleet ~535k.
+  - date: "2020-03"
+    event: >-
+      COVID craters travel; April revenue down ~73% YoY. Used-car auction values
+      briefly collapse, eroding fleet asset coverage under the HVF master lease.
+  - date: "2020-04"
+    event: >-
+      Hertz misses ABS lease payments; HVF noteholders demand depreciation
+      top-ups (~$135M cash) the company cannot meet — the ABS squeeze, not the
+      corporate bonds, forces the filing.
+  - date: "2020-05-22"
+    event: >-
+      Hertz files Chapter 11 (D. Delaware, Judge Walrath). International units NOT
+      in the U.S. cases. ~$6.0B of corporate debt accelerated.
+  - date: DECISION_POINT
+    event: >-
+      THIS IS THE COMMITTEE MEETING — at/after the filing, where is the fulcrum?
+      Is there value below the fleet ABS for the unsecured notes (and possibly
+      old equity), betting on a used-car recovery and a solvent-debtor outcome?
+  - date: "2020-06-15"
+    event: >-
+      Hertz signs a $500M ATM equity program with Jefferies during bankruptcy
+      (meme rally); SEC review halts it after ~$29M sold — offering scrapped.
+  - date: "2020-07"
+    event: >-
+      Hertz settles the HVF master-lease fight (had moved to reject ~144k
+      vehicles), agreeing to ~$650M of base rent over six months.
+  - date: "2021-05"
+    event: >-
+      Used-vehicle prices surge (record Manheim index). KHCA group (Knighthead +
+      Certares + Apollo) wins a ~30-hour auction over Centerbridge/Warburg/Dundon
+      with a "$6B bid."
+  - date: "2021-06-30"
+    event: >-
+      Hertz emerges. >$5.9B new equity capital; creditors paid cash in full;
+      ~$5.0B debt eliminated. OLD equity recovers >$1B (cash + 3% common + 30-yr
+      warrants for 18% struck off a $6.5B equity value).
+
+operating_metrics:
+  FY2019 Revenue: $9.78B
+  FY2020 Revenue: $5.26B (-46%)
+  FY2019 Adj Corporate EBITDA: $649M
+  FY2020 Adj Corporate EBITDA: -$995M
+  FY2020 Net loss: -$1.85B
+  Total debt at filing: ~$19B framing (~$10B U.S. ABS / ~$5B U.S. corporate / ~$4B other); audited YE2019 anchor $17.1B
+  Avg U.S. RAC fleet: ~535k (2019) -> ~424k (2020, -21%)
+  Going-concern: YES — substantial doubt disclosed in FY2020 10-K
+  Key driver: used-vehicle residual values (Manheim index) — collapsed spring 2020, surged 2021
+  Brands: Hertz, Dollar, Thrifty (+ Firefly, Donlen fleet leasing — sold Sep 2021 for $891M)
+
+key_risks:
+  - >-
+    Fleet ABS (HVF II) is structurally senior against the cars and non-recourse
+    to the opco — corporate creditors only recover on residual fleet value after
+    the ABS is satisfied.
+  - >-
+    Used-vehicle residuals are the whole thesis — a prolonged depression in
+    Manheim values would have wiped out junior corporate claims and equity.
+  - COVID travel-demand recovery timing was deeply uncertain at the May 2020 decision point.
+  - >-
+    Master-lease rejection/renegotiation risk — the ABS lease fight could have
+    shifted billions of value between silos.
+  - >-
+    Equity recovered here (rare) only because the estate proved SOLVENT; do not
+    generalize the meme-stock outcome to other Chapter 11 cases.
+  - >-
+    Solvent-debtor / make-whole risk (3d Cir. 2024) — post-petition interest and
+    "Applicable Premiums" reshaped recoveries across the stack.
