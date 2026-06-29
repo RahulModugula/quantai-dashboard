@@ -11,3 +11,4 @@
 
 litellm>=1.40.0   # model-agnostic LLM calls (Claude / GPT / Grok / Ollama / ...)
 pyyaml>=6.0       # parse situation .yaml files
+rich>=13.0        # pretty terminal output for the snapshot / decision

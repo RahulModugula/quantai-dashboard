@@ -22,6 +22,11 @@ thesis_one_liner: >-
 
 current_position: No existing exposure — new underwrite
 
+# Structured financials (optional) — unlock the computed cap-structure snapshot
+# (leverage, coverage, attach/detach in turns of EBITDA) without an LLM.
+ltm_ebitda_mm: 6.7      # FY2022 Adj EBITDA (collapsed from $39.8M in 2021)
+cash_interest_mm: 61.0  # ~SOFR+725 on the $500M 1L, pre-TSA
+
 # Capital structure at the decision point. seniority: 1 = most senior.
 # face_mm = outstanding principal in $MM. price_pct_par is the trade price as a
 # percent of par (omit if the tranche doesn't trade / isn't marked).
@@ -46,14 +51,14 @@ capital_structure:
     face_mm: 125.0
     coupon: 8% PIK
     maturity: Aug 2028
-    seniority: 2
+    seniority: 3   # junior to the 1L TL, senior to the Preferred
     holder: TSA participants (prospective)
 
   - name: Series A Senior Preferred Stock (2022)
     face_mm: 165.0
     coupon: 8% cash / 10% PIK at issuer option
     maturity: Perpetual
-    seniority: 3
+    seniority: 4
     holder: Advent International + other SPAC-era investors
 
 # Chronological events. Each entry is a {date, event} pair. Mark the committee

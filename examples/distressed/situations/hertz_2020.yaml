@@ -29,6 +29,11 @@ thesis_one_liner: >-
 
 current_position: No existing exposure — new underwrite at/after the filing
 
+# Structured financials (optional) — FY2019 was the last clean LTM before the
+# COVID EBITDA collapse; used here for the leverage/attach snapshot on CORPORATE
+# debt only (the fleet ABS is a separate non-recourse silo).
+ltm_ebitda_mm: 649.0  # FY2019 Adjusted Corporate EBITDA
+
 # Capital structure at/around the May 22, 2020 filing.
 # Anchor = audited Dec 31, 2019 debt footnote (revolver ~undrawn at YE2019 but
 # ~$615M drawn just before filing). seniority: 1 = most senior. Two silos.
@@ -83,15 +88,13 @@ capital_structure:
     seniority: 3
     holder: Senior unsecured
 
-  # --- Fleet ABS silo: bankruptcy-remote, NON-Debtor; did NOT file Ch.11 ---
-  # Structurally senior against the VEHICLES only; non-recourse to the opco.
-  # Shown as a separate silo, not directly rankable against corporate debt.
-  - name: HVF II U.S. Fleet ABS (VFNs + medium-term notes)
-    face_mm: 9264.0   # ~approx, YE2019; ~$13.4B incl. Donlen HFLF + intl vehicle debt
-    coupon: Floating/fixed ~2.9-4.2%
-    maturity: 2020-2024 (rolling series)
-    seniority: 1   # senior against the fleet within the SPE; separate silo
-    holder: Hertz Vehicle Financing II LP (non-Debtor SPE); ABS investors
+  # NOTE: The ~$9.3B HVF II U.S. fleet ABS (and ~$13.4B incl. Donlen HFLF +
+  # international vehicle debt) is deliberately NOT listed as a tranche here.
+  # It sits in a bankruptcy-remote, NON-Debtor SPE, secured against the VEHICLES
+  # only and non-recourse to the operating company — a separate silo. Putting it
+  # in this waterfall (against corporate enterprise value) would be wrong: the
+  # corporate creditors above recover on corporate/residual value, not the cars.
+  # It is captured in operating_metrics as context for the asset-coverage thesis.
 
 # Chronological events. Mark the committee meeting with DECISION_POINT.
 timeline:
@@ -143,6 +146,7 @@ operating_metrics:
   FY2020 Adj Corporate EBITDA: -$995M
   FY2020 Net loss: -$1.85B
   Total debt at filing: ~$19B framing (~$10B U.S. ABS / ~$5B U.S. corporate / ~$4B other); audited YE2019 anchor $17.1B
+  Fleet ABS silo (separate, non-recourse): ~$9.3B HVF II U.S. (~$13.4B incl. Donlen HFLF + intl) in a bankruptcy-remote SPE, senior against the VEHICLES only — not part of the corporate waterfall above
   Avg U.S. RAC fleet: ~535k (2019) -> ~424k (2020, -21%)
   Going-concern: YES — substantial doubt disclosed in FY2020 10-K
   Key driver: used-vehicle residual values (Manheim index) — collapsed spring 2020, surged 2021

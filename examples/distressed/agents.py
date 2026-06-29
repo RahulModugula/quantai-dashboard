@@ -27,11 +27,16 @@ from examples.distressed.models import (
 from examples.distressed.credit_tools import (
     CREDIT_TOOLS_SCHEMA,
     analyze_recovery_scenarios,
+    calculate_attachment_detachment,
+    calculate_breakeven_ev,
     calculate_coverage,
     calculate_leverage,
     check_covenant_headroom,
+    format_attachment_detachment,
     format_covenant_status,
+    format_maturity_wall,
     format_recovery_analysis,
+    summarize_maturity_wall,
 )
 
 logger = logging.getLogger(__name__)
@@ -129,7 +134,9 @@ class CapStructureAgent(BaseAgent):
                 }
             elif tool_name == "analyze_recovery_scenarios":
                 if self._situation is None:
-                    return {"error": "No situation context — pass situation= when constructing CapStructureAgent"}
+                    return {
+                        "error": "No situation context — pass situation= when constructing CapStructureAgent"
+                    }
                 cap_structure = self._situation.capital_structure
                 scenarios = analyze_recovery_scenarios(
                     capital_structure=cap_structure,
@@ -156,6 +163,32 @@ class CapStructureAgent(BaseAgent):
                     "covenants_table": format_covenant_status(covenants),
                     "breached_count": sum(1 for c in covenants if c.is_breached),
                 }
+            elif tool_name == "calculate_attachment_detachment":
+                if self._situation is None:
+                    return {"error": "No situation context for attachment/detachment"}
+                attachments = calculate_attachment_detachment(
+                    capital_structure=self._situation.capital_structure,
+                    ebitda_mm=args.get("ebitda_mm", 0),
+                )
+                return {"attachment_table": format_attachment_detachment(attachments)}
+            elif tool_name == "calculate_breakeven_ev":
+                if self._situation is None:
+                    return {"error": "No situation context for breakeven EV"}
+                begins, full = calculate_breakeven_ev(
+                    capital_structure=self._situation.capital_structure,
+                    tranche_name=args.get("tranche_name", ""),
+                )
+                if begins is None:
+                    return {"error": f"Tranche not found: {args.get('tranche_name')}"}
+                return {
+                    "ev_recovery_begins_mm": begins,
+                    "ev_full_recovery_mm": full,
+                }
+            elif tool_name == "summarize_maturity_wall":
+                if self._situation is None:
+                    return {"error": "No situation context for maturity wall"}
+                wall = summarize_maturity_wall(self._situation.capital_structure)
+                return {"maturity_wall_table": format_maturity_wall(wall)}
             else:
                 return {"error": f"Unknown tool: {tool_name}"}
         except Exception as e:

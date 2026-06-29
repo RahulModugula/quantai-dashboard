@@ -117,7 +117,26 @@ check_covenant_headroom(ebitda_mm, total_debt_mm, max_leverage_x=5.0, min_covera
 
 # Tranche where enterprise value is exhausted
 calculate_fulcrum_security(capital_structure, enterprise_value_mm) -> tuple
+
+# Attachment / detachment per tranche, in turns of EBITDA (where you sit)
+calculate_attachment_detachment(capital_structure, ebitda_mm) -> list
+
+# Enterprise value at which a tranche starts to recover, and is made whole
+calculate_breakeven_ev(capital_structure, tranche_name) -> tuple
+
+# Yield on a traded tranche
+current_yield(coupon_pct, price_pct_par) -> float
+approx_ytm(coupon_pct, price_pct_par, years_to_maturity) -> float
+
+# Face amount by maturity year (the maturity wall)
+summarize_maturity_wall(capital_structure) -> dict
 ```
+
+The recovery waterfall pays strictly by seniority, treats tranches that share a
+rank as **pari passu** (pro-rata by claim), pays super-priority/admin claims off
+the top, and accretes PIK claims. The same functions power the free
+`quantai-credit validate` snapshot — leverage, coverage, attach/detach, and the
+maturity wall computed with no LLM.
 
 ---
 

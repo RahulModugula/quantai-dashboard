@@ -21,6 +21,12 @@ thesis_one_liner: >-
 
 current_position: No existing position   # or "Hold $20MM of the 1L at 78c", etc.
 
+# Optional structured financials. If you provide ltm_ebitda_mm, the tool computes
+# a free cap-structure snapshot (leverage, coverage, attach/detach in turns of
+# EBITDA) with no LLM — run `quantai-credit validate <file>` to see it.
+ltm_ebitda_mm: 85       # LTM EBITDA in $MM (omit if unknown)
+cash_interest_mm: 70    # annual cash interest in $MM (enables coverage)
+
 # Capital structure, most senior first. seniority: 1 = most senior; ties are fine
 # (e.g. two pari passu tranches both seniority 2). Drop `price_pct_par`/`holder`
 # if unknown.

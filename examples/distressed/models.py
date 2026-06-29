@@ -76,6 +76,11 @@ class Situation:
     operating_metrics: dict[str, Any] = field(default_factory=dict)  # revenue, EBITDA, etc.
     current_position: str = "No existing position"
     key_risks: list[str] = field(default_factory=list)
+    # Optional structured financials. When provided, they unlock the deterministic
+    # cap-structure snapshot (leverage, coverage, attach/detach in turns of EBITDA)
+    # without an LLM. operating_metrics still carries the prose/full detail.
+    ltm_ebitda_mm: float | None = None
+    cash_interest_mm: float | None = None
 
     @classmethod
     def from_dict(cls, d: dict[str, Any]) -> Situation:
@@ -110,6 +115,8 @@ class Situation:
             operating_metrics=dict(d.get("operating_metrics") or {}),
             current_position=str(d.get("current_position", "No existing position")),
             key_risks=list(d.get("key_risks") or []),
+            ltm_ebitda_mm=_opt_float(d.get("ltm_ebitda_mm")),
+            cash_interest_mm=_opt_float(d.get("cash_interest_mm")),
         )
 
     @classmethod
@@ -145,7 +152,14 @@ class Situation:
             "operating_metrics": self.operating_metrics,
             "current_position": self.current_position,
             "key_risks": self.key_risks,
+            "ltm_ebitda_mm": self.ltm_ebitda_mm,
+            "cash_interest_mm": self.cash_interest_mm,
         }
+
+    @property
+    def total_debt_mm(self) -> float:
+        """Sum of all tranche face amounts in the capital structure ($MM)."""
+        return sum(t.face_amount_mm for t in self.capital_structure)
 
     def as_context(self) -> dict[str, Any]:
         """Flatten into the context dict the agents consume."""

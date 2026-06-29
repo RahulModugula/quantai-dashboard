@@ -17,7 +17,7 @@ def print_header():
     cyan = "\033[1;36m"
     yellow = "\033[1;33m"
     reset = "\033[0m"
-    
+
     print()
     print(f"{cyan}{'=' * 70}{reset}")
     print(f"{cyan}QuantAI Credit Committee — Live Demo{reset}")
@@ -33,7 +33,7 @@ def print_summary():
     cyan = "\033[1;36m"
     yellow = "\033[1;33m"
     reset = "\033[0m"
-    
+
     print(f"{cyan}{'─' * 70}{reset}")
     print(f"{cyan}QUICK SUMMARY{reset}")
     print(f"{cyan}{'─' * 70}{reset}")
@@ -60,30 +60,30 @@ def print_architecture():
 def print_memo():
     """Read and print the memo with colored sections."""
     memo_path = Path(__file__).parent / "ati_2023_memo.md"
-    
+
     if not memo_path.exists():
         print(f"Error: Memo file not found at {memo_path}")
         return
-    
+
     with open(memo_path, "r") as f:
         lines = f.readlines()
-    
+
     # ANSI color codes
     bold_cyan = "\033[1;36m"
     bold_green = "\033[1;32m"
     bold_yellow = "\033[1;33m"
     bold_white = "\033[1;37m"
     reset = "\033[0m"
-    
+
     # Lines that should be colored green
     green_prefixes = ["RECOMMENDATION:", "INSTRUMENT:", "SIZING:", "TARGET PRICE:", "CATALYST:"]
-    
+
     # Lines that should be colored yellow
     yellow_prefixes = ["VERDICT:", "RISK RATING:"]
-    
+
     for line in lines:
         stripped = line.rstrip()
-        
+
         # Check for ## headings
         if stripped.startswith("## "):
             print(f"{bold_cyan}{stripped}{reset}")
@@ -105,7 +105,7 @@ def print_footer():
     green = "\033[1;32m"
     cyan = "\033[1;36m"
     reset = "\033[0m"
-    
+
     print()
     print(f"{cyan}{'─' * 70}{reset}")
     print(f"{green}Outcome (August 1, 2025): Knighthead/Marathon take-private closed{reset}")
@@ -121,16 +121,22 @@ def print_key_takeaways():
     cyan = "\033[1;36m"
     yellow = "\033[1;33m"
     reset = "\033[0m"
-    
+
     print(f"{cyan}{'─' * 70}{reset}")
     print(f"{cyan}KEY TAKEAWAYS{reset}")
     print(f"{cyan}{'─' * 70}{reset}")
     print(f"{green}✓{reset} 4-agent debate: CapStructure + Situation → CreditRisk → Committee")
-    print(f"{green}✓{reset} {yellow}Fulcrum security{reset}: 2L PIK convertible engineered for loan-to-own")
-    print(f"{green}✓{reset} {yellow}Supply-side shock{reset}: PT wage inflation, not demand destruction")
+    print(
+        f"{green}✓{reset} {yellow}Fulcrum security{reset}: 2L PIK convertible engineered for loan-to-own"
+    )
+    print(
+        f"{green}✓{reset} {yellow}Supply-side shock{reset}: PT wage inflation, not demand destruction"
+    )
     print(f"{green}✓{reset} {yellow}Asymmetric upside{reset}: 250-320c par in bull case")
     print(f"{green}✓{reset} {yellow}Bounded downside{reset}: 55-70c par bear case recovery")
-    print(f"{green}✓{reset} {yellow}Thesis validated{reset}: Knighthead/Marathon take-private @ 11.2x EBITDA")
+    print(
+        f"{green}✓{reset} {yellow}Thesis validated{reset}: Knighthead/Marathon take-private @ 11.2x EBITDA"
+    )
     print(f"{cyan}{'─' * 70}{reset}")
     print()
 
@@ -143,7 +149,7 @@ def main():
     print_memo()
     print_footer()
     print_key_takeaways()
-    
+
     print("To generate a live run:")
     print("  export ANTHROPIC_API_KEY=sk-ant-...")
     print("  python -m examples.distressed.ati_2023")

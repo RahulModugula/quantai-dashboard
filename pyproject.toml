@@ -41,16 +41,19 @@ dependencies = [
     "aiohttp>=3.9.0",
     "feedparser>=6.0.0",
     "pyyaml>=6.0",
+    "rich>=13.0",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=8.0.0",
-    "pytest-asyncio>=0.23.0",
-    "pytest-cov>=4.1.0",
-    "pytest-timeout>=2.2.0",
-    "pytest-mock>=3.12.0",
-    "ruff>=0.2.0",
+    # Upper bounds guard against silent CI breakage on a new major release
+    # (a pytest-asyncio jump previously broke the suite via event-loop handling).
+    "pytest>=8.0,<10",
+    "pytest-asyncio>=0.23,<2",
+    "pytest-cov>=4.1,<7",
+    "pytest-timeout>=2.2,<3",
+    "pytest-mock>=3.12,<4",
+    "ruff>=0.2,<1",
 ]
 
 [project.scripts]
@@ -70,3 +73,6 @@ skips = ["B101"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+# Pin the fixture loop scope so pytest-asyncio 1.x behavior is deterministic
+# (and to silence its unset-scope deprecation warning).
+asyncio_default_fixture_loop_scope = "function"

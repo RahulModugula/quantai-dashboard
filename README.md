@@ -7,10 +7,20 @@
 [![tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)](tests/)
 
 > **Four AI agents debate a distressed-credit situation — leverage, recovery waterfall, fulcrum security, tail risks — and write the IC vote memo.**
-> Point it at any deal in a YAML file. The same agent architecture also drives an equity-research pipeline; credit is the wedge.
+> Point it at any deal in a YAML file. Backed by **deterministic, unit-tested credit math** (not just prompts), so the numbers are auditable. The same agent architecture also drives an equity-research pipeline; credit is the wedge.
 
 <p align="center">
   <img src="docs/assets/credit_committee_demo.svg" alt="quantai-credit running a credit committee on a distressed situation" width="820">
+</p>
+
+Unlike prompt-only "AI investing" projects, every number comes from an audited function — leverage, the pari-passu recovery waterfall, attachment/detachment in turns of EBITDA, the fulcrum security, the maturity wall. The LLM brings judgment; the tools bring correctness. You can see all of it **for free, with no API key**:
+
+```bash
+quantai-credit validate my_deal.yaml    # instant cap-structure snapshot, no LLM
+```
+
+<p align="center">
+  <img src="docs/assets/validate_snapshot.svg" alt="quantai-credit validate computing a cap-structure snapshot with no LLM" width="820">
 </p>
 
 ---
@@ -35,16 +45,19 @@ The credit committee isn't hardcoded to ATI — point it at any distressed
 situation described in a YAML file and it writes the IC memo:
 
 ```bash
-quantai-credit new my_deal.yaml     # scaffold an annotated template
+quantai-credit new my_deal.yaml       # scaffold an annotated template
 # ...fill in the cap structure, timeline, metrics, and risks...
-quantai-credit run my_deal.yaml     # 4-agent committee → my_deal_memo.md
-quantai-credit list                 # show bundled example situations
+quantai-credit validate my_deal.yaml  # free pre-flight: computed snapshot + sanity checks
+quantai-credit run my_deal.yaml       # 4-agent committee → my_deal_memo.md + my_deal.json
+quantai-credit list                   # show bundled example situations
 ```
 
 A situation file is just the cap stack, a timeline, operating metrics, and the
-risks you already see — no code. The committee computes leverage, coverage, the
-recovery waterfall, and the fulcrum security from the numbers you give it, then
-debates and votes. Start from [`TEMPLATE.yaml`](examples/distressed/situations/TEMPLATE.yaml)
+risks you already see — no code. `validate` computes the leverage, coverage,
+attachment/detachment, and maturity wall instantly and free; `run` adds the
+4-agent debate and vote, writing both a human-readable memo (`_memo.md`) and a
+machine-readable result (`.json`) you can pipe into anything. Start from
+[`TEMPLATE.yaml`](examples/distressed/situations/TEMPLATE.yaml)
 (annotated blank) or copy one of the bundled examples:
 
 | Situation | Structure it teaches |
