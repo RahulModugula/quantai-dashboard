@@ -47,6 +47,7 @@ class CapStructureSnapshot:
     coverage_x: float | None
     attachments: list[TrancheAttachment]
     maturity_wall: dict[str, float]
+    preferred_equity_mm: float = 0.0
     warnings: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict:
@@ -54,6 +55,7 @@ class CapStructureSnapshot:
             "company": self.company,
             "num_tranches": self.num_tranches,
             "total_debt_mm": self.total_debt_mm,
+            "preferred_equity_mm": self.preferred_equity_mm,
             "ltm_ebitda_mm": self.ltm_ebitda_mm,
             "leverage_x": None
             if self.leverage_x in (None, float("inf"))
@@ -84,6 +86,11 @@ class CapStructureSnapshot:
             f"- **Tranches:** {self.num_tranches}",
             f"- **Total debt:** ${self.total_debt_mm:,.0f}MM",
         ]
+        if self.preferred_equity_mm:
+            lines.append(
+                f"- **Preferred / equity (excl. from debt):** "
+                f"${self.preferred_equity_mm:,.0f}MM"
+            )
         if self.ltm_ebitda_mm is not None:
             lines.append(f"- **LTM EBITDA:** ${self.ltm_ebitda_mm:,.1f}MM")
             lines.append(f"- **Leverage (gross):** {_fmt_x(self.leverage_x)}")
@@ -99,13 +106,77 @@ class CapStructureSnapshot:
         return "\n".join(lines)
 
 
+# Structures the generic pari-passu / EBITDA-multiple waterfall does NOT model.
+# When a situation looks like one of these, `validate` says so loudly rather
+# than printing a confident number that is quietly wrong for the hard case.
+_LME_KEYWORDS = (
+    "uptier",
+    "up-tier",
+    "priming",
+    "primed",
+    "non-pro-rata",
+    "non-pro rata",
+    "drop-down",
+    "dropdown",
+    "liability management",
+    "lme",
+    "double dip",
+    "double-dip",
+)
+_ASSET_COVERAGE_KEYWORDS = (
+    "abs",
+    "silo",
+    "bankruptcy-remote",
+    "bankruptcy remote",
+    "non-recourse",
+    "securitization",
+    "securitisation",
+    "asset coverage",
+    "asset-coverage",
+    "fleet",
+    "collateral value",
+)
+
+
+def _structure_warnings(situation: Situation) -> list[str]:
+    """Warn when a situation is a structure the generic waterfall can't capture."""
+    haystack = " ".join(
+        [
+            situation.situation_type or "",
+            situation.thesis_one_liner or "",
+            " ".join(t.name for t in situation.capital_structure),
+        ]
+    ).lower()
+
+    out: list[str] = []
+    if any(k in haystack for k in _LME_KEYWORDS):
+        out.append(
+            "This looks like a liability-management / uptier transaction "
+            "(non-pro-rata priming). The recovery waterfall models strict "
+            "pari-passu priority by seniority rank — it does NOT adjudicate "
+            "priming disputes or contested/litigated priority. Confirm each "
+            "tranche's `seniority` reflects the priority you intend to model, "
+            "and read the recovery numbers as conditional on that priority holding."
+        )
+    if any(k in haystack for k in _ASSET_COVERAGE_KEYWORDS):
+        out.append(
+            "This looks like an asset-backed / bankruptcy-remote / non-recourse "
+            "structure. The recovery waterfall uses a going-concern "
+            "EV = EBITDA × multiple and does NOT model separate collateral pools "
+            "or asset coverage. Corporate leverage here excludes any silo debt; "
+            "model each silo's recovery against its own collateral with "
+            "`collateral_recovery_pct` / `asset_coverage_ratio`."
+        )
+    return out
+
+
 def validate_situation(situation: Situation) -> list[str]:
     """Return human-readable completeness/sanity warnings for a situation.
 
     Warnings are advisory, not errors — a situation can still run with them, but
     each one is something that would make the committee memo weaker.
     """
-    w: list[str] = []
+    w: list[str] = list(_structure_warnings(situation))
     s = situation
 
     if not s.capital_structure:
@@ -172,5 +243,6 @@ def compute_snapshot(situation: Situation) -> CapStructureSnapshot:
         coverage_x=coverage,
         attachments=attachments,
         maturity_wall=wall,
+        preferred_equity_mm=situation.preferred_equity_mm,
         warnings=validate_situation(situation),
     )

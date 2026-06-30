@@ -47,7 +47,7 @@ def simple_stack():
 
 def test_pari_passu_shares_pro_rata(simple_stack):
     # EV 150: 1L fully covered (100), 50 left for the 100 of pari-passu 2L → 50%
-    r = calculate_recovery_waterfall(simple_stack, 150.0, include_piK_accrual=False)
+    r = calculate_recovery_waterfall(simple_stack, 150.0, include_pik_accrual=False)
     assert r["1L"] == 100.0
     assert r["2L-A"] == pytest.approx(50.0)
     assert r["2L-B"] == pytest.approx(50.0)  # equal claims share equally
@@ -61,7 +61,7 @@ def test_pari_passu_unequal_claims_share_pro_rata():
         _tranche("C", 300, 2),  # B and C pari-passu, 1:3 ratio
     ]
     # EV 500: A takes 300, 200 left for 400 of pari claims → 50% each
-    r = calculate_recovery_waterfall(stack, 500.0, include_piK_accrual=False)
+    r = calculate_recovery_waterfall(stack, 500.0, include_pik_accrual=False)
     assert r["A"] == 100.0
     assert r["B"] == pytest.approx(50.0)
     assert r["C"] == pytest.approx(50.0)
@@ -70,24 +70,24 @@ def test_pari_passu_unequal_claims_share_pro_rata():
 def test_admin_claims_paid_off_the_top(simple_stack):
     # EV 150 with 50 admin claims → only 100 distributable → 1L exactly whole
     r = calculate_recovery_waterfall(
-        simple_stack, 150.0, include_piK_accrual=False, admin_claims_mm=50.0
+        simple_stack, 150.0, include_pik_accrual=False, admin_claims_mm=50.0
     )
     assert r["1L"] == pytest.approx(100.0)
     assert r["2L-A"] == 0.0
 
 
 def test_full_recovery_when_ev_exceeds_all(simple_stack):
-    r = calculate_recovery_waterfall(simple_stack, 10_000.0, include_piK_accrual=False)
+    r = calculate_recovery_waterfall(simple_stack, 10_000.0, include_pik_accrual=False)
     assert all(v == 100.0 for v in r.values())
 
 
 def test_pik_accrual_grows_claim():
     stack = [_tranche("PIK", 100, 1, coupon="10% PIK")]
     # With PIK accrual (10% for 2 years compounding → claim 121), EV 100 → ~82.6%
-    r = calculate_recovery_waterfall(stack, 100.0, include_piK_accrual=True, pik_years=2.0)
+    r = calculate_recovery_waterfall(stack, 100.0, include_pik_accrual=True, pik_years=2.0)
     assert r["PIK"] == pytest.approx(100.0 / 121.0 * 100.0, rel=1e-3)
     # Without accrual, full recovery
-    r2 = calculate_recovery_waterfall(stack, 100.0, include_piK_accrual=False)
+    r2 = calculate_recovery_waterfall(stack, 100.0, include_pik_accrual=False)
     assert r2["PIK"] == 100.0
 
 

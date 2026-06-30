@@ -29,18 +29,31 @@ thesis_one_liner: >-
 
 current_position: Existing 1L term loan holder — must decide whether to join the uptier
 
-# Capital structure at the decision point (just BEFORE the June 2020 uptier).
-# seniority: 1 = most senior. face_mm = outstanding principal in $MM.
+# LTM EBITDA is not cleanly disclosed for Serta (private). ~$260M is the figure
+# that reconciles Moody's two cited leverage points: >8x pre-uptier on ~$2.58B
+# pre-deal debt (9.9x) and ~10.5x pro forma on ~$2.76B pro-forma debt (10.6x).
+# Marked ~approx and derived, not reported — see operating_metrics.
+ltm_ebitda_mm: 260.0   # ~approx, implied from Moody's leverage; not cleanly disclosed
+
+# Capital structure modeled PRO FORMA for the June 2020 uptier (the structure
+# we're voting to create). seniority: 1 = most senior. face_mm = outstanding
+# principal in $MM.
 #
-# Ranks reflect the POST-uptier priority (the structure we're voting to create).
-# That is the whole teaching point: the new super-priority debt (ranks 1-2)
-# primes the old term loans, pushing the non-participating 1L from what was
-# effectively the top of the term-loan stack down to rank 4, behind ~$1.05B of
-# new super-priority paper. The ABL is modeled below the new super-priority for
+# Teaching point: the new super-priority debt (ranks 1-2, ~$1.05B) primes the
+# old term loans, pushing the non-participating 1L from the top of the term-loan
+# stack down to rank 4. The ABL is modeled below the new super-priority for
 # simplicity (in reality it is super-senior on a separate AR/inventory pool).
+#
+# NO double-count: the $850M FLSO "roll-up" is old 1L/2L *repositioned*, not new
+# debt, so the old term loans are carried at their NON-participating residuals,
+# not full face. Reconciliation: pre-deal 1L $1,900M + 2L $450M + ABL $225M =
+# $2,575M. The uptier rolls ~$750M of 1L and ~$115M of 2L into the $850M FLSO
+# and adds $200M new money → pro-forma $200 + $850 + $225 + $1,150 + $335 =
+# $2,760M (≈ $2,575M + $200M new money, net of exchange discount). Residual
+# splits are an illustrative ~51/49 apportionment (~approx).
 capital_structure:
-  # The PROPOSED uptier instruments. If we join, ~$1.2B of old 1L/2L is
-  # exchanged into ~$850M FLSO at a discount; $200M new money sits on top.
+  # The uptier instruments. ~$865M of old 1L/2L face is exchanged into the
+  # $850M FLSO at a discount; $200M new money sits on top.
   - name: NEW — Super-Priority First-Out Term Loan (new money)
     face_mm: 200.0
     coupon: Floating (Moody's-rated B2)
@@ -49,7 +62,7 @@ capital_structure:
     holder: Participating ("Prevailing") majority group
 
   - name: NEW — Super-Priority Second-Out Term Loan (FLSO roll-up)
-    face_mm: 850.0   # Moody's $851MM; built from ~$734M (ex-1L @ ~74c) + ~$116M (ex-2L @ ~39c)
+    face_mm: 850.0   # Moody's $851MM; repositioned old 1L/2L (NOT additive to them)
     coupon: Floating (Moody's-rated Caa2)
     maturity: Aug 2023
     seniority: 2
@@ -62,18 +75,18 @@ capital_structure:
     seniority: 3
     holder: Bank group
 
-  - name: First-Lien Term Loan (2016)
-    face_mm: 1900.0   # ~$1.95B original face; ~$1.84-1.89B outstanding by 2020 ~approx
+  - name: First-Lien Term Loan (2016, non-participating residual)
+    face_mm: 1150.0   # ~$1.9B face less ~$750M rolled into the FLSO ~approx
     coupon: LIBOR + 350
     maturity: Nov 2023
     seniority: 4   # PRIMED by the uptier — was senior, now behind ~$1.05B new super-priority
     holder: >-
-      Broadly syndicated across CLOs/credit funds — Eaton Vance, Invesco,
-      Credit Suisse AM, Barings, Boston Mgmt & Research (later "Prevailing"
-      group) vs. Apollo, Angelo Gordon, LCM, North Star (later excluded)
+      Non-participating minority — Apollo, Angelo Gordon, LCM, North Star
+      (later "excluded" lenders who sued). The participating majority (Eaton
+      Vance, Invesco, Credit Suisse AM, Barings) rolled its 1L into the FLSO.
 
-  - name: Second-Lien Term Loan (2016)
-    face_mm: 450.0   # ~$428M outstanding by 2020 ~approx; traded ~30c in late 2019
+  - name: Second-Lien Term Loan (2016, non-participating residual)
+    face_mm: 335.0   # ~$450M face less ~$115M rolled into the FLSO ~approx
     coupon: LIBOR + spread (unknown; market reports materially wider than 1L)
     maturity: Nov 2024
     seniority: 5

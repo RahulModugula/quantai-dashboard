@@ -27,22 +27,32 @@ current_position: No existing exposure — new underwrite
 ltm_ebitda_mm: 6.7      # FY2022 Adj EBITDA (collapsed from $39.8M in 2021)
 cash_interest_mm: 61.0  # ~SOFR+725 on the $500M 1L, pre-TSA
 
-# Capital structure at the decision point. seniority: 1 = most senior.
-# face_mm = outstanding principal in $MM. price_pct_par is the trade price as a
-# percent of par (omit if the tranche doesn't trade / isn't marked).
+# Capital structure — modeled PRO FORMA for the TSA (the stack you would hold if
+# you participate). seniority: 1 = most senior. face_mm = outstanding principal
+# (or, for preferred, liquidation preference) in $MM. instrument_class defaults
+# to "debt"; set it to "preferred"/"equity" so junior non-debt claims are kept
+# OUT of Debt/EBITDA leverage (they still sit in the recovery waterfall).
+#
+# Reconciliation (no double-counting): pre-TSA funded debt was $550M
+# ($50M revolver + $500M 1L TL) = 82.1x on $6.7M EBITDA. The TSA exchanges $100M
+# of the 1L into the new 2L PIK and adds $25M of new money, so pro-forma funded
+# debt = $50M revolver + $400M 1L + $125M 2L = $575M (= $550M + $25M new money)
+# = 85.8x. The $165M Series A Preferred is equity-like and excluded from debt.
 capital_structure:
   - name: Super-priority Revolver
     face_mm: 50.0
     coupon: SOFR + ~500 drawn
     maturity: Feb 2027
     seniority: 1
+    instrument_class: debt
     holder: HPS Investment Partners (Lender Rep)
 
-  - name: 1L Senior Secured Term Loan
-    face_mm: 500.0
+  - name: 1L Senior Secured Term Loan (post-exchange)
+    face_mm: 400.0   # $500M pre-TSA less the $100M exchanged into the 2L PIK
     coupon: SOFR + 725
     maturity: Feb 2028
     seniority: 2
+    instrument_class: debt
     holder: HPS Investment Partners (Lender Rep)
 
   # The prospective instrument we would underwrite: $25M new money + $100M
@@ -52,6 +62,7 @@ capital_structure:
     coupon: 8% PIK
     maturity: Aug 2028
     seniority: 3   # junior to the 1L TL, senior to the Preferred
+    instrument_class: debt
     holder: TSA participants (prospective)
 
   - name: Series A Senior Preferred Stock (2022)
@@ -59,6 +70,7 @@ capital_structure:
     coupon: 8% cash / 10% PIK at issuer option
     maturity: Perpetual
     seniority: 4
+    instrument_class: preferred   # equity-like; excluded from Debt/EBITDA
     holder: Advent International + other SPAC-era investors
 
 # Chronological events. Each entry is a {date, event} pair. Mark the committee

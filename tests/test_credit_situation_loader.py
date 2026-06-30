@@ -165,11 +165,19 @@ def test_ati_yaml_loads_and_is_faithful():
     assert s.company == "ATI Physical Therapy"
     assert s.ticker == "ATIP"
     assert len(s.capital_structure) == 4
-    # The four tranches, by face amount (sourced from FY2022 filings).
+    # The four tranches, by face amount. Modeled PRO FORMA for the TSA, with no
+    # double-count: the 1L is carried at its $400M POST-exchange balance ($500M
+    # pre-TSA less the $100M rolled into the new 2L PIK).
     faces = {t.name: t.face_amount_mm for t in s.capital_structure}
     assert any("1L Senior Secured" in n for n in faces)
-    assert 500.0 in faces.values()  # 1L term loan
+    assert 400.0 in faces.values()  # 1L term loan, post-$100M exchange
     assert 125.0 in faces.values()  # new 2L PIK convertible
+    # Debt is debt-only: revolver 50 + 1L 400 + 2L PIK 125 = 575; the $165M
+    # Series A Preferred is equity-like and excluded from Debt/EBITDA.
+    assert s.total_debt_mm == 575.0
+    assert s.preferred_equity_mm == 165.0
+    pref = next(t for t in s.capital_structure if "Preferred" in t.name)
+    assert not pref.is_debt
     # Decision-point marker must survive normalization (agents key off it).
     assert any(e["date"] == "DECISION_POINT" for e in s.timeline)
 

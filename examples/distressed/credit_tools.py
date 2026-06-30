@@ -137,10 +137,14 @@ def _accreted_face(tranche: CapitalStructureTranche, include_pik: bool, pik_year
     return face
 
 
+# Tolerance for float comparisons against the 0%/100% recovery boundaries.
+_EPS = 1e-9
+
+
 def calculate_recovery_waterfall(
     capital_structure: list[CapitalStructureTranche],
     enterprise_value_mm: float,
-    include_piK_accrual: bool = True,
+    include_pik_accrual: bool = False,
     pik_years: float = 2.0,
     admin_claims_mm: float = 0.0,
 ) -> dict[str, float]:
@@ -151,11 +155,18 @@ def calculate_recovery_waterfall(
     to their rank **pro rata by claim**. ``admin_claims_mm`` (DIP / admin /
     priority claims) are paid off the top before any tranche.
 
+    Claims are measured at **face value by default** (``include_pik_accrual=
+    False``). This is the canonical claim amount used consistently across the
+    waterfall, attachment/detachment, and breakeven tools, so the three never
+    disagree about the same tranche. PIK accretion is an explicit *scenario*:
+    pass ``include_pik_accrual=True`` to grow PIK-coupon claims by ``pik_years``
+    of accrued interest (all tools that accept the flag apply it the same way).
+
     Args:
         capital_structure: the tranches (seniority 1 = most senior).
         enterprise_value_mm: distributable enterprise value.
-        include_piK_accrual: grow PIK tranche claims by accrued interest.
-        pik_years: years of PIK accrual to assume.
+        include_pik_accrual: grow PIK tranche claims by accrued interest.
+        pik_years: years of PIK accrual to assume when the flag is on.
         admin_claims_mm: super-priority admin/DIP claims paid first.
 
     Returns:
@@ -170,7 +181,7 @@ def calculate_recovery_waterfall(
     recovery: dict[str, float] = {}
     for seniority in sorted(groups):
         tranches = groups[seniority]
-        claims = {t.name: _accreted_face(t, include_piK_accrual, pik_years) for t in tranches}
+        claims = {t.name: _accreted_face(t, include_pik_accrual, pik_years) for t in tranches}
         total_claim = sum(claims.values())
 
         if total_claim <= 0:
@@ -208,14 +219,7 @@ def analyze_recovery_scenarios(
     for scenario_name, ebitda, multiple in scenarios:
         ev_mm = ebitda * multiple
         recovery_by_tranche = calculate_recovery_waterfall(capital_structure, ev_mm)
-
-        # Fulcrum: most senior tranche with partial recovery (0% < r < 100%)
-        fulcrum = None
-        for tranche in sorted(capital_structure, key=lambda t: t.seniority):
-            recovery = recovery_by_tranche.get(tranche.name, 0.0)
-            if 0 < recovery < 100:
-                fulcrum = tranche.name
-                break
+        fulcrum, _ = calculate_fulcrum_security(capital_structure, ev_mm)
 
         results.append(
             RecoveryScenario(
@@ -236,15 +240,29 @@ def calculate_fulcrum_security(
 ) -> tuple[str | None, float | None]:
     """Identify the fulcrum security at a given enterprise value.
 
-    The fulcrum is the most senior tranche receiving partial recovery
-    (0% < recovery < 100%) — the security that converts to the reorganized
-    equity in a restructuring.
+    The fulcrum is the **most senior impaired claim** — the first tranche
+    (senior → junior) that is *not* paid in full. That security is where value
+    "breaks" and is the one that typically converts to the reorganized equity.
+
+    This uses ``< 100%`` (not the narrower ``0% < r < 100%``), so it is correct
+    at an exact claim boundary — when enterprise value lands precisely on a
+    tranche's cumulative claim, the tranche below is impaired at 0% and *is* the
+    fulcrum, rather than being missed. Returns ``(None, None)`` only when there
+    is nothing to distribute (EV ≤ 0) or every tranche recovers in full
+    (over-collateralized — no impaired claim exists).
     """
+    if enterprise_value_mm <= 0:
+        return None, None
+
     recovery_by_tranche = calculate_recovery_waterfall(capital_structure, enterprise_value_mm)
+
+    # Over-collateralized: no claim is impaired, so there is no fulcrum.
+    if recovery_by_tranche and all(r >= 100.0 - _EPS for r in recovery_by_tranche.values()):
+        return None, None
 
     for tranche in sorted(capital_structure, key=lambda t: t.seniority):
         recovery = recovery_by_tranche.get(tranche.name, 0.0)
-        if 0 < recovery < 100:
+        if recovery < 100.0 - _EPS:
             return tranche.name, recovery
 
     return None, None
@@ -310,6 +328,45 @@ def calculate_breakeven_ev(
     debt_above = sum(t.face_amount_mm for t in capital_structure if t.seniority < target.seniority)
     group_face = sum(t.face_amount_mm for t in capital_structure if t.seniority == target.seniority)
     return debt_above, debt_above + group_face
+
+
+# ---------------------------------------------------------------------------
+# Asset coverage (collateral-pool / silo recovery)
+# ---------------------------------------------------------------------------
+
+
+def asset_coverage_ratio(collateral_value_mm: float, secured_claim_mm: float) -> float:
+    """Asset coverage = collateral value / secured claim, in turns.
+
+    For a claim secured by a dedicated collateral pool (e.g. a first lien on
+    specific assets, or a bankruptcy-remote / ABS silo), this is the cushion:
+    ``> 1.0x`` means the collateral covers the claim in full. Returns ``inf``
+    when the claim is non-positive.
+    """
+    if secured_claim_mm <= 0:
+        return float("inf")
+    return collateral_value_mm / secured_claim_mm
+
+
+def collateral_recovery_pct(collateral_value_mm: float, secured_claim_mm: float) -> float:
+    """Recovery (% of claim) from a *dedicated* collateral pool, capped at 100%.
+
+    This is the correct primitive for asset-backed structures where recovery is
+    driven by **collateral value**, not a going-concern EBITDA multiple — e.g.
+    Hertz's fleet-ABS silo, where fleet residual value (not corporate EBITDA)
+    determined the outcome. Model each silo's claim against its own collateral
+    with this, separately from the corporate ``calculate_recovery_waterfall``.
+
+    Args:
+        collateral_value_mm: value of the pledged/segregated collateral pool.
+        secured_claim_mm: claim secured by (and limited to) that pool.
+
+    Returns:
+        recovery as a percentage of the claim, in ``[0, 100]``.
+    """
+    if secured_claim_mm <= 0:
+        return 0.0
+    return min(1.0, max(0.0, collateral_value_mm) / secured_claim_mm) * 100.0
 
 
 # ---------------------------------------------------------------------------

@@ -133,7 +133,7 @@ class TestCalculateRecoveryWaterfall:
     def test_full_recovery_at_high_ev(self, ati_capital_structure):
         # At $900M EV, all tranches (ex-PIK accrual) should be fully covered
         result = calculate_recovery_waterfall(
-            ati_capital_structure, enterprise_value_mm=900.0, include_piK_accrual=False
+            ati_capital_structure, enterprise_value_mm=900.0, include_pik_accrual=False
         )
         assert result["Super-Priority Revolver"] == 100.0
         assert result["1L Senior Secured Term Loan"] == 100.0
@@ -142,7 +142,7 @@ class TestCalculateRecoveryWaterfall:
     def test_partial_recovery_at_low_ev(self, ati_capital_structure):
         # At $75M EV (bear case), only revolver gets full recovery, 1L partial
         result = calculate_recovery_waterfall(
-            ati_capital_structure, enterprise_value_mm=75.0, include_piK_accrual=False
+            ati_capital_structure, enterprise_value_mm=75.0, include_pik_accrual=False
         )
         assert result["Super-Priority Revolver"] == 100.0
         assert result["1L Senior Secured Term Loan"] < 100.0
@@ -151,7 +151,7 @@ class TestCalculateRecoveryWaterfall:
     def test_zero_recovery_below_senior_debt(self, ati_capital_structure):
         # At $40M EV (< revolver face), revolver partial, everything else zero
         result = calculate_recovery_waterfall(
-            ati_capital_structure, enterprise_value_mm=40.0, include_piK_accrual=False
+            ati_capital_structure, enterprise_value_mm=40.0, include_pik_accrual=False
         )
         assert result["Super-Priority Revolver"] < 100.0
         assert result["1L Senior Secured Term Loan"] == 0.0
@@ -160,7 +160,7 @@ class TestCalculateRecoveryWaterfall:
     def test_seniority_ordering(self, ati_capital_structure):
         # Senior tranches always recover before junior tranches
         result = calculate_recovery_waterfall(
-            ati_capital_structure, enterprise_value_mm=250.0, include_piK_accrual=False
+            ati_capital_structure, enterprise_value_mm=250.0, include_pik_accrual=False
         )
         # With $250M: Revolver (50) + 1L (partial 200) — 2L gets 0
         assert result["Super-Priority Revolver"] >= result["1L Senior Secured Term Loan"]

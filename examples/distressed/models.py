@@ -7,17 +7,49 @@ from pathlib import Path
 from typing import Any
 
 
+DEBT = "debt"
+PREFERRED = "preferred"
+EQUITY = "equity"
+_INSTRUMENT_CLASSES = (DEBT, PREFERRED, EQUITY)
+
+
+def _infer_instrument_class(name: str, coupon: str) -> str:
+    """Infer whether a tranche is debt, preferred, or common equity from its name.
+
+    Only used when a situation file doesn't set ``instrument_class`` explicitly.
+    Keeps existing files working while ensuring preferred/equity are not silently
+    summed into *debt* leverage. Anything unrecognized defaults to ``debt``.
+    """
+    text = f"{name} {coupon}".lower()
+    if "preferred" in text or "pref stock" in text or "pik preferred" in text:
+        return PREFERRED
+    if "common equity" in text or "common stock" in text or "common shares" in text:
+        return EQUITY
+    return DEBT
+
+
 @dataclass
 class CapitalStructureTranche:
     """One layer of the pre-restructuring capital stack."""
 
     name: str  # e.g. "Senior Secured Term Loan B (2028)"
-    face_amount_mm: float  # outstanding principal in $MM
+    face_amount_mm: float  # outstanding principal (or liquidation pref) in $MM
     coupon: str  # e.g. "SOFR + 750"
     maturity: str  # ISO date or "N/A"
     seniority: int  # 1 = most senior
     current_price: float | None = None  # trade price, as % of par, or None
     holder: str | None = None  # known holder if public
+    instrument_class: str = DEBT  # "debt" | "preferred" | "equity"
+
+    @property
+    def is_debt(self) -> bool:
+        """True for funded debt; False for preferred / common equity.
+
+        Leverage and total-debt are computed over debt only — preferred and
+        common are junior *claims* in the recovery waterfall but are not debt,
+        so folding them into Debt/EBITDA would overstate leverage.
+        """
+        return self.instrument_class == DEBT
 
     @classmethod
     def from_dict(cls, d: dict[str, Any]) -> CapitalStructureTranche:
@@ -25,7 +57,9 @@ class CapitalStructureTranche:
 
         Accepts either the canonical field names (``face_amount_mm``,
         ``current_price``) or the friendlier aliases used in the YAML
-        templates (``face_mm``, ``price_pct_par``).
+        templates (``face_mm``, ``price_pct_par``). ``instrument_class`` is
+        optional — when omitted it is inferred from the tranche name so that
+        preferred/equity are not counted as debt.
         """
         if "name" not in d:
             raise ValueError("each capital_structure tranche needs a 'name'")
@@ -34,14 +68,27 @@ class CapitalStructureTranche:
             raise ValueError(f"tranche '{d['name']}' is missing 'face_mm' / 'face_amount_mm'")
         if "seniority" not in d:
             raise ValueError(f"tranche '{d['name']}' is missing 'seniority' (1 = most senior)")
+        name = str(d["name"])
+        coupon = str(d.get("coupon", ""))
+        raw_class = d.get("instrument_class") or d.get("class")
+        if raw_class is not None:
+            instrument_class = str(raw_class).lower()
+            if instrument_class not in _INSTRUMENT_CLASSES:
+                raise ValueError(
+                    f"tranche '{name}' has invalid instrument_class '{raw_class}' "
+                    f"(use one of: {', '.join(_INSTRUMENT_CLASSES)})"
+                )
+        else:
+            instrument_class = _infer_instrument_class(name, coupon)
         return cls(
-            name=str(d["name"]),
+            name=name,
             face_amount_mm=float(face),
-            coupon=str(d.get("coupon", "")),
+            coupon=coupon,
             maturity=str(d.get("maturity", "N/A")),
             seniority=int(d["seniority"]),
             current_price=_opt_float(d.get("current_price", d.get("price_pct_par"))),
             holder=d.get("holder"),
+            instrument_class=instrument_class,
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -54,6 +101,7 @@ class CapitalStructureTranche:
             "seniority": self.seniority,
             "current_price": self.current_price,
             "holder": self.holder,
+            "instrument_class": self.instrument_class,
         }
 
 
@@ -158,7 +206,22 @@ class Situation:
 
     @property
     def total_debt_mm(self) -> float:
-        """Sum of all tranche face amounts in the capital structure ($MM)."""
+        """Sum of **funded debt** tranche face amounts ($MM).
+
+        Excludes preferred and common equity — those are junior claims in the
+        recovery waterfall but are not debt, so including them would overstate
+        Debt/EBITDA leverage.
+        """
+        return sum(t.face_amount_mm for t in self.capital_structure if t.is_debt)
+
+    @property
+    def preferred_equity_mm(self) -> float:
+        """Sum of preferred / common-equity face (liquidation preference) ($MM)."""
+        return sum(t.face_amount_mm for t in self.capital_structure if not t.is_debt)
+
+    @property
+    def total_claims_mm(self) -> float:
+        """Sum of *all* claims — debt plus preferred/equity ($MM)."""
         return sum(t.face_amount_mm for t in self.capital_structure)
 
     def as_context(self) -> dict[str, Any]:
