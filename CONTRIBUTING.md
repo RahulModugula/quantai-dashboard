@@ -6,10 +6,11 @@ The fastest way to help is to add a real restructuring as a worked example — n
 infrastructure, just a YAML file:
 
 ```bash
-pip install -r requirements-credit.txt
-python -m examples.distressed.run new examples/distressed/situations/my_company.yaml
+pip install -e .          # lightweight: litellm + pyyaml + rich, no ML stack
+quantai-credit new examples/distressed/situations/my_company.yaml
 # fill in the cap structure, timeline, operating metrics, and risks
-python -m examples.distressed.run run examples/distressed/situations/my_company.yaml
+quantai-credit validate examples/distressed/situations/my_company.yaml   # free, no key
+quantai-credit run examples/distressed/situations/my_company.yaml        # needs an LLM key
 ```
 
 Use [`examples/distressed/situations/`](examples/distressed/situations/) as your
@@ -24,10 +25,12 @@ bundled file automatically.
 ```bash
 git clone https://github.com/RahulModugula/quantai-dashboard.git
 cd quantai-dashboard
-make setup      # installs deps + pre-commit hooks
 
-# Working on just the credit committee? You don't need the full ML stack:
-pip install -r requirements-credit.txt
+# Working on just the credit committee? You don't need the ML stack:
+make setup-credit   # pip install -e ".[dev]" — litellm + pyyaml + rich + test tools
+
+# Working on the equity reference build / API / dashboard too?
+make setup          # pip install -e ".[equity,dev]" + pre-commit hooks
 ```
 
 ## Running Tests
@@ -48,11 +51,28 @@ All tests must pass and lint must be clean before pushing.
 
 ## Architecture Notes
 
-- **Entry point**: `src/api/main.py` → `create_app()`
-- **Config**: `src/config/__init__.py` (Pydantic Settings, env prefix `QUANTAI_`)
-- **ML models train independently** — ensemble combines at prediction time
-- **Walk-forward constraint**: predictions at time `t` use only data before `t`
-- **Tests don't require seeded data** — use synthetic fixtures from `conftest.py`
+The credit committee (the core) and the equity reference build share one
+`BaseAgent`, but are otherwise decoupled — the credit path never imports the ML
+stack.
+
+**Credit committee** (`examples/distressed/`):
+- **Entry point**: `examples/distressed/run.py` → `main()` (the `quantai-credit` CLI)
+- **Deterministic math**: `credit_tools.py` — leverage, coverage, pari-passu
+  recovery waterfall, fulcrum, attachment/detachment, asset coverage. Face value
+  is the canonical claim across all tools; PIK accrual is opt-in and applied
+  consistently. Preferred/equity is not counted as funded debt.
+- **Free snapshot**: `snapshot.py` (`validate`) — no LLM; warns loudly on
+  structures the generic waterfall can't model (uptier priming, ABS/silo).
+- **Situations are data**: `models.py` parses a YAML `Situation`; adding a deal
+  is pure YAML, no code.
+
+**Equity reference build** (`src/`, behind the `equity` extra):
+- **Entry point**: `src/api/main.py` → `create_app()`; config in `src/config/`
+  (Pydantic Settings, env prefix `QUANTAI_`).
+- **Walk-forward constraint**: predictions at time `t` use only data before `t`.
+- `src/agents` lazily imports the equity orchestrator (PEP 562) so importing the
+  shared `BaseAgent` never drags in torch/pandas.
+- **Tests don't require seeded data** — use synthetic fixtures from `conftest.py`.
 
 ## Making Changes
 

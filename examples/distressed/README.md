@@ -42,15 +42,15 @@ python -m examples.distressed.ati_2023
 
 ### Envision Healthcare — May 2023 Chapter 11
 
-**Validation case study demonstrating framework repeatability.** Analyzes the
-**May 7, 2023 Chapter 11 bankruptcy filing** at Envision Healthcare,
-where KKR led a pre-packaged restructuring with $2.6B of DIP financing
-and a plan of reorganization that converted significant debt to equity.
+**A second worked example, to show the same loop runs on a different situation.**
+Analyzes the **May 2023 Chapter 11 filing** at Envision Healthcare, where KKR led
+a pre-packaged restructuring with $2.6B of DIP financing and a debt-to-equity plan.
 
-This case study validates that the quantitative framework constitutes a repeatable
-system rather than an isolated proof of concept. See [`VALIDATION_METHODOLOGY.md`](VALIDATION_METHODOLOGY.md)
-and [`COMPARATIVE_ANALYSIS.md`](COMPARATIVE_ANALYSIS.md) for detailed
-validation documentation.
+> **Note on sourcing.** Unlike the three bundled YAML situations (ATI, Serta,
+> Hertz), the Envision figures are **approximate and illustrative** — assembled to
+> demonstrate that the framework generalizes across sectors and structures, not
+> line-by-line reconciled to Envision's filings. Treat its numbers as a
+> structure/shape example, not a sourced model.
 
 **Key Characteristics:**
 - **Sector:** Emergency medical services / ambulance transportation
@@ -58,13 +58,10 @@ validation documentation.
 - **Distress Driver:** Demand-side shock (CMS reimbursement pressure, state rate caps)
 - **Asset Type:** Asset-heavy (ambulances, bases, equipment)
 - **Resolution:** Take-private by KKR (April 2024)
-- **Time in Distress:** 11 months
 
 Files:
 - [`envision_2023.py`](envision_2023.py) — situation data + runner
 - [`envision_2023_memo.md`](envision_2023_memo.md) — pre-rendered sample IC memo
-- [`VALIDATION_METHODOLOGY.md`](VALIDATION_METHODOLOGY.md) — framework validation methodology
-- [`COMPARATIVE_ANALYSIS.md`](COMPARATIVE_ANALYSIS.md) — ATI vs. Envision comparative analysis
 
 ### Run
 
@@ -74,48 +71,33 @@ python -m examples.distressed.envision_2023
 # Writes a freshly-generated memo to envision_2023_live_memo.md
 ```
 
-## Framework Validation
+## What the two examples show
 
-The quantitative distressed credit framework has been validated across two resolved
-distressed situations with different characteristics:
+The point of running the same loop on ATI (out-of-court TSA, asset-light,
+supply-side) and Envision (Chapter 11, asset-heavy, demand-side) is that the
+framework **generalizes** — the agents and deterministic tools adapt to different
+sectors, structures, and restructuring types without code changes.
 
-| Dimension | ATI Physical Therapy | Envision Healthcare | Validation Insight |
-|-----------|---------------------|---------------------|---------------------|
-| **Sector** | Outpatient PT | Emergency services | Cross-sector applicability |
-| **Situation Type** | Out-of-court TSA | Chapter 11 pre-packaged | Handles different restructuring types |
-| **Distress Driver** | Supply-side (labor) | Demand-side (reimbursement) | Identifies root cause correctly |
-| **Asset Type** | Asset-light | Asset-heavy | Adapts asset coverage analysis |
-| **Capital Structure** | 4 tranches | 5 tranches | Handles variable complexity |
-| **Resolution** | Take-private | Take-private | Identifies exit optionality |
-| **Predictive Accuracy** | Base/bull cases realized | Base/bull cases realized | Validated predictive framework |
+| Dimension | ATI Physical Therapy | Envision Healthcare |
+|-----------|---------------------|---------------------|
+| Sector | Outpatient PT | Emergency services |
+| Situation type | Out-of-court TSA | Chapter 11 pre-packaged |
+| Distress driver | Supply-side (labor) | Demand-side (reimbursement) |
+| Asset type | Asset-light | Asset-heavy |
+| Resolution | Take-private | Take-private |
 
-### Universal Distress Indicators (Both Cases)
+**On outcomes:** for ATI, the later take-private (Aug 2025, $523.3M TEV, ~11.2x)
+is consistent with the committee's base/bull thesis — shown as **directional
+context, not a forecast the tool produced.** This is an analysis and education
+tool; it makes no predictive-accuracy claim, and the ATI numbers are the sourced,
+reconciled ones (see the [`ati_2023.yaml`](situations/ati_2023.yaml) reconciliation
+comments). The Envision figures are illustrative (see the note above).
 
-1. **Going-Concern Disclosure:** Auditors flag material doubt 6-18 months before restructuring
-2. **Leverage Elevation:** Debt/EBITDA >10x indicates severe distress
-3. **Coverage Deterioration:** Interest coverage <1.0x indicates cash constraint
-4. **Covenant Breaches:** Violation of financial covenants precedes restructuring
-5. **Liquidity Pressure:** Revolver draws, declining cash balance
-6. **Management Turnover:** Executive departures during distress period
-7. **Equity Value Erosion:** Stock price decline or valuation pressure
+### Common distress indicators worth checking
 
-### Predictive Validity
-
-**ATI Physical Therapy (April 2023 → August 2025):**
-- Predicted EBITDA: $25-35M FY2024 → Actual: ~$47M LTM (exceeded)
-- Predicted Multiple: 7-11x → Actual: 11.2x (within range)
-- Predicted EV: $210-550M → Actual: $523.3M (within range)
-- Predicted Resolution: Take-private → Actual: Take-private (correct)
-
-**Envision Healthcare (May 2023 → April 2024):**
-- Predicted EBITDA: $485M stable → Actual: ~$485M LTM (met)
-- Predicted Multiple: 7.5x → Actual: ~7.5x (met)
-- Predicted EV: $3.6B → Actual: ~$3.6B (met)
-- Predicted Resolution: Take-private → Actual: Take-private (correct)
-
-See [`VALIDATION_METHODOLOGY.md`](VALIDATION_METHODOLOGY.md) for comprehensive validation
-documentation and [`COMPARATIVE_ANALYSIS.md`](COMPARATIVE_ANALYSIS.md) for detailed
-side-by-side comparison.
+Going-concern disclosure; Debt/EBITDA well above sustainable levels; interest
+coverage below ~1.0x; covenant breaches; liquidity pressure (revolver draws, cash
+burn). These are heuristics the agents surface, not a scoring model.
 
 ### How it differs from the equity agents
 

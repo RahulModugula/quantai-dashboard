@@ -56,24 +56,26 @@ The input is a `Situation` (`examples/distressed/models.py`) loaded from a YAML/
 
 **Thesis:** Loan-to-own via 2L PIK convertible. Supply-side shocks resolve faster than demand-side. Enter at peak stress; the PIK coupon eliminates near-term cash burn; fulcrum conversion gives majority equity control on the other side.
 
-### Capital Structure at Decision Point
+### Capital Structure (pro forma for the TSA)
 
 | Tranche | Face ($MM) | Rate | Maturity | Holder |
 |---------|-----------|------|----------|--------|
 | Super-priority Revolver | $50 | SOFR + ~500 | Feb 2027 | HPS Investment Partners |
-| 1L Senior Secured Term Loan | $500 | SOFR + 725 | Feb 2028 | HPS Investment Partners |
+| 1L Senior Secured Term Loan (post-exchange) | $400 | SOFR + 725 | Feb 2028 | HPS Investment Partners |
 | **NEW 2L PIK Convertible (TSA)** | **$125** | **8% PIK** | **Aug 2028** | **TSA participants** |
-| Series A Senior Preferred | $165 | 8% cash / 10% PIK | Perpetual | Advent International |
+| Series A Senior Preferred *(equity-like, excluded from debt)* | $165 | 8% cash / 10% PIK | Perpetual | Advent International |
 
-*$25M new money + $100M exchanged from 1L.*
+*The TSA exchanges $100M of the 1L into the new 2L PIK (1L: $500M → $400M) and
+adds $25M new money — no double-count.*
 
 ### Recovery Analysis
 
-| Metric | Pre-TSA | Post-TSA |
+| Metric | Pre-TSA | Pro forma (post-exchange) |
 |--------|---------|---------|
 | LTM EBITDA | $6.7M | $6.7M (guided $25–35M FY2024) |
-| Gross Debt | $550M | $840M incl. preferred |
+| Funded debt | $550M | $575M ($550M + $25M new money) |
 | **Leverage** | **82.1x** | **85.8x** |
+| Preferred (excluded from debt) | $165M | $165M |
 | Cash Interest | ~$61M | ~$49M (PIK eliminates 2L cash coupon) |
 | **Coverage** | **0.11x** | **0.5–0.7x** |
 
@@ -104,8 +106,15 @@ calculate_leverage(total_debt_mm, ebitda_mm, include_lease_obligations=0.0) -> f
 # Interest coverage — optionally includes preferred dividends
 calculate_coverage(ebitda_mm, cash_interest_mm, preferred_dividends_mm=0.0) -> float
 
-# Per-tranche recovery (%) at a given enterprise value
-calculate_recovery_waterfall(capital_structure, enterprise_value_mm, include_piK_accrual=True) -> dict
+# Per-tranche recovery (%) at a given enterprise value. Face value is the
+# canonical claim; PIK accrual is opt-in (off by default) and, when on, applied
+# consistently across the waterfall, breakeven, and attach/detach.
+calculate_recovery_waterfall(capital_structure, enterprise_value_mm, include_pik_accrual=False) -> dict
+
+# Asset-coverage / silo recovery (for bankruptcy-remote or ABS structures the
+# going-concern waterfall can't model): recovery from a dedicated collateral pool.
+collateral_recovery_pct(collateral_value_mm, secured_claim_mm) -> float
+asset_coverage_ratio(collateral_value_mm, secured_claim_mm) -> float
 
 # Bear / base / bull recovery table across EBITDA and multiple assumptions
 analyze_recovery_scenarios(capital_structure, base_ebitda_mm, bear_ebitda_mm, bull_ebitda_mm,
@@ -133,10 +142,12 @@ summarize_maturity_wall(capital_structure) -> dict
 ```
 
 The recovery waterfall pays strictly by seniority, treats tranches that share a
-rank as **pari passu** (pro-rata by claim), pays super-priority/admin claims off
-the top, and accretes PIK claims. The same functions power the free
-`quantai-credit validate` snapshot — leverage, coverage, attach/detach, and the
-maturity wall computed with no LLM.
+rank as **pari passu** (pro-rata by claim), and pays super-priority/admin claims
+off the top. Claims are measured at face value by default; PIK accretion is an
+explicit, consistently-applied scenario. It is a going-concern pari-passu model —
+for non-pro-rata uptiers or asset-backed silos it warns rather than guessing. The
+same functions power the free `quantai-credit validate` snapshot — leverage,
+coverage, attach/detach, and the maturity wall computed with no LLM.
 
 ---
 

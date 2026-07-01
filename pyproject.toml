@@ -3,13 +3,38 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "quantai-dashboard"
-version = "0.1.0"
-description = "Real-time ML trading dashboard with backtesting and paper trading"
+name = "quantai-credit"
+version = "0.2.0"
+description = "An open-source, auditable AI distressed-credit committee: recovery waterfalls, fulcrum analysis, and IC memos from a YAML file"
 readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"
+keywords = [
+    "distressed-debt",
+    "restructuring",
+    "credit-analysis",
+    "recovery-waterfall",
+    "fulcrum-security",
+    "llm-agents",
+    "multi-agent",
+    "fintech",
+    "litellm",
+]
+# Core install is the distressed-credit committee only — model-agnostic LLM
+# calls + YAML situations + pretty output. It does NOT pull the ML/data stack.
+# The equity-research reference build lives behind the optional `equity` extra.
 dependencies = [
+    "litellm>=1.40.0",  # model-agnostic LLM calls (Claude / GPT / Grok / Ollama)
+    "pyyaml>=6.0",      # parse situation .yaml files
+    "rich>=13.0",       # terminal rendering for the snapshot / decision
+]
+
+[project.optional-dependencies]
+# The full equity-research pipeline, API, and dashboard (the reference build
+# that shows the same agent loop applied to equities). Heavy: torch, xgboost,
+# lightgbm, dash, fastapi, ... Only needed for the equity system, never for the
+# credit committee.
+equity = [
     "yfinance>=0.2.36",
     "pandas>=2.2.0",
     "numpy>=1.26.0",
@@ -37,14 +62,9 @@ dependencies = [
     "prometheus-client>=0.20.0",
     "structlog>=24.1.0",
     "shap>=0.44.0",
-    "litellm>=1.40.0",
     "aiohttp>=3.9.0",
     "feedparser>=6.0.0",
-    "pyyaml>=6.0",
-    "rich>=13.0",
 ]
-
-[project.optional-dependencies]
 dev = [
     # Upper bounds guard against silent CI breakage on a new major release
     # (a pytest-asyncio jump previously broke the suite via event-loop handling).

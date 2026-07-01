@@ -33,8 +33,10 @@ RUN apt-get update && apt-get install -y \
 # Copy built wheel from builder
 COPY --from=builder /app/dist/*.whl /tmp/
 
-# Install the application (wheel already contains src/)
-RUN pip install /tmp/*.whl && rm /tmp/*.whl
+# Install the application WITH the equity extra — this image runs the full
+# equity pipeline + API + dashboard (uvicorn src.api.main below), so it needs
+# the ML/data stack. The credit committee alone does not require this image.
+RUN pip install "$(echo /tmp/*.whl)[equity]" && rm /tmp/*.whl
 
 # Copy scripts and config (not src/ — already installed via wheel)
 COPY scripts/ scripts/

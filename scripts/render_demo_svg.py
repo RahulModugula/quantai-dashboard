@@ -30,7 +30,7 @@ def render() -> None:
     )
     console.print()
     console.print(
-        "  [green]✓[/] [cyan]CapStructureAgent[/]     leverage [bold]82.1x[/] · coverage [bold]0.11x[/] · fulcrum: [yellow]2L PIK Convertible[/]"
+        "  [green]✓[/] [cyan]CapStructureAgent[/]     leverage [bold]85.8x[/] · coverage [bold]0.11x[/] · fulcrum: [yellow]2L PIK Convertible[/]"
     )
     console.print(
         "  [green]✓[/] [cyan]SituationAgent[/]        supply-side EBITDA shock · catalyst: [yellow]Q3'23 print[/]"

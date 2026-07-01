@@ -1,10 +1,19 @@
-.PHONY: setup seed train backtest analyze run test test-ci lint format migrate docker-up docker-down docker-prod clean
+.PHONY: setup setup-credit credit seed train backtest analyze run test test-credit test-ci lint format migrate docker-up docker-down docker-prod clean
 
 PYTHON := python
 
+# Full stack: credit committee + equity pipeline + API + dashboard + dev tools.
 setup:
-	pip install -e ".[dev]"
+	pip install -e ".[equity,dev]"
 	pre-commit install
+
+# Credit committee only — no ML/data stack (litellm + pyyaml + rich).
+setup-credit:
+	pip install -e ".[dev]"
+
+# Run the bundled credit committee example (needs an LLM key; see README).
+credit:
+	$(PYTHON) -m examples.distressed.run run examples/distressed/situations/ati_2023.yaml
 
 seed:
 	$(PYTHON) scripts/seed_data.py
@@ -29,11 +38,17 @@ migrate:
 run:
 	uvicorn src.api.main:app --host 0.0.0.0 --port 8000 --reload
 
+# Credit-only tests — run under the lightweight install (no ML stack needed).
+test-credit:
+	pytest tests/test_distressed_credit.py tests/test_credit_correctness.py \
+	  tests/test_credit_snapshot.py tests/test_credit_situation_loader.py \
+	  tests/test_credit_tools_advanced.py tests/test_envision_2023.py -v --timeout=30
+
 test:
-	pytest tests/ -v --cov=src --cov-report=term-missing --timeout=30
+	pytest tests/ -v --cov=src --cov=examples --cov-report=term-missing --timeout=30
 
 test-ci:
-	pytest tests/ -v --cov=src --cov-report=term-missing --cov-report=xml --timeout=30
+	pytest tests/ -v --cov=src --cov=examples --cov-report=term-missing --cov-report=xml --timeout=30
 
 lint:
 	ruff check src/ tests/
